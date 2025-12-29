@@ -164,6 +164,117 @@ export const pt = {
   // Themes
   themeDark: 'Escuro',
   themeLight: 'Claro',
+  themeNord: 'Nord',
+  themeDracula: 'Dracula',
+  themeSolarized: 'Solarized',
+  themeGruvbox: 'Gruvbox',
+  themeCatppuccin: 'Catppuccin',
+  
+  // Profile & Password
+  displayName: 'Nome de Exibição',
+  displayNamePlaceholder: 'Seu nome',
+  displayNameRequired: 'O nome de exibição é obrigatório',
+  currentPassword: 'Senha Atual',
+  currentPasswordPlaceholder: 'Digite sua senha atual',
+  currentPasswordIncorrect: 'Senha atual incorreta',
+  newPassword: 'Nova Senha',
+  newPasswordPlaceholder: 'Digite a nova senha',
+  confirmPassword: 'Confirmar Senha',
+  confirmPasswordPlaceholder: 'Confirme a nova senha',
+  passwordsDoNotMatch: 'As senhas não correspondem',
+  passwordUpdated: 'Senha atualizada com sucesso!',
+  profileUpdated: 'Perfil atualizado com sucesso!',
+  editProfile: 'Editar Perfil',
+  changePassword: 'Alterar Senha',
+  updatePassword: 'Atualizar Senha',
+  
+  // Profile Dialog
+  profileDialogDescription: 'Gerenciar suas informações de perfil',
+  passwordDialogDescription: 'Alterar sua senha',
+  
+  // Family Management
+  families: 'Famílias',
+  members: 'Membros',
+  member: 'Membro',
+  invite: 'Convidar',
+  inviteMember: 'Convidar Membro',
+  sendInvitation: 'Enviar Convite',
+  inviteEmailPlaceholder: 'email@exemplo.com',
+  invitationSent: 'Convite enviado com sucesso!',
+  pendingInvitations: 'Convites Pendentes',
+  noPendingInvitations: 'Nenhum convite pendente',
+  accept: 'Aceitar',
+  acceptInvitation: 'Aceitar Convite',
+  reject: 'Rejeitar',
+  rejectInvitation: 'Rejeitar Convite',
+  invitationAccepted: 'Convite aceito!',
+  invitedToFamily: 'Você foi convidado para uma família',
+  familyNameUpdated: 'Nome da família atualizado com sucesso!',
+  familyDeleted: 'Família deletada com sucesso!',
+  deleteFamily: 'Deletar Família',
+  deleteFamilyConfirm: 'Tem certeza que deseja deletar esta família?',
+  deleteFamilyWarning: 'Esta ação não pode ser desfeita. Todos os eventos serão perdidos.',
+  deleteFamilyWarningOnline: 'Esta ação não pode ser desfeita e afetará todos os membros da família.',
+  leave: 'Sair',
+  leaveFamily: 'Sair da Família',
+  leaveFamilyConfirm: 'Tem certeza que deseja sair desta família?',
+  leaveFamilyWarning: 'Você perderá acesso a todos os eventos desta família.',
+  leftFamily: 'Você saiu da família',
+  familyDetails: 'Detalhes da Família',
+  noFamilySelected: 'Nenhuma família selecionada',
+  openFamilySettings: 'Abrir Configurações da Família',
+  createFamilyDialogDescription: 'Crie uma nova família para começar a compartilhar eventos',
+  
+  // Role Management
+  role_admin: 'Administrador',
+  role_member: 'Membro',
+  removeMember: 'Remover Membro',
+  promoteAdminFirst: 'Promova outro membro a administrador primeiro',
+  
+  // Auth Dialogs
+  authDialogDescription: 'Faça login ou crie uma conta para usar o calendário',
+  loginOrSignup: 'Entrar ou Cadastrar',
+  backToLogin: 'Voltar para Login',
+  forgotPassword: 'Esqueceu a Senha?',
+  forgotPasswordDescription: 'Insira seu e-mail para receber um link de redefinição',
+  enterEmailForReset: 'Digite seu e-mail para receber um link de redefinição de senha',
+  sendResetLink: 'Enviar Link de Redefinição',
+  resetEmailSent: 'E-mail de redefinição enviado! Verifique sua caixa de entrada.',
+  checkSpamFolder: 'Se não receber em breve, verifique a pasta de spam.',
+  resendVerificationEmail: 'Reenviar E-mail de Verificação',
+  verificationEmailResent: 'E-mail de verificação reenviado!',
+  emailConfirmedSuccess: 'E-mail confirmado com sucesso!',
+  emailVerificationTitle: 'Verificar E-mail',
+  emailVerificationDescription: 'Verifique seu e-mail para ativar sua conta',
+  emailVerificationInstructions: 'Enviamos um e-mail de confirmação. Clique no link para ativar sua conta.',
+  emailCannotBeChanged: 'O e-mail não pode ser alterado',
+  
+  // Data Management
+  dataManagement: 'Gerenciamento de Dados',
+  clearOfflineCache: 'Limpar Cache Offline',
+  clearOfflineCacheWarning: 'Isto irá remover todos os dados salvos localmente. Esta ação não pode ser desfeita.',
+  offlineCacheCleared: 'Cache offline limpo com sucesso!',
+  offlineCacheClearError: 'Erro ao limpar cache offline',
+  dangerZone: 'Zona de Perigo',
+  
+  // Time-related strings (used internally, may not need UI translation)
+  sync_queue: 'Fila de Sincronização',
+  tag_definitions: 'Definições de Tags',
+  tag_id: 'ID da Tag',
+  current_family_id: 'ID da Família Atual',
+  user_preferences: 'Preferências do Usuário',
+  
+  // Month/Event deletion
+  deleteMonth: 'Deletar Mês',
+  deleteMonthConfirm: 'Tem certeza que deseja deletar todos os eventos deste mês?',
+  deleteMonthWarning: 'Esta ação irá remover permanentemente todos os eventos de todos os membros para este mês.',
+  saveChanges: 'Salvar Alterações',
+  
+  // Dialog & Button Labels
+  preferences: 'Preferências',
+  invitations: 'Convites',
+  pendingSent: 'Convites Enviados',
+  cancelInvitation: 'Cancelar Convite',
 };
 
 export type TranslationKey = keyof typeof pt;

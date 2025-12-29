@@ -1,8 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Settings, Tag, LogOut } from 'lucide-react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { useState } from 'react';
 import { SettingsPanel } from '@/components/settings';
 import { useAuth } from '@/contexts/AuthContext';
@@ -34,7 +32,6 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
 }) => {
   const { signOut } = useAuth();
   const { t } = useLanguage();
-  const monthYear = format(currentDate, 'MMMM yyyy', { locale: ptBR });
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
@@ -44,6 +41,8 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
     t('month-4'), t('month-5'), t('month-6'), t('month-7'),
     t('month-8'), t('month-9'), t('month-10'), t('month-11'),
   ];
+
+  const monthYear = `${months[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
 
   const handleMonthSelect = (monthIndex: number) => {
     if (onDateChange) {
