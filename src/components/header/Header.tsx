@@ -6,6 +6,8 @@ import {
   Calendar as CalendarIcon,
   Tag,
   Settings,
+  Filter,
+  X,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -14,6 +16,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import type { EventTag } from '@/types/calendar';
 
 interface HeaderProps {
   currentDate: Date;
@@ -25,6 +28,11 @@ interface HeaderProps {
   onSettings?: () => void;
   syncProgress?: number;
   isSyncing?: boolean;
+  // Filter props
+  availableTags?: EventTag[];
+  selectedFilterTags?: string[];
+  onToggleTagFilter?: (tagId: string) => void;
+  onClearFilters?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -37,9 +45,14 @@ export const Header: React.FC<HeaderProps> = ({
   onSettings,
   syncProgress = 0,
   isSyncing = false,
+  availableTags = [],
+  selectedFilterTags = [],
+  onToggleTagFilter,
+  onClearFilters,
 }) => {
   const { t } = useLanguage();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
 
   const months = [
@@ -181,8 +194,68 @@ export const Header: React.FC<HeaderProps> = ({
             </Button>
           </div>
 
-          {/* Right: Action buttons (Tags + Settings) */}
+          {/* Right: Action buttons (Filter + Tags + Settings) */}
           <div className="flex items-center gap-1 flex-shrink-0" role="toolbar" aria-label="Actions">
+            {/* Filter button */}
+            {availableTags && availableTags.length > 0 && (
+              <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={selectedFilterTags.length > 0 ? 'default' : 'ghost'}
+                    size="sm"
+                    aria-label="Filter events by tags"
+                    title={selectedFilterTags.length > 0 ? `Filtering by ${selectedFilterTags.length} tag(s)` : 'Filter events'}
+                    className="border border-transparent transition-all hover:shadow-md hover:border-primary hover:scale-[1.02]"
+                  >
+                    <Filter className="h-4 w-4" aria-hidden="true" />
+                    {selectedFilterTags.length > 0 && (
+                      <span className="ml-1.5 text-xs font-semibold">{selectedFilterTags.length}</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80" align="end">
+                  <div className="space-y-3">
+                    <div className="font-semibold text-sm">{t('tags')}</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {availableTags.map((tag) => {
+                        const isSelected = selectedFilterTags.includes(tag.id);
+                        return (
+                          <button
+                            key={tag.id}
+                            onClick={() => onToggleTagFilter?.(tag.id)}
+                            className="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full border transition-all text-xs sm:text-sm font-medium whitespace-nowrap hover:shadow-md hover:scale-[1.05]"
+                            style={{
+                              borderColor: isSelected ? tag.color : tag.color + '40',
+                              backgroundColor: isSelected ? tag.color : tag.color + '15',
+                              color: isSelected ? tag.color : 'hsl(var(--foreground))',
+                            }}
+                            title={tag.name}
+                          >
+                            {isSelected && <span className="mr-1">✓</span>}
+                            {tag.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {selectedFilterTags.length > 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          onClearFilters?.();
+                          setIsFilterOpen(false);
+                        }}
+                        className="w-full text-xs"
+                      >
+                        <X className="h-3 w-3 mr-1.5" />
+                        {t('clear')}
+                      </Button>
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            )}
+
             {/* Tags manager button */}
             {onTagManager && (
               <Button

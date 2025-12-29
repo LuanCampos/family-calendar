@@ -27,6 +27,7 @@ export const en = {
   delete: 'Delete',
   create: 'Create',
   update: 'Update',
+  clear: 'Clear',
   
   // Days of week (full)
   'day-0': 'Sunday',

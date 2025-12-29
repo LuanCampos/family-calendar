@@ -27,6 +27,7 @@ export const pt = {
   delete: 'Excluir',
   create: 'Criar',
   update: 'Atualizar',
+  clear: 'Limpar',
   
   // Days of week (full)
   'day-0': 'Domingo',

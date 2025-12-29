@@ -1,12 +1,14 @@
 import React from 'react';
 import type { Event, EventInput, EventTag } from '@/types/calendar';
 import { enrichEventsWithTags } from '@/lib/utils/eventUtils';
+import { filterEventsByTags } from '@/lib/utils/filterUtils';
 import { Header } from '../header';
 import { CalendarGrid } from './CalendarGrid';
 import { EventModal } from './EventModal';
 import { useCalendar } from '@/hooks/useCalendar';
 import { useEvents } from '@/hooks/useEvents';
 import { useEventTags } from '@/hooks/useEventTags';
+import { useFilterTags } from '@/hooks/useFilterTags';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { toast } from 'sonner';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -52,6 +54,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [editingEvent, setEditingEvent] = React.useState<Event | undefined>();
+  const { selectedFilterTags, toggleTagFilter, clearFilters } = useFilterTags();
 
   const handleDateClick = (date: string) => {
     console.log('Date clicked:', date);
@@ -109,8 +112,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   // Enrich events with tag data
   const enrichedEvents = enrichEventsWithTags(events, tags);
 
+  // Filter events based on selected tags
+  const filteredEvents = filterEventsByTags(enrichedEvents, selectedFilterTags);
+
   // Get events for selected date
-  const selectedDateEvents = selectedDate ? enrichedEvents.filter(e => e.date === selectedDate) : [];
+  const selectedDateEvents = selectedDate ? filteredEvents.filter(e => e.date === selectedDate) : [];
 
   return (
     <div className="flex flex-col h-full bg-background">
@@ -124,12 +130,16 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         onSettings={onSettings}
         syncProgress={syncProgress}
         isSyncing={isSyncing}
+        availableTags={tags}
+        selectedFilterTags={selectedFilterTags}
+        onToggleTagFilter={toggleTagFilter}
+        onClearFilters={clearFilters}
       />
 
       <div className="flex-1 overflow-y-auto">
         <CalendarGrid
           currentDate={currentDate}
-          events={enrichedEvents}
+          events={filteredEvents}
           selectedDate={selectedDate}
           onSelectDate={selectDate}
           onDateClick={handleDateClick}
