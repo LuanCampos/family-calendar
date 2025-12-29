@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Trash2, AlertCircle, Check } from 'lucide-react';
+import { Trash2, AlertCircle, Check, Clock, Timer } from 'lucide-react';
 import { getTagIds } from '@/lib/utils/eventUtils';
 import type { Event, EventInput, EventTag } from '@/types/calendar';
 import { format } from 'date-fns';
@@ -92,12 +92,12 @@ export const EventModal: React.FC<EventModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="w-[95vw] sm:max-w-lg max-h-[95vh] overflow-y-auto rounded-lg sm:rounded-xl shadow-lg">
-        <DialogHeader className="border-b pb-3 sm:pb-4">
+      <DialogContent className="w-[95vw] sm:max-w-lg max-h-[95vh] overflow-y-auto rounded-lg sm:rounded-xl shadow-lg flex flex-col gap-0 p-0">
+        <DialogHeader className="border-b px-4 sm:px-5 pt-3 sm:pt-4 pb-2.5 sm:pb-3">
           <DialogTitle className="text-lg sm:text-xl font-bold">
             {editingEvent ? t('editEvent') : t('newEvent')}
           </DialogTitle>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-2">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1.5">
             {(() => {
               const date = new Date(selectedDate);
               const dayOfWeek = t(`day-${date.getDay()}` as any);
@@ -107,7 +107,7 @@ export const EventModal: React.FC<EventModalProps> = ({
           </p>
         </DialogHeader>
 
-        <div className="space-y-3 sm:space-y-4 py-3 sm:py-4">
+        <div className="flex-1 overflow-y-auto space-y-2.5 sm:space-y-3 p-3 sm:p-4">
           {/* Title field */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
@@ -121,13 +121,7 @@ export const EventModal: React.FC<EventModalProps> = ({
             <Input
               id="title"
               value={title}
-              onChange={(e) => {
-                setTitle(e.target.value);
-                if (e.target.value.trim().length > 0) setShowValidation(false);
-              }}
-              onBlur={() => {
-                if (title.trim().length === 0) setShowValidation(true);
-              }}
+              onChange={(e) => setTitle(e.target.value)}
               placeholder={t('eventTitlePlaceholder')}
               autoFocus
               className={`text-sm ${showValidation && !isValid ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
@@ -150,12 +144,12 @@ export const EventModal: React.FC<EventModalProps> = ({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder={t('eventDescriptionPlaceholder')}
-              className="min-h-20 sm:min-h-24 text-sm resize-none"
+              className="min-h-16 sm:min-h-20 text-sm resize-none"
             />
           </div>
 
           {/* All-day checkbox */}
-          <div className="flex items-center space-x-2 py-1">
+          <div className="flex items-center space-x-2">
             <Checkbox
               id="isAllDay"
               checked={isAllDay}
@@ -171,12 +165,16 @@ export const EventModal: React.FC<EventModalProps> = ({
 
           {/* Time and Duration fields */}
           {!isAllDay && (
-            <div className="space-y-3 bg-muted/30 p-2.5 sm:p-3 rounded-lg">
+            <div className="space-y-1.5">
               <div className="grid grid-cols-2 gap-2">
-                <div className="space-y-1">
-                  <Label htmlFor="time" className="text-xs sm:text-sm font-semibold">
-                    {t('eventTime')}
-                  </Label>
+                {/* Start Time */}
+                <div className="space-y-1 p-2 rounded-lg border border-transparent bg-card shadow-sm hover:border-primary hover:shadow-md transition-all duration-200">
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary flex-shrink-0" />
+                    <Label htmlFor="time" className="text-xs sm:text-sm font-semibold">
+                      {t('eventTime')}
+                    </Label>
+                  </div>
                   <Input
                     id="time"
                     type="time"
@@ -187,10 +185,14 @@ export const EventModal: React.FC<EventModalProps> = ({
                   />
                 </div>
 
-                <div className="space-y-1">
-                  <Label htmlFor="duration" className="text-xs sm:text-sm font-semibold">
-                    {t('eventDuration')} (min)
-                  </Label>
+                {/* Duration */}
+                <div className="space-y-1 p-2 rounded-lg border border-transparent bg-card shadow-sm hover:border-primary hover:shadow-md transition-all duration-200">
+                  <div className="flex items-center gap-1.5">
+                    <Timer className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary flex-shrink-0" />
+                    <Label htmlFor="duration" className="text-xs sm:text-sm font-semibold">
+                      {t('eventDuration')} (min)
+                    </Label>
+                  </div>
                   <Input
                     id="duration"
                     type="number"
@@ -207,9 +209,9 @@ export const EventModal: React.FC<EventModalProps> = ({
 
           {/* Tags section */}
           {availableTags.length > 0 && (
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label className="text-xs sm:text-sm font-semibold">{t('tags')}</Label>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 {availableTags.map((tag) => (
                   <button
                     key={tag.id}
@@ -233,9 +235,6 @@ export const EventModal: React.FC<EventModalProps> = ({
                   </button>
                 ))}
               </div>
-              <p className="text-xs text-muted-foreground">
-                {selectedTags.length} {selectedTags.length === 1 ? 'tag selecionada' : 'tags selecionadas'}
-              </p>
             </div>
           )}
 
@@ -253,7 +252,7 @@ export const EventModal: React.FC<EventModalProps> = ({
         </div>
 
         {/* Footer buttons */}
-        <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 justify-between pt-3 sm:pt-4 border-t">
+        <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 justify-between pt-2 sm:pt-2.5 border-t px-4 sm:px-5 py-2.5 sm:py-3">
           <Button
             variant="destructive"
             size="sm"

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Trash2, Plus, Loader2, Check, AlertCircle, Pencil } from 'lucide-react';
 import {
   Dialog,
@@ -129,6 +129,13 @@ export const TagManager: React.FC<TagManagerProps> = ({
     setShowNameError(false);
   };
 
+  // Reset validation state when modal opens/closes
+  useEffect(() => {
+    if (isOpen) {
+      setShowNameError(false);
+    }
+  }, [isOpen]);
+
   const handleDeleteTag = (tagId: string) => {
     const tag = tags.find(t => t.id === tagId);
     if (window.confirm(`Deletar tag "${tag?.name}"? Esta ação não pode ser desfeita.`)) {
@@ -147,13 +154,13 @@ export const TagManager: React.FC<TagManagerProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-[95vw] sm:max-w-md max-h-[90vh] flex flex-col gap-0 p-0 rounded-lg sm:rounded-xl">
-        <DialogHeader className="border-b px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4">
+        <DialogHeader className="border-b px-4 sm:px-5 pt-3 sm:pt-4 pb-2.5 sm:pb-3">
           <DialogTitle className="text-base sm:text-lg font-bold">
             {t('manageTags')}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto space-y-3 sm:space-y-4 p-4 sm:p-6">
+        <div className="flex-1 overflow-y-auto space-y-2.5 sm:space-y-3 p-3 sm:p-4">
           {error && (
             <div className="border border-destructive/50 rounded-lg p-2.5 sm:p-3 bg-destructive/10 flex items-start gap-2">
               <AlertCircle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
@@ -168,9 +175,9 @@ export const TagManager: React.FC<TagManagerProps> = ({
           )}
           
           {/* Create/Edit tag */}
-          <div className="space-y-2.5 sm:space-y-3 bg-muted/20 p-3 sm:p-4 rounded-lg">
+          <div className="space-y-2 sm:space-y-2.5 bg-muted/20 p-2.5 sm:p-3 rounded-lg">
             {editingTag && (
-              <div className="flex items-center justify-between mb-1 sm:mb-2">
+              <div className="flex items-center justify-between mb-1">
                 <p className="text-xs sm:text-sm font-semibold text-primary">{t('editingTag')}</p>
                 <Button
                   variant="ghost"
@@ -189,13 +196,7 @@ export const TagManager: React.FC<TagManagerProps> = ({
               <Input
                 id="tagName"
                 value={newTagName}
-                onChange={(e) => {
-                  setNewTagName(e.target.value);
-                  if (e.target.value.trim().length > 0) setShowNameError(false);
-                }}
-                onBlur={() => {
-                  if (newTagName.trim().length === 0) setShowNameError(true);
-                }}
+                onChange={(e) => setNewTagName(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder={t('tagNamePlaceholder')}
                 className={`text-xs sm:text-sm mt-1 ${showNameError && !isNameValid ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
@@ -212,7 +213,7 @@ export const TagManager: React.FC<TagManagerProps> = ({
                 {t('tagColor')}
               </Label>
               <div className="flex gap-2 mt-1">
-                <div className="w-10 sm:w-12 h-9 sm:h-10 rounded border border-border bg-card p-1 flex items-center justify-center shadow-sm flex-shrink-0">
+                <div className="w-10 sm:w-12 h-9 sm:h-10 rounded border border-transparent bg-card shadow-sm hover:border-primary hover:shadow-md transition-all duration-200 p-1 flex items-center justify-center flex-shrink-0 cursor-pointer">
                   <input
                     id="tagColor"
                     type="color"
@@ -251,10 +252,10 @@ export const TagManager: React.FC<TagManagerProps> = ({
           </div>
 
           {/* Existing tags */}
-          <div className="space-y-1.5 sm:space-y-2">
+          <div className="space-y-1.5">
             <p className="text-xs sm:text-sm font-semibold text-muted-foreground px-1">{tags.length} {tags.length === 1 ? 'tag' : 'tags'}</p>
             {tags.length === 0 ? (
-              <div className="border border-dashed border-border rounded-lg p-4 sm:p-6 bg-muted/20 text-center">
+              <div className="border border-dashed border-border rounded-lg p-3 sm:p-4 bg-muted/20 text-center">
                 <p className="text-xs sm:text-sm text-muted-foreground mb-1">
                   {t('noTags')}
                 </p>
@@ -302,12 +303,6 @@ export const TagManager: React.FC<TagManagerProps> = ({
             )}
           </div>
         </div>
-
-        <DialogFooter className="border-t px-4 sm:px-6 py-3 sm:py-4">
-          <Button variant="outline" onClick={onClose} size="sm" className="w-full sm:w-auto">
-            {t('close')}
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
