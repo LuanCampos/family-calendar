@@ -132,7 +132,7 @@ export const Header: React.FC<HeaderProps> = ({
                             : 'outline'
                         }
                         onClick={() => handleMonthSelect(index)}
-                        className="text-xs"
+                        className="text-xs hover:shadow-md hover:border-primary hover:scale-[1.02] transition-all"
                         aria-pressed={index === currentDate.getMonth() && selectedYear === currentDate.getFullYear()}
                         aria-label={month}
                       >

@@ -92,12 +92,12 @@ export const EventModal: React.FC<EventModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="w-[95vw] sm:max-w-lg max-h-[95vh] overflow-y-auto rounded-lg sm:rounded-xl">
-        <DialogHeader className="border-b pb-4">
-          <DialogTitle className="text-lg sm:text-xl">
+      <DialogContent className="w-[95vw] sm:max-w-lg max-h-[95vh] overflow-y-auto rounded-lg sm:rounded-xl shadow-lg">
+        <DialogHeader className="border-b pb-3 sm:pb-4">
+          <DialogTitle className="text-lg sm:text-xl font-bold">
             {editingEvent ? t('editEvent') : t('newEvent')}
           </DialogTitle>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-2">
             {(() => {
               const date = new Date(selectedDate);
               const dayOfWeek = t(`day-${date.getDay()}` as any);
@@ -107,11 +107,12 @@ export const EventModal: React.FC<EventModalProps> = ({
           </p>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          <div>
+        <div className="space-y-3 sm:space-y-4 py-3 sm:py-4">
+          {/* Title field */}
+          <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <Label htmlFor="title" className="text-sm font-medium">
-                {t('eventTitle')} *
+              <Label htmlFor="title" className="text-xs sm:text-sm font-semibold">
+                {t('eventTitle')} <span className="text-red-500">*</span>
               </Label>
               {isValid && (
                 <Check className="h-4 w-4 text-green-500" />
@@ -129,18 +130,19 @@ export const EventModal: React.FC<EventModalProps> = ({
               }}
               placeholder={t('eventTitlePlaceholder')}
               autoFocus
-              className={`mt-1 ${showValidation && !isValid ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+              className={`text-sm ${showValidation && !isValid ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
             />
             {showValidation && !isValid && (
-              <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+              <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
                 <AlertCircle className="h-3 w-3" />
                 {t('eventTitleRequired')}
               </p>
             )}
           </div>
 
-          <div>
-            <Label htmlFor="description" className="text-sm font-medium">
+          {/* Description field */}
+          <div className="space-y-1.5">
+            <Label htmlFor="description" className="text-xs sm:text-sm font-semibold">
               {t('eventDescription')}
             </Label>
             <Textarea
@@ -148,12 +150,12 @@ export const EventModal: React.FC<EventModalProps> = ({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder={t('eventDescriptionPlaceholder')}
-              className="min-h-24 mt-1 resize-none"
+              className="min-h-20 sm:min-h-24 text-sm resize-none"
             />
           </div>
 
           {/* All-day checkbox */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 py-1">
             <Checkbox
               id="isAllDay"
               checked={isAllDay}
@@ -161,49 +163,53 @@ export const EventModal: React.FC<EventModalProps> = ({
             />
             <Label
               htmlFor="isAllDay"
-              className="text-sm font-medium cursor-pointer"
+              className="text-xs sm:text-sm font-medium cursor-pointer"
             >
               {t('eventAllDay')}
             </Label>
           </div>
 
+          {/* Time and Duration fields */}
           {!isAllDay && (
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="time" className="text-sm font-medium">
-                  {t('eventTime')}
-                </Label>
-                <Input
-                  id="time"
-                  type="time"
-                  value={time}
-                  onChange={(e) => setTime(e.target.value)}
-                  className="mt-1"
-                  style={{ colorScheme: 'dark' }}
-                />
-              </div>
+            <div className="space-y-3 bg-muted/30 p-2.5 sm:p-3 rounded-lg">
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <Label htmlFor="time" className="text-xs sm:text-sm font-semibold">
+                    {t('eventTime')}
+                  </Label>
+                  <Input
+                    id="time"
+                    type="time"
+                    value={time}
+                    onChange={(e) => setTime(e.target.value)}
+                    className="text-xs sm:text-sm"
+                    style={{ colorScheme: 'dark' }}
+                  />
+                </div>
 
-              <div>
-                <Label htmlFor="duration" className="text-sm font-medium">
-                  {t('eventDuration')}
-                </Label>
-                <Input
-                  id="duration"
-                  type="number"
-                  min="15"
-                  step="15"
-                  value={duration}
-                  onChange={(e) => setDuration(e.target.value)}
-                  className="mt-1"
-                />
+                <div className="space-y-1">
+                  <Label htmlFor="duration" className="text-xs sm:text-sm font-semibold">
+                    {t('eventDuration')} (min)
+                  </Label>
+                  <Input
+                    id="duration"
+                    type="number"
+                    min="15"
+                    step="15"
+                    value={duration}
+                    onChange={(e) => setDuration(e.target.value)}
+                    className="text-xs sm:text-sm"
+                  />
+                </div>
               </div>
             </div>
           )}
 
+          {/* Tags section */}
           {availableTags.length > 0 && (
-            <div>
-              <Label className="text-sm font-medium">{t('tags')}</Label>
-              <div className="grid grid-cols-2 gap-2 mt-2 max-h-40 overflow-y-auto">
+            <div className="space-y-2">
+              <Label className="text-xs sm:text-sm font-semibold">{t('tags')}</Label>
+              <div className="flex flex-wrap gap-2">
                 {availableTags.map((tag) => (
                   <button
                     key={tag.id}
@@ -214,26 +220,29 @@ export const EventModal: React.FC<EventModalProps> = ({
                           : [...prev, tag.id]
                       );
                     }}
-                    className="px-3 py-2 rounded-lg border-2 transition-all text-sm font-medium text-center hover:shadow-sm"
+                    className="px-3 py-1.5 sm:py-2 rounded-full border transition-all text-xs sm:text-sm font-medium whitespace-nowrap hover:shadow-md hover:scale-[1.05] cursor-pointer"
                     style={{
-                      borderColor: selectedTags.includes(tag.id) ? tag.color : 'hsl(var(--border))',
-                      backgroundColor: selectedTags.includes(tag.id) ? tag.color + '25' : 'transparent',
+                      borderColor: selectedTags.includes(tag.id) ? tag.color : tag.color + '40',
+                      backgroundColor: selectedTags.includes(tag.id) ? tag.color : tag.color + '15',
                       color: selectedTags.includes(tag.id) ? tag.color : 'hsl(var(--foreground))',
                     }}
+                    title={tag.name}
                   >
-                    {selectedTags.includes(tag.id) && <span className="mr-1">✓</span>}
+                    {selectedTags.includes(tag.id) && <span className="mr-1.5">✓</span>}
                     {tag.name}
                   </button>
                 ))}
               </div>
-              <p className="text-xs text-muted-foreground mt-2">
+              <p className="text-xs text-muted-foreground">
                 {selectedTags.length} {selectedTags.length === 1 ? 'tag selecionada' : 'tags selecionadas'}
               </p>
             </div>
           )}
+
+          {/* No tags message */}
           {availableTags.length === 0 && (
-            <div className="border border-dashed border-border rounded-lg p-4 bg-muted/20">
-              <p className="text-sm text-muted-foreground text-center mb-2">
+            <div className="border border-dashed border-border rounded-lg p-3 bg-muted/20">
+              <p className="text-xs sm:text-sm text-muted-foreground text-center mb-1">
                 {t('noTags')}
               </p>
               <p className="text-xs text-muted-foreground text-center">
@@ -243,28 +252,34 @@ export const EventModal: React.FC<EventModalProps> = ({
           )}
         </div>
 
-        <DialogFooter className="flex gap-2 justify-between pt-4 border-t">
-          {editingEvent && onDelete && (
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={handleDelete}
-              className="gap-2"
-            >
-              <Trash2 className="h-4 w-4" />
-              {t('delete')}
-            </Button>
-          )}
-          <div className="flex gap-2 ml-auto">
+        {/* Footer buttons */}
+        <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 justify-between pt-3 sm:pt-4 border-t">
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={handleDelete}
+            className="gap-2 order-last sm:order-none"
+            style={{ display: editingEvent && onDelete ? 'flex' : 'none' }}
+          >
+            <Trash2 className="h-4 w-4" />
+            <span className="hidden sm:inline">{t('delete')}</span>
+            <span className="sm:hidden">{t('delete')}</span>
+          </Button>
+          
+          <div className="flex gap-2 ml-auto w-full sm:w-auto">
             <Button
               variant="outline"
               onClick={handleClose}
+              className="flex-1 sm:flex-none"
+              size="sm"
             >
               {t('cancel')}
             </Button>
             <Button 
               onClick={handleSave}
               disabled={!isValid && showValidation}
+              className="flex-1 sm:flex-none"
+              size="sm"
             >
               {editingEvent ? t('update') : t('create')}
             </Button>
