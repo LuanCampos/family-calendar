@@ -1,0 +1,162 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 30 6% 9%;
+    --foreground: 40 20% 95%;
+    --card: 30 6% 12%;
+    --card-foreground: 40 20% 95%;
+    --popover: 30 6% 10%;
+    --popover-foreground: 40 20% 95%;
+    --primary: 43 74% 49%;
+    --primary-foreground: 30 6% 9%;
+    --secondary: 30 6% 18%;
+    --secondary-foreground: 40 20% 95%;
+    --muted: 30 6% 20%;
+    --muted-foreground: 40 10% 60%;
+    --accent: 30 6% 16%;
+    --accent-foreground: 40 20% 95%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 40 20% 95%;
+    --success: 142 71% 45%;
+    --success-foreground: 30 6% 9%;
+    --border: 30 6% 22%;
+    --input: 30 6% 18%;
+    --ring: 43 74% 49%;
+    --radius: 0.75rem;
+
+    /* Category colors */
+    --category-custos-fixos: 187 85% 53%;
+    --category-conforto: 160 84% 39%;
+    --category-metas: 48 96% 53%;
+    --category-prazeres: 291 64% 42%;
+    --category-liberdade: 217 91% 60%;
+    --category-conhecimento: 25 95% 53%;
+
+    /* Sidebar */
+    --sidebar-background: 30 6% 9%;
+    --sidebar-foreground: 40 20% 95%;
+    --sidebar-primary: 43 74% 49%;
+    --sidebar-primary-foreground: 30 6% 9%;
+    --sidebar-accent: 30 6% 18%;
+    --sidebar-accent-foreground: 40 20% 95%;
+    --sidebar-border: 30 6% 22%;
+    --sidebar-ring: 43 74% 49%;
+
+    /* Dashboard enhancements */
+    --card-hover: 30 6% 14%;
+    --card-shadow: 0 4px 6px -1px hsl(0 0% 0% / 0.3), 0 2px 4px -2px hsl(0 0% 0% / 0.2);
+    --card-shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.3), 0 4px 6px -4px hsl(0 0% 0% / 0.2);
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+@layer components {
+  /* Dashboard Card Styles */
+  .dashboard-card {
+    @apply bg-card rounded-lg border border-border transition-all duration-200;
+    box-shadow: var(--card-shadow);
+  }
+
+  .dashboard-card:hover {
+    background-color: hsl(var(--card-hover));
+  }
+
+  .dashboard-card-header {
+    @apply flex items-center justify-between px-4 py-3 border-b border-border/50;
+  }
+
+  .dashboard-card-title {
+    @apply text-sm font-semibold text-foreground uppercase tracking-wide;
+  }
+
+  .dashboard-card-content {
+    @apply p-4;
+  }
+
+  /* Section Header */
+  .section-header {
+    @apply flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4;
+  }
+
+  .section-title {
+    @apply text-lg font-semibold text-foreground;
+  }
+
+  /* Action Button Group */
+  .action-btn-group {
+    @apply flex items-center gap-1.5 sm:gap-2 flex-wrap;
+  }
+
+  /* Stat Card */
+  .stat-card {
+    @apply flex flex-col p-3 sm:p-4 bg-secondary/30 rounded-lg;
+  }
+
+  .stat-value {
+    @apply text-xl sm:text-2xl font-bold text-foreground;
+  }
+
+  .stat-label {
+    @apply text-xs text-muted-foreground mt-1;
+  }
+}
+
+@layer utilities {
+  .text-category-custos-fixos {
+    color: hsl(var(--category-custos-fixos));
+  }
+  .text-category-conforto {
+    color: hsl(var(--category-conforto));
+  }
+  .text-category-metas {
+    color: hsl(var(--category-metas));
+  }
+  .text-category-prazeres {
+    color: hsl(var(--category-prazeres));
+  }
+  .text-category-liberdade {
+    color: hsl(var(--category-liberdade));
+  }
+  .text-category-conhecimento {
+    color: hsl(var(--category-conhecimento));
+  }
+  
+  .bg-category-custos-fixos {
+    background-color: hsl(var(--category-custos-fixos));
+  }
+  .bg-category-conforto {
+    background-color: hsl(var(--category-conforto));
+  }
+  .bg-category-metas {
+    background-color: hsl(var(--category-metas));
+  }
+  .bg-category-prazeres {
+    background-color: hsl(var(--category-prazeres));
+  }
+  .bg-category-liberdade {
+    background-color: hsl(var(--category-liberdade));
+  }
+  .bg-category-conhecimento {
+    background-color: hsl(var(--category-conhecimento));
+  }
+
+  /* Mobile touch targets */
+  @media (max-width: 640px) {
+    .touch-target {
+      @apply min-h-[44px] min-w-[44px];
+    }
+  }
+}
