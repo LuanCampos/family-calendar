@@ -49,27 +49,30 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
   ];
 
   return (
-    <div className="flex-1 overflow-auto bg-background p-3">
-      {/* Weekday headers */}
-      <div className="grid grid-cols-7 gap-2 mb-2">
+    <div className="flex-1 overflow-auto bg-background p-2 sm:p-3 md:p-2 lg:p-2.5" role="main">
+      {/* Weekday headers - responsive text size */}
+      <div className="grid grid-cols-7 gap-1 sm:gap-2 md:gap-1.5 mb-0.5 sm:mb-1 md:mb-0.5" role="row">
         {weekDays.map((day) => (
           <div
             key={day}
-            className="text-center font-semibold text-sm text-muted-foreground py-2"
+            className="text-center font-semibold text-xs sm:text-sm text-muted-foreground py-1 sm:py-2"
+            role="columnheader"
+            aria-label={day}
           >
             {day}
           </div>
         ))}
       </div>
 
-      {/* Calendar grid */}
-      <div className="grid grid-cols-7 gap-2 auto-rows-[110px]">
+      {/* Calendar grid - Responsive row heights */}
+      <div className="grid grid-cols-7 gap-1 sm:gap-2 md:gap-1.5 auto-rows-[50px] sm:auto-rows-[70px] md:auto-rows-[85px] lg:auto-rows-[105px]" role="grid">
         {daysInCalendar.map((day) => {
           const dateStr = format(day, 'yyyy-MM-dd');
           const dayEvents = eventsByDate[dateStr] || [];
           const isCurrentMonth = isSameMonth(day, currentDate);
           const isTodayDate = isToday(day);
           const isSelected = dateStr === selectedDate;
+          const dayLabel = format(day, 'EEEE, MMMM d, yyyy');
 
           return (
             <div
@@ -78,30 +81,44 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                 onSelectDate(dateStr);
                 onDateClick(dateStr);
               }}
+              role="gridcell"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onSelectDate(dateStr);
+                  onDateClick(dateStr);
+                }
+              }}
+              aria-label={`${dayLabel}${dayEvents.length > 0 ? `, ${dayEvents.length} ${dayEvents.length === 1 ? 'event' : 'events'}` : ''}`}
               className={cn(
-                'rounded-lg border transition-all cursor-pointer flex flex-col overflow-hidden',
-                'hover:shadow-md hover:border-primary',
+                'rounded border md:rounded-lg transition-all cursor-pointer flex flex-col overflow-hidden focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1',
+                'hover:shadow-md hover:border-primary hover:scale-[1.02] md:hover:scale-[1.01]',
                 !isCurrentMonth && 'bg-muted/30 opacity-50',
                 isCurrentMonth && 'bg-card',
-                isTodayDate && 'border-primary bg-primary/5 shadow-sm',
+                isTodayDate && 'border-primary bg-primary/5 shadow-sm md:shadow-md',
                 isSelected && 'ring-2 ring-primary'
               )}
             >
-              {/* Day number */}
-              <div className={cn(
-                'px-3 py-2 font-semibold text-sm flex items-center justify-between',
-                !isCurrentMonth && 'text-muted-foreground',
-                isCurrentMonth && isTodayDate && 'bg-primary/10 text-primary',
-              )}>
-                <span>{day.getDate()}</span>
+              {/* Day number - Responsive font size */}
+              <div
+                className={cn(
+                  'px-1 sm:px-2 md:px-1.5 py-1 md:py-1.5 font-semibold text-xs sm:text-sm flex items-center justify-between flex-shrink-0',
+                  !isCurrentMonth && 'text-muted-foreground',
+                  isCurrentMonth && isTodayDate && 'bg-primary/10 text-primary'
+                )}
+              >
+                <span aria-label={isTodayDate ? `Today, ${day.getDate()}` : day.getDate().toString()}>
+                  {day.getDate()}
+                </span>
               </div>
 
-              {/* Events */}
-              <div className="flex-1 px-2 pb-2 overflow-hidden flex flex-col gap-1">
+              {/* Events - Responsive with overflow handling */}
+              <div className="flex-1 px-1 md:px-1.5 overflow-hidden flex flex-col gap-0.5 md:gap-0.5" role="list">
                 {dayEvents.length > 0 ? (
                   <>
                     {dayEvents.slice(0, 2).map((event) => {
-                      const tagColor = 
+                      const tagColor =
                         Array.isArray(event.tags) && event.tags.length > 0
                           ? isEventTagArray(event.tags)
                             ? event.tags[0].color
@@ -115,14 +132,23 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                             e.stopPropagation();
                             onEventClick?.(event);
                           }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              onEventClick?.(event);
+                            }
+                          }}
+                          role="listitem"
+                          tabIndex={0}
                           className={cn(
-                            'text-xs px-2 py-1 rounded truncate font-medium text-white',
-                            'cursor-pointer hover:opacity-80 transition-opacity hover:scale-105'
+                            'text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded truncate font-medium text-white',
+                            'cursor-pointer hover:opacity-80 transition-opacity hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-1'
                           )}
                           style={{
                             backgroundColor: tagColor,
                           }}
-                          title={`Clique para editar: ${event.title}`}
+                          title={`${t('clickToEdit')}: ${event.title}`}
+                          aria-label={`${event.title}${event.time ? ` at ${event.time}` : ''}`}
                         >
                           {event.isAllDay ? (
                             <>📅 {event.title}</>
@@ -131,20 +157,21 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                               {event.time && (
                                 <span className="font-semibold">{event.time}</span>
                               )}
-                              {event.time && ' '}{event.title}
+                              {event.time && ' '}
+                              <span className="hidden sm:inline">{event.title}</span>
                             </>
                           )}
                         </div>
                       );
                     })}
                     {dayEvents.length > 2 && (
-                      <div className="text-xs text-muted-foreground px-2 py-1 font-medium">
-                        +{dayEvents.length - 2} mais
+                      <div className="text-xs text-muted-foreground px-1 md:px-2 font-medium" role="listitem">
+                        +{dayEvents.length - 2}
                       </div>
                     )}
                   </>
                 ) : (
-                  <div className="text-xs text-muted-foreground/40">
+                  <div className="text-xs text-muted-foreground/40 hidden md:block" aria-hidden="true">
                     {isCurrentMonth ? '—' : ''}
                   </div>
                 )}

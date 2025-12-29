@@ -92,12 +92,12 @@ export const EventModal: React.FC<EventModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="w-[95vw] sm:max-w-lg max-h-[95vh] overflow-y-auto rounded-lg sm:rounded-xl">
         <DialogHeader className="border-b pb-4">
-          <DialogTitle className="text-lg">
+          <DialogTitle className="text-lg sm:text-xl">
             {editingEvent ? t('editEvent') : t('newEvent')}
           </DialogTitle>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
             {(() => {
               const date = new Date(selectedDate);
               const dayOfWeek = t(`day-${date.getDay()}` as any);

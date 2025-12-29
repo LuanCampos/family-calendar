@@ -3,34 +3,35 @@ import { useFamily } from '@/contexts/FamilyContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { CalendarView } from '@/components/calendar';
 import { TagManager } from '@/components/tags';
-import { OnlineStatusBar } from '@/components/common';
+import { SettingsPanel } from '@/components/settings';
 import { FamilySetup } from '@/components/family';
 import { useEventTags } from '@/hooks/useEventTags';
+import { useOnline } from '@/contexts/OnlineContext';
 
 const CalendarContent = () => {
   const { user } = useAuth();
   const { currentFamilyId } = useFamily();
   const { tags, createTag, updateTag, deleteTag } = useEventTags();
+  const { isOnline, isSyncing, syncProgress } = useOnline();
   const [isTagManagerOpen, setIsTagManagerOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   if (!currentFamilyId) {
     return <FamilySetup />;
   }
 
   return (
-    <div className="flex flex-col h-screen bg-background">
-      <OnlineStatusBar />
+    <div className="h-screen bg-background flex flex-col">
+      <CalendarView
+        userEmail={user?.email}
+        onTagManager={() => setIsTagManagerOpen(true)}
+        onSettings={() => setIsSettingsOpen(true)}
+        availableTags={tags}
+        isOnline={isOnline}
+        isSyncing={isSyncing}
+        syncProgress={syncProgress}
+      />
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* Main calendar */}
-        <div className="flex-1 flex flex-col">
-          <CalendarView
-            userEmail={user?.email}
-            onTagManager={() => setIsTagManagerOpen(true)}
-            availableTags={tags}
-          />
-        </div>
-      </div>
       {/* Modals */}
       <TagManager
         tags={tags}
@@ -39,6 +40,11 @@ const CalendarContent = () => {
         onDeleteTag={deleteTag}
         isOpen={isTagManagerOpen}
         onClose={() => setIsTagManagerOpen(false)}
+      />
+
+      <SettingsPanel
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
       />
     </div>
   );

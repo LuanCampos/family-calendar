@@ -1,7 +1,7 @@
 import React from 'react';
 import type { Event, EventInput, EventTag } from '@/types/calendar';
 import { enrichEventsWithTags } from '@/lib/utils/eventUtils';
-import { CalendarHeader } from './CalendarHeader';
+import { Header } from '../header';
 import { CalendarGrid } from './CalendarGrid';
 import { EventModal } from './EventModal';
 import { useCalendar } from '@/hooks/useCalendar';
@@ -13,14 +13,22 @@ import { useLanguage } from '@/contexts/LanguageContext';
 
 interface CalendarViewProps {
   onTagManager?: () => void;
+  onSettings?: () => void;
   userEmail?: string;
-  availableTags?: EventTag[]; // Tags passadas do pai para sincronizar estado
+  availableTags?: EventTag[];
+  isOnline?: boolean;
+  isSyncing?: boolean;
+  syncProgress?: number;
 }
 
 export const CalendarView: React.FC<CalendarViewProps> = ({
   onTagManager,
+  onSettings,
   userEmail,
   availableTags,
+  isOnline = true,
+  isSyncing = false,
+  syncProgress = 0,
 }) => {
   const { t } = useLanguage();
   const {
@@ -106,14 +114,16 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
   return (
     <div className="flex flex-col h-full bg-background">
-      <CalendarHeader
+      <Header
         currentDate={currentDate}
         onPrevious={goToPreviousMonth}
         onNext={goToNextMonth}
         onToday={goToToday}
         onDateChange={setCurrentDate}
         onTagManager={onTagManager}
-        userEmail={userEmail}
+        onSettings={onSettings}
+        syncProgress={syncProgress}
+        isSyncing={isSyncing}
       />
 
       <div className="flex-1 overflow-y-auto">
