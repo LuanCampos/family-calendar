@@ -500,7 +500,6 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const createFamily = async (name: string) => {
     // Check online status first (cheap operation)
     if (!navigator.onLine) {
-      console.log('Creating offline family (navigator.onLine = false)');
       return createOfflineFamily(name);
     }
 
@@ -510,14 +509,15 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const session = await userService.ensureSessionReady();
       const sessionUser = session.user;
 
-      console.log('Creating cloud family for user:', sessionUser?.email);
-
       // Create cloud family
       const { data: family, error } = await familyService.insertFamily(name, sessionUser.id);
 
       if (error) {
         // Fallback to offline on error (e.g., network error, RLS error, etc.)
-        console.error('Cloud family creation failed, creating offline:', error);
+        console.warn('[FAMILY] Cloud family creation failed:', {
+          code: (error as any).code,
+          message: error.message,
+        });
         return createOfflineFamily(name);
       }
 
@@ -529,8 +529,9 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         user_email: sessionUser.email || null,
       });
 
-      if (memberError && (memberError as any).code !== '23505') {
-        console.error('Member creation error:', memberError);
+      if (memberError) {
+        console.error('[FAMILY] Member creation error:', memberError);
+        // Don't fail on this error - family was created successfully
       }
 
       await refreshFamilies();
@@ -541,7 +542,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       // Auth validation failed (user not authenticated, token not ready, etc.)
       // Fall back to offline creation
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      console.error('Auth validation failed, creating offline family:', errorMessage);
+      console.warn('[FAMILY] Auth validation failed, falling back to offline:', errorMessage);
       return createOfflineFamily(name);
     }
   };

@@ -94,7 +94,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const syncLocalPreferencesToServer = async () => {
       try {
         const { data, error } = await userService.getUserPreferences(user.id);
-        if (error) return;
+        if (error) {
+          console.warn('[AUTH] getUserPreferences failed:', error);
+          return;
+        }
 
         const localTheme = typeof window !== 'undefined' ? localStorage.getItem('budget-app-theme') : null;
         const localLanguage = typeof window !== 'undefined' ? localStorage.getItem('budget-app-language') : null;
@@ -122,15 +125,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (shouldUpsert) {
           try {
-            await userService.upsertUserPreference(payload);
+            const result = await userService.upsertUserPreference(payload);
+            if (result.error) {
+              console.warn('[AUTH] upsertUserPreference failed:', result.error);
+            }
           } catch (upsertErr) {
             // Non-fatal: Log and continue. Errors here are real auth/RLS issues,
             // not transient race conditions. User can still use the app offline.
-            console.warn('Failed to upsert user preferences on first auth:', upsertErr instanceof Error ? upsertErr.message : String(upsertErr));
+            console.warn('[AUTH] upsertUserPreference threw:', upsertErr instanceof Error ? upsertErr.message : String(upsertErr));
           }
         }
       } catch (err) {
-        console.warn('Error syncing local preferences to server:', err);
+        console.warn('[AUTH] Error syncing local preferences to server:', err);
       }
     };
 

@@ -53,9 +53,20 @@ export const upsertUserPreference = async (payload: {
     updated_at: new Date().toISOString(),
   };
 
-  return supabase
+  const result = await supabase
     .from('user_preference')
     .upsert(finalPayload, { onConflict: 'user_id' });
+
+  if (result.error) {
+    console.error('[USER_PREF] Upsert failed', {
+      code: result.error.code,
+      message: result.error.message,
+      details: (result.error as any).details,
+      hint: (result.error as any).hint,
+    });
+  }
+
+  return result;
 };
 
 export const updateCurrentFamily = async (userId: string, familyId: string | null) => {
