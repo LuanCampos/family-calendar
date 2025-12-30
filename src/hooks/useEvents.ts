@@ -55,22 +55,46 @@ export const useEvents = (startDate?: string, endDate?: string) => {
       const userId = user?.id || 'offline-user';
 
       try {
-        console.log('[useEvents] Calling storageAdapter.createEvent...');
-        const response = await storageAdapter.createEvent(currentFamilyId, input, userId);
+        // Check if this is a recurring event
+        if (input.isRecurring && input.recurrenceRule) {
+          console.log('[useEvents] Calling storageAdapter.createRecurringEvent...');
+          const response = await storageAdapter.createRecurringEvent(currentFamilyId, input, userId);
 
-        console.log('[useEvents] createEvent response:', response);
+          console.log('[useEvents] createRecurringEvent response:', response);
 
-        if (response.data) {
-          setEvents(prev => [...prev, response.data]);
-          logger.info('event.created', { eventId: response.data.id });
+          if (response.data) {
+            // For recurring events, we store only the parent
+            // Instances will be generated on demand when fetching events
+            setEvents(prev => [...prev, response.data]);
+            logger.info('event.recurring.created', { 
+              parentId: response.data.id
+            });
+          }
+
+          if (response.error) {
+            logger.error('event.recurring.create.error', { error: response.error });
+            setError('Failed to create recurring event');
+          }
+
+          return response;
+        } else {
+          console.log('[useEvents] Calling storageAdapter.createEvent...');
+          const response = await storageAdapter.createEvent(currentFamilyId, input, userId);
+
+          console.log('[useEvents] createEvent response:', response);
+
+          if (response.data) {
+            setEvents(prev => [...prev, response.data]);
+            logger.info('event.created', { eventId: response.data.id });
+          }
+
+          if (response.error) {
+            logger.error('event.create.error', { error: response.error });
+            setError('Failed to create event');
+          }
+
+          return response;
         }
-
-        if (response.error) {
-          logger.error('event.create.error', { error: response.error });
-          setError('Failed to create event');
-        }
-
-        return response;
       } catch (err) {
         console.error('[useEvents] createEvent exception:', err);
         logger.error('event.create.exception', { error: err });

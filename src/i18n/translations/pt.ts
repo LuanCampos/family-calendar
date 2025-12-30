@@ -271,11 +271,35 @@ export const pt = {
   deleteMonthWarning: 'Esta ação irá remover permanentemente todos os eventos de todos os membros para este mês.',
   saveChanges: 'Salvar Alterações',
   
+  // Recurrence
+  'event.recurring': 'Evento Recorrente',
+  'recurrence.frequency': 'Frequência',
+  'recurrence.daily': 'Diariamente',
+  'recurrence.weekly': 'Semanalmente',
+  'recurrence.biweekly': 'Quinzenalmente',
+  'recurrence.monthly': 'Mensalmente',
+  'recurrence.yearly': 'Anualmente',
+  'recurrence.interval': 'Intervalo',
+  'recurrence.intervalHelp': 'Número de períodos entre ocorrências (1 = cada período)',
+  'recurrence.occurrenceLimit': 'Limite de Ocorrências',
+  'recurrence.useEndDate': 'Usar data final',
+  'recurrence.useMaxOccurrences': 'Usar número máximo',
+  'recurrence.unlimitedOccurrence': 'Sem limite (infinito)',
+  'recurrence.preview': 'Preview das Ocorrências',
+  'recurrence.totalInstances': 'Total de eventos',
+  'recurrence.more': 'mais',
+  'recurrence.unlimited': 'indefinidamente',
+  'recurrence.every': 'a cada',
+  'recurrence.until': 'até',
+  'recurrence.occurrences': 'ocorrências',
+  
   // Dialog & Button Labels
   preferences: 'Preferências',
   invitations: 'Convites',
   pendingSent: 'Convites Enviados',
   cancelInvitation: 'Cancelar Convite',
+  showMore: 'Mostrar mais',
+  showLess: 'Mostrar menos',
 };
 
 export type TranslationKey = keyof typeof pt;

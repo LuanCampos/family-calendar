@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
-import type { EventInput, EventTagInput } from '@/types/calendar';
+import { generateRecurringInstances } from '@/lib/utils/recurrenceUtils';
+import type { EventInput, EventTagInput, Event } from '@/types/calendar';
 import type { EventRow, TagDefinitionRow, SupabaseChannel } from '@/types/database';
 
 /**
@@ -251,5 +252,67 @@ export const eventService = {
    */
   unsubscribe: async (channel: SupabaseChannel) => {
     await supabase.removeChannel(channel);
+  },
+
+  /**
+   * Create a recurring event (store rule only)
+   */
+  createRecurringEvent: async (familyId: string, input: EventInput, userId: string) => {
+    if (!input.isRecurring || !input.recurrenceRule) {
+      return { data: null, error: 'Not a recurring event' };
+    }
+
+    try {
+      const { tags, ...eventData } = input;
+
+      // Create parent event with the recurrence rule
+      const response = await supabase
+        .from('events')
+        .insert({
+          family_id: familyId,
+          created_by: userId,
+          ...eventData,
+        } as EventRow)
+        .select()
+        .single();
+
+      if (response.error) return response;
+
+      const parentEvent: Event = {
+        id: response.data.id,
+        title: response.data.title,
+        description: response.data.description,
+        date: response.data.date,
+        time: response.data.time,
+        duration: response.data.duration_minutes,
+        isAllDay: false,
+        familyId,
+        createdBy: userId,
+        tags: [],
+        isRecurring: true,
+        recurrenceRule: input.recurrenceRule,
+      };
+
+      // Add tags if provided
+      if (tags && tags.length > 0) {
+        const tagInserts = tags.map(tagId => ({
+          event_id: response.data.id,
+          tag_id: tagId,
+        }));
+
+        const tagRes = await supabase
+          .from('event_tags')
+          .insert(tagInserts);
+
+        if (tagRes.error) {
+          // Don't rollback - event was created, just tag insertion failed
+          return { data: parentEvent, error: null };
+        }
+      }
+
+      return { data: parentEvent, error: null };
+    } catch (error) {
+      return { data: null, error };
+    }
   },
 };

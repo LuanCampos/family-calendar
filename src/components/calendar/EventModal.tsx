@@ -10,13 +10,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Trash2, AlertCircle, Check, Clock, Timer } from 'lucide-react';
+import { Trash2, AlertCircle, Check, Clock, Timer, Sun } from 'lucide-react';
 import { getTagIds } from '@/lib/utils/eventUtils';
-import type { Event, EventInput, EventTag } from '@/types/calendar';
+import type { Event, EventInput, EventTag, RecurrenceRule } from '@/types/calendar';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { RecurrenceConfig, RecurrencePreview } from '@/components/recurring';
 
 interface EventModalProps {
   isOpen: boolean;
@@ -46,6 +47,9 @@ export const EventModal: React.FC<EventModalProps> = ({
   const [selectedTags, setSelectedTags] = useState<string[]>(
     editingEvent ? getTagIds(editingEvent.tags) : []
   );
+  const [recurrenceRule, setRecurrenceRule] = useState<RecurrenceRule | null>(
+    editingEvent?.recurrenceRule || null
+  );
   const [showValidation, setShowValidation] = useState(false);
 
   // Sincronizar estado quando editingEvent muda
@@ -58,6 +62,7 @@ export const EventModal: React.FC<EventModalProps> = ({
         setDuration(editingEvent.duration?.toString() || '60');
         setIsAllDay(editingEvent.isAllDay || false);
         setSelectedTags(getTagIds(editingEvent.tags));
+        setRecurrenceRule(editingEvent.recurrenceRule || null);
       } else {
         // Novo evento - limpar campos
         setTitle('');
@@ -66,6 +71,7 @@ export const EventModal: React.FC<EventModalProps> = ({
         setDuration('60');
         setIsAllDay(false);
         setSelectedTags([]);
+        setRecurrenceRule(null);
       }
       setShowValidation(false);
     }
@@ -87,6 +93,8 @@ export const EventModal: React.FC<EventModalProps> = ({
       time: isAllDay ? undefined : (time || undefined),
       duration: isAllDay ? undefined : (duration ? parseInt(duration) : undefined),
       tags: selectedTags,
+      isRecurring: !!recurrenceRule,
+      recurrenceRule: recurrenceRule || undefined,
     };
 
     onSave(input);
@@ -109,13 +117,14 @@ export const EventModal: React.FC<EventModalProps> = ({
     setDuration('60');
     setIsAllDay(false);
     setSelectedTags([]);
+    setRecurrenceRule(null);
     setShowValidation(false);
     onClose();
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="w-[95vw] sm:max-w-lg max-h-[95vh] overflow-y-auto rounded-lg sm:rounded-xl shadow-lg flex flex-col gap-0 p-0">
+      <DialogContent className="w-[100vw] sm:max-w-lg max-h-[100vh] overflow-y-auto rounded-lg sm:rounded-xl shadow-lg flex flex-col gap-0 p-0">
         <DialogHeader className="border-b px-4 sm:px-5 pt-3 sm:pt-4 pb-2.5 sm:pb-3">
           <DialogTitle className="text-lg sm:text-xl font-bold">
             {editingEvent ? t('editEvent') : t('newEvent')}
@@ -171,19 +180,25 @@ export const EventModal: React.FC<EventModalProps> = ({
             />
           </div>
 
-          {/* All-day checkbox */}
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="isAllDay"
-              checked={isAllDay}
-              onCheckedChange={(checked) => setIsAllDay(checked as boolean)}
-            />
-            <Label
-              htmlFor="isAllDay"
-              className="text-xs sm:text-sm font-medium cursor-pointer"
-            >
-              {t('eventAllDay')}
-            </Label>
+          {/* All-day and Recurrence toggles */}
+          <div className="space-y-1">
+            {/* All-day checkbox */}
+            <div className="flex items-center space-x-2 p-2 rounded-lg hover:bg-accent/50 transition-colors cursor-pointer group">
+              <Checkbox
+                id="isAllDay"
+                checked={isAllDay}
+                onCheckedChange={(checked) => setIsAllDay(checked as boolean)}
+              />
+              <Label
+                htmlFor="isAllDay"
+                className="text-xs sm:text-sm font-medium cursor-pointer flex-1"
+              >
+                <div className="flex items-center gap-2">
+                  <Sun className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                  {t('eventAllDay')}
+                </div>
+              </Label>
+            </div>
           </div>
 
           {/* Time and Duration fields */}
@@ -229,6 +244,12 @@ export const EventModal: React.FC<EventModalProps> = ({
               </div>
             </div>
           )}
+
+          {/* Recurrence section */}
+          <RecurrenceConfig 
+            onRuleChange={setRecurrenceRule}
+            initialRule={recurrenceRule || undefined}
+          />
 
           {/* Tags section */}
           {availableTags.length > 0 && (

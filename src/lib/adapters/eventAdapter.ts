@@ -1,7 +1,33 @@
 import { eventService } from '@/lib/services/eventService';
 import { offlineAdapter } from '@/lib/adapters/offlineAdapter';
 import { logger } from '@/lib/logger';
+import { generateRecurringInstances } from '@/lib/utils/recurrenceUtils';
 import type { Event, EventInput, EventTag, EventTagInput } from '@/types/calendar';
+
+/**
+ * Helper: Expand recurring events for a date range
+ * Generates instances for recurring events only for the requested period
+ */
+const expandRecurringEvents = (
+  events: Event[],
+  startDate?: string,
+  endDate?: string
+): Event[] => {
+  const expanded: Event[] = [];
+
+  for (const event of events) {
+    if (event.isRecurring && event.recurrenceRule) {
+      // Generate instances for this range
+      const instances = generateRecurringInstances(event, event.recurrenceRule, startDate, endDate);
+      expanded.push(...instances);
+    } else {
+      // Regular event
+      expanded.push(event);
+    }
+  }
+
+  return expanded;
+};
 
 /**
  * Event Adapter - Online/Offline branching for event operations
@@ -11,6 +37,7 @@ import type { Event, EventInput, EventTag, EventTagInput } from '@/types/calenda
 export const eventAdapter = {
   /**
    * Get events for a family, with online/offline fallback
+   * Expands recurring events on demand for the requested date range
    */
   getEvents: async (familyId: string, startDate?: string, endDate?: string): Promise<Event[]> => {
     logger.debug('event.get.start', { familyId, startDate, endDate });
@@ -19,7 +46,7 @@ export const eventAdapter = {
       if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
         logger.info('event.get.offline', { familyId });
         const events = await offlineAdapter.getEvents(familyId, startDate, endDate);
-        return events || [];
+        return expandRecurringEvents(events || [], startDate, endDate);
       }
 
       // Online path
@@ -29,7 +56,7 @@ export const eventAdapter = {
         logger.warn('event.get.online.failed', { error: response.error });
         // Fallback to offline
         const events = await offlineAdapter.getEvents(familyId, startDate, endDate);
-        return events || [];
+        return expandRecurringEvents(events || [], startDate, endDate);
       }
 
       logger.info('event.get.success', { count: response.data?.length || 0 });
@@ -39,11 +66,11 @@ export const eventAdapter = {
         await offlineAdapter.syncEvents(response.data);
       }
 
-      return (response.data as Event[]) || [];
+      return expandRecurringEvents((response.data as Event[]) || [], startDate, endDate);
     } catch (error) {
       logger.error('event.get.exception', { error, familyId });
       const events = await offlineAdapter.getEvents(familyId, startDate, endDate);
-      return events || [];
+      return expandRecurringEvents(events || [], startDate, endDate);
     }
   },
 
@@ -650,6 +677,114 @@ export const eventAdapter = {
       });
 
       return {};
+    }
+  },
+
+  /**
+   * Create a recurring event (store rule only, generate instances on demand)
+   */
+  createRecurringEvent: async (
+    familyId: string,
+    input: EventInput,
+    userId: string
+  ): Promise<{ data?: Event; error?: any }> => {
+    if (!input.isRecurring || !input.recurrenceRule) {
+      return { error: 'Not a recurring event' };
+    }
+
+    logger.debug('event.recurring.create.start', {
+      familyId,
+      title: input.title,
+      frequency: input.recurrenceRule.frequency,
+    });
+
+    try {
+      const isOfflineFamily = offlineAdapter.isOfflineId(familyId);
+      const isOffline = !navigator.onLine;
+
+      // Create the recurring event (parent) - store the rule, not instances
+      const parentEventId = offlineAdapter.generateOfflineId();
+      const parentEvent: Event = {
+        id: parentEventId,
+        title: input.title,
+        description: input.description,
+        date: input.date,
+        time: input.time,
+        duration: input.duration,
+        isAllDay: input.isAllDay,
+        familyId,
+        createdBy: userId,
+        tags: input.tags || [],
+        isPending: !isOfflineFamily,
+        isRecurring: true,
+        recurrenceRule: input.recurrenceRule,
+      };
+
+      // Store only the parent event with the rule (no instances)
+      await offlineAdapter.put('events', parentEvent);
+
+      logger.info('event.recurring.create.success', {
+        eventId: parentEventId,
+        frequency: input.recurrenceRule.frequency,
+      });
+
+      // Only add to sync queue if online family temporarily offline
+      if (!isOfflineFamily && isOffline) {
+        await offlineAdapter.sync.add({
+          type: 'event',
+          action: 'insert',
+          data: parentEvent,
+          familyId,
+        });
+      }
+
+      // If online, try to create in Supabase
+      if (!isOfflineFamily && navigator.onLine) {
+        const response = await eventService.createRecurringEvent(familyId, input, userId);
+
+        if (response.error) {
+          logger.warn('event.recurring.create.online.failed', { error: response.error });
+        } else if (response.data) {
+          // Sync successful response back to offline storage
+          await offlineAdapter.put('events', response.data);
+          logger.info('event.recurring.create.online.success', {
+            eventId: response.data.id,
+          });
+        }
+      }
+
+      return { data: parentEvent };
+    } catch (error) {
+      logger.error('event.recurring.create.exception', { error, familyId });
+
+      // Fallback to offline
+      const parentEventId = offlineAdapter.generateOfflineId();
+      const parentEvent: Event = {
+        id: parentEventId,
+        title: input.title,
+        description: input.description,
+        date: input.date,
+        time: input.time,
+        duration: input.duration,
+        isAllDay: input.isAllDay,
+        familyId,
+        createdBy: userId,
+        tags: input.tags || [],
+        isPending: true,
+        isRecurring: true,
+        recurrenceRule: input.recurrenceRule,
+      };
+
+      await offlineAdapter.put('events', parentEvent);
+
+      await offlineAdapter.sync.add({
+        type: 'event',
+        action: 'insert',
+        data: parentEvent,
+        familyId,
+      });
+
+      return { data: parentEvent };
     }
   },
 };

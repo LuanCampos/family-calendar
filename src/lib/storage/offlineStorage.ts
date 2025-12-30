@@ -14,7 +14,7 @@ export interface OfflineFamily {
 export interface SyncQueueItem {
   id: string;
   type: 'family' | 'month' | 'expense' | 'recurring_expense' | 'subcategory' | 'category_limit' | 'family_member' | 'income_source' | 'event' | 'tag';
-  action: 'insert' | 'update' | 'delete';
+  action: 'insert' | 'update' | 'delete' | 'insert_recurring';
   data: any;
   createdAt: string;
   familyId: string;

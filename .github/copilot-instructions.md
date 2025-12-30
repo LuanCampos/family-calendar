@@ -152,6 +152,63 @@ npm run lint         # ESLint check
 
 ---
 
+## 🔄 Recurring Events Architecture
+
+**Key Concept:** Recurring events use **rule-only storage** - the system stores just the recurrence rule and generates instances on-demand for viewed periods. This enables unlimited/infinite recurrence without storing millions of instances.
+
+### How It Works
+
+**Creation:**
+```typescript
+// Store only parent event + rule
+const input: EventInput = {
+  title: 'Weekly Meeting',
+  date: '2024-01-15',
+  isRecurring: true,
+  recurrenceRule: {
+    frequency: 'weekly',
+    unlimited: true  // Infinite!
+  }
+};
+await createEvent(input);  // Stores 1 event with rule
+```
+
+**Retrieval:**
+```typescript
+const events = await getEvents(familyId, '2024-01-15', '2024-02-15');
+// Internally: expandRecurringEvents() generates instances for the date range
+// Returns: normal events + generated instances (not persisted)
+```
+
+### Rule Structure (RecurrenceRule)
+
+```typescript
+interface RecurrenceRule {
+  frequency: 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'yearly';
+  interval?: number;           // Periods between occurrences (default: 1)
+  endDate?: string;            // End date (YYYY-MM-DD)
+  maxOccurrences?: number;     // Max instances
+  daysOfWeek?: number[];       // For weekly (0-6)
+  dayOfMonth?: number;         // For monthly (1-31)
+  monthOfYear?: number;        // For yearly (1-12)
+  unlimited?: boolean;         // true = infinite, no endDate/maxOccurrences
+}
+```
+
+### Core Components
+
+- `src/lib/utils/recurrenceUtils.ts` - `generateRecurringInstances(event, rule, rangeStart?, rangeEnd?)`
+- `src/lib/adapters/eventAdapter.ts` - `expandRecurringEvents()`, `createRecurringEvent()`
+- `src/components/recurring/RecurrenceConfig.tsx` - UI for configuring rules
+- `src/components/recurring/RecurrencePreview.tsx` - Shows first 4 instances + ellipsis
+
+### Validation Rules
+
+- `unlimited: true` XOR (`endDate` OR `maxOccurrences`) - can't have both
+- Prevents invalid rule combinations
+
+---
+
 ## External Dependencies
 - **Supabase** - PostgreSQL backend, auth, realtime (config in `src/lib/supabase.ts`)
 - **TanStack Query** - HTTP caching & sync (QueryClient in `App.tsx`)

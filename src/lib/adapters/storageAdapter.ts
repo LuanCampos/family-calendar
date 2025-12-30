@@ -35,6 +35,9 @@ export const storageAdapter = {
   deleteEventTag: (tagId: string, familyId: string) =>
     eventAdapter.deleteEventTag(tagId, familyId),
 
+  createRecurringEvent: (familyId: string, input: EventInput, userId: string) =>
+    eventAdapter.createRecurringEvent(familyId, input, userId),
+
   offlineAdapter,
 };
 
@@ -63,6 +66,9 @@ export const updateEventTag = (tagId: string, input: Partial<EventTagInput>, fam
 
 export const deleteEventTag = (tagId: string, familyId: string) =>
   eventAdapter.deleteEventTag(tagId, familyId);
+
+export const createRecurringEvent = (familyId: string, input: EventInput, userId: string) =>
+  eventAdapter.createRecurringEvent(familyId, input, userId);
 
 // Re-export offline utilities
 export { offlineAdapter };
