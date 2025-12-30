@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { TimePicker } from '@/components/ui/time-picker';
 import { Trash2, AlertCircle, Check, Clock, Timer, Sun } from 'lucide-react';
 import { getTagIds } from '@/lib/utils/eventUtils';
 import type { Event, EventInput, EventTag, RecurrenceRule } from '@/types/calendar';
@@ -213,14 +214,23 @@ export const EventModal: React.FC<EventModalProps> = ({
                       {t('eventTime')}
                     </Label>
                   </div>
-                  <Input
-                    id="time"
-                    type="time"
-                    value={time}
-                    onChange={(e) => setTime(e.target.value)}
-                    className="text-xs sm:text-sm"
-                    style={{ colorScheme: 'dark' }}
-                  />
+                  <div className="flex gap-2">
+                    <Input
+                      id="time"
+                      type="text"
+                      value={time}
+                      onChange={(e) => setTime(e.target.value)}
+                      placeholder="HH:MM"
+                      className="text-xs sm:text-sm flex-1 font-mono"
+                    />
+                    <div className="flex-shrink-0">
+                      <TimePicker
+                        value={time}
+                        onChange={(val) => setTime(val)}
+                        label={t('eventTime')}
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 {/* Duration */}

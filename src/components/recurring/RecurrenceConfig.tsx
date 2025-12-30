@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { DatePicker } from '@/components/ui/date-picker';
 import {
   Select,
   SelectContent,
@@ -58,8 +59,8 @@ export const RecurrenceConfig = ({
     setUseUnlimited(false);
   };
 
-  const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    updateRule({ ...rule, endDate: e.target.value, maxOccurrences: undefined, unlimited: false });
+  const handleEndDateChange = (dateStr: string) => {
+    updateRule({ ...rule, endDate: dateStr || undefined, maxOccurrences: undefined, unlimited: false });
   };
 
   const handleUnlimitedToggle = (checked: boolean) => {
@@ -206,12 +207,12 @@ export const RecurrenceConfig = ({
             </>
           ) : (
             <>
-              <Input
-                type="date"
+              <DatePicker
                 value={rule.endDate || ''}
                 onChange={handleEndDateChange}
                 disabled={disabled || useUnlimited}
-                className="text-xs sm:text-sm h-8 flex-1"
+                label={t('recurrence.useEndDate')}
+                className="flex-1"
               />
               <Button
                 variant="outline"

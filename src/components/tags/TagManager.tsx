@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ColorPicker } from '@/components/ui/color-picker';
 import type { EventTag, EventTagInput } from '@/types/calendar';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -215,22 +216,11 @@ export const TagManager: React.FC<TagManagerProps> = ({
               <Label htmlFor="tagColor" className="text-xs sm:text-sm font-semibold">
                 {t('tagColor')}
               </Label>
-              <div className="flex gap-2 mt-1">
-                <div className="w-10 sm:w-12 h-9 sm:h-10 rounded border border-transparent bg-card shadow-sm hover:border-primary hover:shadow-md transition-all duration-200 p-1 flex items-center justify-center flex-shrink-0 cursor-pointer">
-                  <input
-                    id="tagColor"
-                    type="color"
-                    value={newTagColor}
-                    onChange={(e) => setNewTagColor(e.target.value)}
-                    className="w-full h-full rounded cursor-pointer border-0"
-                    style={{ colorScheme: 'dark' }}
-                  />
-                </div>
-                <Input
+              <div className="mt-2">
+                <ColorPicker
                   value={newTagColor}
-                  onChange={(e) => setNewTagColor(e.target.value)}
-                  placeholder="#3B82F6"
-                  className="flex-1 font-mono text-xs sm:text-sm"
+                  onChange={(color) => setNewTagColor(color)}
+                  label={t('tagColor')}
                 />
               </div>
             </div>
