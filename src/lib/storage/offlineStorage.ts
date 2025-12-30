@@ -13,8 +13,8 @@ export interface OfflineFamily {
 
 export interface SyncQueueItem {
   id: string;
-  type: 'family' | 'month' | 'expense' | 'recurring_expense' | 'subcategory' | 'category_limit' | 'family_member' | 'income_source' | 'event' | 'tag';
-  action: 'insert' | 'update' | 'delete' | 'insert_recurring';
+  type: 'family' | 'event' | 'tag';
+  action: 'insert' | 'update' | 'delete';
   data: any;
   createdAt: string;
   familyId: string;
@@ -82,57 +82,6 @@ const openDB = (): Promise<IDBDatabase> => {
       // Families store
       ensureStore('families', { keyPath: 'id' });
 
-      // Months store
-      ensureStore('months', { keyPath: 'id' }, (store) => {
-        if (!store.indexNames.contains('family_id')) {
-          store.createIndex('family_id', 'family_id', { unique: false });
-        }
-        // Back-compat (older builds)
-        if (!store.indexNames.contains('familyId')) {
-          store.createIndex('familyId', 'familyId', { unique: false });
-        }
-      });
-
-      // Expenses store
-      ensureStore('expenses', { keyPath: 'id' }, (store) => {
-        if (!store.indexNames.contains('month_id')) {
-          store.createIndex('month_id', 'month_id', { unique: false });
-        }
-        // Back-compat (older builds)
-        if (!store.indexNames.contains('monthId')) {
-          store.createIndex('monthId', 'monthId', { unique: false });
-        }
-      });
-
-      // Recurring expenses store
-      ensureStore('recurring_expenses', { keyPath: 'id' }, (store) => {
-        if (!store.indexNames.contains('family_id')) {
-          store.createIndex('family_id', 'family_id', { unique: false });
-        }
-        // Back-compat (older builds)
-        if (!store.indexNames.contains('familyId')) {
-          store.createIndex('familyId', 'familyId', { unique: false });
-        }
-      });
-
-      // Subcategories store
-      ensureStore('subcategories', { keyPath: 'id' }, (store) => {
-        if (!store.indexNames.contains('family_id')) {
-          store.createIndex('family_id', 'family_id', { unique: false });
-        }
-        // Back-compat (older builds)
-        if (!store.indexNames.contains('familyId')) {
-          store.createIndex('familyId', 'familyId', { unique: false });
-        }
-      });
-
-      // Income sources store
-      ensureStore('income_sources', { keyPath: 'id' }, (store) => {
-        if (!store.indexNames.contains('month_id')) {
-          store.createIndex('month_id', 'month_id', { unique: false });
-        }
-      });
-
       // Events store
       ensureStore('events', { keyPath: 'id' }, (store) => {
         if (!store.indexNames.contains('family_id')) {
@@ -173,13 +122,6 @@ const openDB = (): Promise<IDBDatabase> => {
 
       // User preferences store
       ensureStore('user_preferences', { keyPath: 'user_id' });
-
-      // Category limits per month store
-      ensureStore('category_limits', { keyPath: 'id' }, (store) => {
-        if (!store.indexNames.contains('month_id')) {
-          store.createIndex('month_id', 'month_id', { unique: false });
-        }
-      });
     };
   });
 

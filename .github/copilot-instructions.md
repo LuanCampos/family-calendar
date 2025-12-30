@@ -222,7 +222,7 @@ interface RecurrenceRule {
 
 1. **Add to adapters first** - Implement in `eventAdapter` with online/offline branching
 2. **Then add services** - Create Supabase API calls in `eventService` if online-only
-3. **Expose via hooks** - Create custom hook (e.g., `useExpenses`) that uses adapters
+3. **Expose via hooks** - Create custom hook (e.g., `useEvents`) that uses adapters
 4. **Wire to UI** - Build components that call the hook
 5. **Log important events** - Use `logger.info()` for tracking user actions
 6. **Update types** - Ensure TypeScript definitions exist in `src/types/`
@@ -244,11 +244,11 @@ interface RecurrenceRule {
 
 | Purpose | File |
 |---------|------|
-| Type definitions | [`src/types/calendar.ts`](src/types/calendar.ts), [`src/types/database.ts`](src/types/database.ts) |
-| Adapter routing | [`src/lib/adapters/storageAdapter.ts`](src/lib/adapters/storageAdapter.ts) |
-| Online/offline branching | [`src/lib/adapters/eventAdapter.ts`](src/lib/adapters/eventAdapter.ts) |
-| Offline storage | [`src/lib/storage/offlineStorage.ts`](src/lib/storage/offlineStorage.ts) |
-| Supabase config | [`src/lib/supabase.ts`](src/lib/supabase.ts) |
-| Logging | [`src/lib/logger.ts`](src/lib/logger.ts) |
-| Event CRUD hook | [`src/hooks/useEvents.ts`](src/hooks/useEvents.ts) |
-| i18n setup | [`src/i18n/index.ts`](src/i18n/index.ts) |
+| Type definitions | [src/types/calendar.ts](c:/GitHub/family-calendar/src/types/calendar.ts), [src/types/database.ts](c:/GitHub/family-calendar/src/types/database.ts) |
+| Adapter routing | [src/lib/adapters/storageAdapter.ts](c:/GitHub/family-calendar/src/lib/adapters/storageAdapter.ts) |
+| Online/offline branching | [src/lib/adapters/eventAdapter.ts](c:/GitHub/family-calendar/src/lib/adapters/eventAdapter.ts) |
+| Offline storage | [src/lib/storage/offlineStorage.ts](c:/GitHub/family-calendar/src/lib/storage/offlineStorage.ts) |
+| Supabase config | [src/lib/supabase.ts](c:/GitHub/family-calendar/src/lib/supabase.ts) |
+| Logging | [src/lib/logger.ts](c:/GitHub/family-calendar/src/lib/logger.ts) |
+| Event CRUD hook | [src/hooks/useEvents.ts](c:/GitHub/family-calendar/src/hooks/useEvents.ts) |
+| i18n setup | [src/i18n/index.ts](c:/GitHub/family-calendar/src/i18n/index.ts) |

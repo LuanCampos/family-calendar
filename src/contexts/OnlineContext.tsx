@@ -69,7 +69,9 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return () => clearInterval(interval);
   }, [updatePendingCount]);
 
-  // Sync a specific offline family to cloud with progress tracking and rollback
+  // Sync a specific offline family to cloud
+  // Note: Old expense/income/category features have been removed
+  // This function is now simplified for the calendar-only data model
   const syncFamily = async (familyId: string): Promise<{ newFamilyId?: string; error?: Error }> => {
     if (!session?.user) {
       return { error: new Error('Você precisa estar logado para sincronizar') };
@@ -117,24 +119,12 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         return { error: new Error('Família não encontrada') };
       }
 
-      // Count total items for progress
-      const subcategories = await offlineAdapter.getAllByIndex<any>('subcategories', 'family_id', familyId);
-      const recurringExpenses = await offlineAdapter.getAllByIndex<any>('recurring_expenses', 'family_id', familyId);
-      const months = await offlineAdapter.getAllByIndex<any>('months', 'family_id', familyId);
-      
-      let totalExpenses = 0;
-      let totalIncomeSources = 0;
-      let totalCategoryLimits = 0;
-      for (const month of months) {
-        const expenses = await offlineAdapter.getAllByIndex<any>('expenses', 'month_id', month.id);
-        const incomeSources = await offlineAdapter.getAllByIndex<any>('income_sources', 'month_id', month.id);
-        const categoryLimits = await offlineAdapter.getAllByIndex<any>('category_limits', 'month_id', month.id);
-        totalExpenses += expenses.length;
-        totalIncomeSources += incomeSources.length;
-        totalCategoryLimits += categoryLimits.length;
-      }
+      // Count total items for progress (only family + events + tags)
+      const events = await offlineAdapter.getAllByIndex<any>('events', 'family_id', familyId);
+      const tags = await offlineAdapter.getAll<any>('tag_definitions');
+      const eventTags = await offlineAdapter.getAll<any>('event_tags');
 
-      const totalItems = 1 + subcategories.length + recurringExpenses.length + months.length + totalExpenses + totalIncomeSources + totalCategoryLimits;
+      const totalItems = 1 + events.length + tags.length + eventTags.length;
       let syncedItems = 0;
 
       const updateProgress = (step: string, details?: string) => {
@@ -171,158 +161,69 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       // ID mapping for related records
       const idMap: Record<string, string> = { [familyId]: newFamilyId };
 
-      // Step 2: Sync subcategories
-      for (const sub of subcategories) {
-        const { data, error } = await familyService.insertSubcategoryForSync({
+      // Step 2: Sync events
+      for (const event of events) {
+        const { data, error } = await familyService.insertEventForSync({
           family_id: newFamilyId,
-          name: sub.name,
-          category_key: sub.category_key,
+          title: event.title,
+          date: event.date,
+          is_recurring: event.is_recurring,
+          recurrence_rule: event.recurrence_rule,
         });
         
         if (error) {
-          throw new Error(`Erro ao sincronizar subcategoria "${sub.name}": ${error.message}`);
+          throw new Error(`Erro ao sincronizar evento "${event.title}": ${error.message}`);
         }
         
         if (data) {
-          idMap[sub.id] = data.id;
-          createdCloudIds.push({ table: 'subcategory', id: data.id });
+          idMap[event.id] = data.id;
+          createdCloudIds.push({ table: 'event', id: data.id });
         }
-        updateProgress('Sincronizando subcategorias', sub.name);
+        updateProgress('Sincronizando eventos', event.title);
       }
 
-      // Step 3: Sync recurring expenses
-      for (const rec of recurringExpenses) {
-        const { data, error } = await familyService.insertRecurringForSync({
+      // Step 3: Sync tags
+      for (const tag of tags) {
+        const { data, error } = await familyService.insertTagDefinitionForSync({
           family_id: newFamilyId,
-          title: rec.title,
-          category_key: rec.category_key,
-          subcategory_id: rec.subcategory_id ? idMap[rec.subcategory_id] : null,
-          value: rec.value,
-          due_day: rec.due_day,
-          has_installments: rec.has_installments,
-          total_installments: rec.total_installments,
-          start_year: rec.start_year,
-          start_month: rec.start_month,
+          name: tag.name,
+          color: tag.color,
         });
         
         if (error) {
-          throw new Error(`Erro ao sincronizar gasto recorrente "${rec.title}": ${error.message}`);
+          throw new Error(`Erro ao sincronizar tag "${tag.name}": ${error.message}`);
         }
         
         if (data) {
-          idMap[rec.id] = data.id;
-          createdCloudIds.push({ table: 'recurring_expense', id: data.id });
+          idMap[tag.id] = data.id;
+          createdCloudIds.push({ table: 'tag', id: data.id });
         }
-        updateProgress('Sincronizando gastos recorrentes', rec.title);
+        updateProgress('Sincronizando tags', tag.name);
       }
 
-      // Step 4: Sync months
-      for (const month of months) {
-        const newMonthId = month.id.replace(familyId, newFamilyId);
-        const { error } = await familyService.insertMonthWithId({
-          id: newMonthId,
-          family_id: newFamilyId,
-          year: month.year,
-          month: month.month,
-          income: month.income,
+      // Step 4: Sync event tags
+      for (const eventTag of eventTags) {
+        const { data, error } = await familyService.insertEventTagForSync({
+          event_id: idMap[eventTag.event_id] || eventTag.event_id,
+          tag_id: idMap[eventTag.tag_id] || eventTag.tag_id,
         });
         
         if (error) {
-          throw new Error(`Erro ao sincronizar mês ${month.month}/${month.year}: ${error.message}`);
+          throw new Error(`Erro ao sincronizar tags de evento: ${error.message}`);
         }
         
-        idMap[month.id] = newMonthId;
-        createdCloudIds.push({ table: 'month', id: newMonthId });
-        updateProgress('Sincronizando meses', `${month.month}/${month.year}`);
-      }
-
-      // Step 5: Sync expenses
-      for (const month of months) {
-        const expenses = await offlineAdapter.getAllByIndex<any>('expenses', 'month_id', month.id);
-        for (const exp of expenses) {
-          const { data, error } = await familyService.insertExpenseForSync({
-            month_id: idMap[month.id],
-            title: exp.title,
-            category_key: exp.category_key,
-            subcategory_id: exp.subcategory_id ? idMap[exp.subcategory_id] : null,
-            value: exp.value,
-            is_recurring: exp.is_recurring,
-            is_pending: exp.is_pending,
-            due_day: exp.due_day,
-            recurring_expense_id: exp.recurring_expense_id ? idMap[exp.recurring_expense_id] : null,
-            installment_current: exp.installment_current,
-            installment_total: exp.installment_total,
-          });
-          
-          if (error) {
-            throw new Error(`Erro ao sincronizar gasto "${exp.title}": ${error.message}`);
-          }
-          
-          if (data) {
-            createdCloudIds.push({ table: 'expense', id: data.id });
-          }
-          updateProgress('Sincronizando gastos', exp.title);
+        if (data) {
+          createdCloudIds.push({ table: 'event_tag', id: data.id });
         }
+        updateProgress('Sincronizando tags de evento');
       }
 
-      // Step 6: Sync income sources
-      for (const month of months) {
-        const incomeSources = await offlineAdapter.getAllByIndex<any>('income_sources', 'month_id', month.id);
-        for (const source of incomeSources) {
-          const { data, error } = await familyService.insertIncomeSourceForSync({
-            month_id: idMap[month.id],
-            name: source.name,
-            value: source.value,
-          });
-          
-          if (error) {
-            throw new Error(`Erro ao sincronizar fonte de renda "${source.name}": ${error.message}`);
-          }
-          
-          if (data) {
-            idMap[source.id] = data.id;
-            createdCloudIds.push({ table: 'income_source', id: data.id });
-          }
-          updateProgress('Sincronizando fontes de renda', source.name);
-        }
-      }
-
-      // Step 7: Sync category limits (per month)
-      for (const month of months) {
-        const categoryLimits = await offlineAdapter.getAllByIndex<any>('category_limits', 'month_id', month.id);
-        for (const limit of categoryLimits) {
-          const { data, error } = await familyService.insertCategoryLimitForSync({
-            month_id: idMap[month.id],
-            category_key: limit.category_key,
-            percentage: limit.percentage,
-          });
-          
-          if (error) {
-            throw new Error(`Erro ao sincronizar limite de categoria "${limit.category_key}": ${error.message}`);
-          }
-          
-          if (data) {
-            createdCloudIds.push({ table: 'category_limit', id: data.id });
-          }
-          updateProgress('Sincronizando limites de categoria', limit.category_key);
-        }
-      }
-
-      
-      // Step 8: Clean up local offline data
+      // Step 5: Clean up local offline data
       setSyncProgress({ step: 'Limpando dados locais...', current: totalItems, total: totalItems });
       
-      for (const sub of subcategories) await offlineAdapter.delete('subcategories', sub.id);
-      for (const rec of recurringExpenses) await offlineAdapter.delete('recurring_expenses', rec.id);
-      for (const month of months) {
-        const expenses = await offlineAdapter.getAllByIndex<any>('expenses', 'month_id', month.id);
-        const incomeSources = await offlineAdapter.getAllByIndex<any>('income_sources', 'month_id', month.id);
-        const categoryLimits = await offlineAdapter.getAllByIndex<any>('category_limits', 'month_id', month.id);
-        for (const exp of expenses) await offlineAdapter.delete('expenses', exp.id);
-        for (const source of incomeSources) await offlineAdapter.delete('income_sources', source.id);
-        for (const limit of categoryLimits) await offlineAdapter.delete('category_limits', limit.id);
-        await offlineAdapter.delete('months', month.id);
-      }
+      for (const event of events) await offlineAdapter.delete('events', event.id);
+      for (const tag of tags) await offlineAdapter.delete('tag_definitions', tag.id);
+      for (const eventTag of eventTags) await offlineAdapter.delete('event_tags', eventTag.id);
       await offlineAdapter.delete('families', familyId);
 
       // Clear sync queue for this family

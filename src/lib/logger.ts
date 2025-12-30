@@ -5,8 +5,8 @@
  * with support for different log levels and contextual information.
  *
  * Usage:
- *   logger.info('expense.created', { expenseId, familyId });
- *   logger.error('expense.failed', { error, payload });
+ *   logger.info('event.created', { eventId, familyId });
+ *   logger.error('event.failed', { error, payload });
  *   logger.debug('sync.start', { queueLength });
  */
 

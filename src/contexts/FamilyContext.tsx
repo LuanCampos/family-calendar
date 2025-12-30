@@ -564,19 +564,11 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const deleteFamily = async (familyId: string) => {
     if (offlineAdapter.isOfflineId(familyId)) {
       // Delete offline family and all related data
-      const months = await offlineAdapter.getAllByIndex<any>('months', 'family_id', familyId);
-      for (const month of months) {
-        const expenses = await offlineAdapter.getAllByIndex<any>('expenses', 'month_id', month.id);
-        for (const exp of expenses) await offlineAdapter.delete('expenses', exp.id);
-        await offlineAdapter.delete('months', month.id);
-      }
+      const events = await offlineAdapter.getAllByIndex<any>('events', 'family_id', familyId);
+      for (const event of events) await offlineAdapter.delete('events', event.id);
       
-      const recurring = await offlineAdapter.getAllByIndex<any>('recurring_expenses', 'family_id', familyId);
-      for (const rec of recurring) await offlineAdapter.delete('recurring_expenses', rec.id);
-      
-      const subs = await offlineAdapter.getAllByIndex<any>('subcategories', 'family_id', familyId);
-      for (const sub of subs) await offlineAdapter.delete('subcategories', sub.id);
-      
+      const tags = await offlineAdapter.getAllByIndex<any>('tag_definitions', 'family_id', familyId);
+      for (const tag of tags) await offlineAdapter.delete('tag_definitions', tag.id);
       
       await offlineAdapter.delete('families', familyId);
 

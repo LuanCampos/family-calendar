@@ -188,27 +188,16 @@ export const insertWithSelect = async (table: string, data: any) => {
   return supabase.from(table).insert(data).select().single();
 };
 
-// Note: upsertCategoryGoal was removed. Use category_limit (per month) instead.
+// Note: Old expense/income/category features have been removed
 
-export const insertMonthWithId = async (data: { id: string; family_id: string; year: number; month: number; income: number }) => {
-  return supabase.from('month').insert(data);
+export const insertEventForSync = async (data: any) => {
+  return supabase.from('event').insert(data).select().single();
 };
 
-export const insertExpenseForSync = async (data: any) => {
-  return supabase.from('expense').insert(data).select().single();
+export const insertTagDefinitionForSync = async (data: { family_id: string; name: string; color: string }) => {
+  return supabase.from('tag').insert(data).select().single();
 };
 
-export const insertSubcategoryForSync = async (data: { family_id: string; name: string; category_key: string }) => {
-  return supabase.from('subcategory').insert(data).select().single();
-};
-
-export const insertRecurringForSync = async (data: any) => {
-  return supabase.from('recurring_expense').insert(data).select().single();
-};
-export const insertIncomeSourceForSync = async (data: { month_id: string; name: string; value: number }) => {
-  return supabase.from('income_source').insert(data).select().single();
-};
-
-export const insertCategoryLimitForSync = async (data: { month_id: string; category_key: string; percentage: number }) => {
-  return supabase.from('category_limit').insert(data).select().single();
+export const insertEventTagForSync = async (data: { event_id: string; tag_id: string }) => {
+  return supabase.from('event_tag').insert(data).select().single();
 };
