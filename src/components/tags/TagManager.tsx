@@ -7,6 +7,16 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -39,6 +49,8 @@ export const TagManager: React.FC<TagManagerProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [showNameError, setShowNameError] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [tagToDelete, setTagToDelete] = useState<string | null>(null);
 
   const isNameValid = newTagName.trim().length > 0;
 
@@ -141,9 +153,15 @@ export const TagManager: React.FC<TagManagerProps> = ({
   }, [isOpen]);
 
   const handleDeleteTag = (tagId: string) => {
-    const tag = tags.find(t => t.id === tagId);
-    if (window.confirm(`Deletar tag "${tag?.name}"? Esta ação não pode ser desfeita.`)) {
-      onDeleteTag?.(tagId);
+    setTagToDelete(tagId);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (tagToDelete) {
+      onDeleteTag?.(tagToDelete);
+      setShowDeleteConfirm(false);
+      setTagToDelete(null);
     }
   };
 
@@ -155,9 +173,29 @@ export const TagManager: React.FC<TagManagerProps> = ({
     }
   };
 
+  const tagBeingDeleted = tags.find(t => t.id === tagToDelete);
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] sm:max-w-md max-h-[90vh] flex flex-col gap-0 p-0 rounded-lg sm:rounded-xl">
+    <>
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent className="sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('deleteTag')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('deleteTagConfirm')} <strong>"{tagBeingDeleted?.name}"</strong>?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {t('delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="w-[95vw] sm:max-w-md max-h-[90vh] flex flex-col gap-0 p-0 rounded-lg sm:rounded-xl">
         <DialogHeader className="border-b px-4 sm:px-5 pt-3 sm:pt-4 pb-2.5 sm:pb-3">
           <DialogTitle className="text-base sm:text-lg font-bold">
             {t('manageTags')}
@@ -298,5 +336,6 @@ export const TagManager: React.FC<TagManagerProps> = ({
         </div>
       </DialogContent>
     </Dialog>
+    </>
   );
 };

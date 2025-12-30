@@ -6,6 +6,16 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -53,6 +63,7 @@ export const EventModal: React.FC<EventModalProps> = ({
     editingEvent?.recurrenceRule || null
   );
   const [showValidation, setShowValidation] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Sincronizar estado quando editingEvent muda
   useEffect(() => {
@@ -104,11 +115,14 @@ export const EventModal: React.FC<EventModalProps> = ({
   };
 
   const handleDelete = () => {
+    setShowDeleteConfirm(true);
+  };
+
+  const handleConfirmDelete = () => {
     if (editingEvent && onDelete) {
-      if (window.confirm(t('deleteEventConfirm'))) {
-        onDelete(editingEvent.id);
-        handleClose();
-      }
+      onDelete(editingEvent.id);
+      setShowDeleteConfirm(false);
+      handleClose();
     }
   };
 
@@ -125,8 +139,26 @@ export const EventModal: React.FC<EventModalProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="w-[100vw] sm:max-w-lg max-h-[100vh] overflow-y-auto rounded-lg sm:rounded-xl shadow-lg flex flex-col gap-0 p-0">
+    <>
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent className="sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('deleteEvent')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('deleteEventConfirm')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {t('delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={isOpen} onOpenChange={handleClose}>
+        <DialogContent className="w-[100vw] sm:max-w-lg max-h-[100vh] overflow-y-auto rounded-lg sm:rounded-xl shadow-lg flex flex-col gap-0 p-0">
         <DialogHeader className="border-b px-4 sm:px-5 pt-3 sm:pt-4 pb-2.5 sm:pb-3">
           <DialogTitle className="text-lg sm:text-xl font-bold">
             {editingEvent ? t('editEvent') : t('newEvent')}
@@ -340,6 +372,7 @@ export const EventModal: React.FC<EventModalProps> = ({
           </div>
         </DialogFooter>
       </DialogContent>
-    </Dialog>
+      </Dialog>
+    </>
   );
 };
