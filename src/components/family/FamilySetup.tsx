@@ -534,7 +534,7 @@ export const FamilySetup = () => {
             <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-4">
               <Users className="h-8 w-8 text-primary" />
             </div>
-            <CardTitle>{t('familyBudget')}</CardTitle>
+            <CardTitle>{t('appTitle')}</CardTitle>
             <CardDescription>{t('loginToAccessFamily')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
