@@ -7,8 +7,8 @@ import type { Event, EventTag } from '@/types/calendar';
 /**
  * Check if tags is an array of EventTag objects (not strings)
  */
-export const isEventTagArray = (tags: string[] | EventTag[]): tags is EventTag[] => {
-  return tags.length > 0 && typeof tags[0] === 'object';
+export const isEventTagArray = (tags: string[] | EventTag[] | undefined): tags is EventTag[] => {
+  return Array.isArray(tags) && tags.length > 0 && typeof tags[0] === 'object';
 };
 
 /**
@@ -19,6 +19,11 @@ export const enrichEventsWithTags = (
   allTags: EventTag[]
 ): Event[] => {
   return events.map(event => {
+    // Skip if no tags
+    if (!event.tags) {
+      return event;
+    }
+
     // Skip if already enriched
     if (isEventTagArray(event.tags)) {
       return event;
@@ -39,15 +44,16 @@ export const enrichEventsWithTags = (
 /**
  * Get tag IDs from an event (handles both string[] and EventTag[] formats)
  */
-export const getTagIds = (tags: string[] | EventTag[]): string[] => {
-  if (tags.length === 0) return [];
+export const getTagIds = (tags: string[] | EventTag[] | undefined): string[] => {
+  if (!tags || tags.length === 0) return [];
   return isEventTagArray(tags) ? tags.map(t => t.id) : (tags as string[]);
 };
 
 /**
  * Get tag data from an event (converts to EventTag[] if needed)
  */
-export const getTagData = (tags: string[] | EventTag[], allTags?: EventTag[]): EventTag[] => {
+export const getTagData = (tags: string[] | EventTag[] | undefined, allTags?: EventTag[]): EventTag[] => {
+  if (!tags) return [];
   if (isEventTagArray(tags)) {
     return tags;
   }

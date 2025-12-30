@@ -308,22 +308,31 @@ export const insertEventForSync = async (data: any) => {
   // Ensure session is ready before INSERT to prevent 403 RLS errors
   await userService.ensureSessionReady();
   
+  logger.apiCall('POST', 'event', { eventId: data.id, familyId: data.family_id });
   // Use insert + select to get the inserted row back
-  return supabase.from('event').insert(data).select().single();
+  const result = await supabase.from('event').insert(data).select().single();
+  logger.apiResponse('POST', 'event', result.error ? 400 : 201, { eventId: result.data?.id });
+  return result;
 };
 
 export const insertTagDefinitionForSync = async (data: { family_id: string; name: string; color: string }) => {
   // Ensure session is ready before INSERT to prevent 403 RLS errors
   await userService.ensureSessionReady();
   
+  logger.apiCall('POST', 'tag', { familyId: data.family_id, name: data.name });
   // Use insert + select to get the inserted row back
-  return supabase.from('tag').insert(data).select().single();
+  const result = await supabase.from('tag').insert(data).select().single();
+  logger.apiResponse('POST', 'tag', result.error ? 400 : 201, { tagId: result.data?.id });
+  return result;
 };
 
 export const insertEventTagForSync = async (data: { event_id: string; tag_id: string }) => {
   // Ensure session is ready before INSERT to prevent 403 RLS errors
   await userService.ensureSessionReady();
   
+  logger.apiCall('POST', 'event_tag', { eventId: data.event_id, tagId: data.tag_id });
   // Use insert + select to get the inserted row back
-  return supabase.from('event_tag').insert(data).select().single();
+  const result = await supabase.from('event_tag').insert(data).select().single();
+  logger.apiResponse('POST', 'event_tag', result.error ? 400 : 201);
+  return result;
 };

@@ -19,6 +19,7 @@ export const eventService = {
    * Get all events for a family within a date range
    */
   getEvents: async (familyId: string, startDate?: string, endDate?: string) => {
+    // First get all events for the family in the date range
     let query = supabase
       .from('event')
       .select('*')
@@ -31,7 +32,44 @@ export const eventService = {
       query = query.lte('date', endDate);
     }
 
-    return query.order('date', { ascending: true });
+    const eventsResult = await query.order('date', { ascending: true });
+    
+    if (eventsResult.error || !eventsResult.data) {
+      return eventsResult;
+    }
+
+    // Get all tags for these events
+    const eventIds = eventsResult.data.map(e => e.id);
+    if (eventIds.length === 0) {
+      return { data: eventsResult.data, error: null };
+    }
+
+    const tagsResult = await supabase
+      .from('event_tag')
+      .select('event_id, tag_id')
+      .in('event_id', eventIds);
+
+    if (tagsResult.error) {
+      // Return events even if tags fail
+      return eventsResult;
+    }
+
+    // Map tags to events
+    const tagsByEventId = new Map<string, string[]>();
+    tagsResult.data?.forEach(et => {
+      if (!tagsByEventId.has(et.event_id)) {
+        tagsByEventId.set(et.event_id, []);
+      }
+      tagsByEventId.get(et.event_id)!.push(et.tag_id);
+    });
+
+    // Add tags to events
+    const eventsWithTags = eventsResult.data.map(event => ({
+      ...event,
+      tags: tagsByEventId.get(event.id) || [],
+    }));
+
+    return { data: eventsWithTags, error: null };
   },
 
   /**
@@ -71,18 +109,32 @@ export const eventService = {
     // Ensure session is ready before INSERT to prevent 403 RLS errors
     await userService.ensureSessionReady();
     
-    const { tags, ...eventData } = input;
+    const { tags, duration, isAllDay, isRecurring, ...eventData } = input;
+
+    const payload = {
+      family_id: familyId,
+      created_by: userId,
+      duration_minutes: duration || null,
+      is_all_day: isAllDay || false,
+      is_recurring: isRecurring || false,
+      ...eventData,
+    } as any;
 
     const response = await supabase
       .from('event')
-      .insert({
-        family_id: familyId,
-        ...eventData,
-      } as EventRow)
+      .insert(payload)
       .select()
       .single();
 
-    if (response.error) return response;
+    if (response.error) {
+      console.error('[eventService] Event creation error:', {
+        code: (response.error as any).code,
+        message: response.error.message,
+        details: (response.error as any).details,
+        hint: (response.error as any).hint,
+      });
+      return response;
+    }
 
     // Add tags if provided
     if (tags && tags.length > 0) {
@@ -96,6 +148,7 @@ export const eventService = {
         .insert(tagInserts);
 
       if (tagRes.error) {
+        console.error('[eventService] Tag insertion error:', tagRes.error);
         // Rollback event creation if tag insertion fails
         await supabase.from('event').delete().eq('id', response.data.id);
         return tagRes;
@@ -109,42 +162,78 @@ export const eventService = {
    * Update an event
    */
   updateEvent: async (eventId: string, input: Partial<EventInput>) => {
-    // Ensure session is ready before UPDATE to prevent 403 RLS errors
-    await userService.ensureSessionReady();
-    
-    const { tags, ...eventData } = input;
+    try {
+      // Ensure session is ready before UPDATE to prevent 403 RLS errors
+      await userService.ensureSessionReady();
+      
+      const { tags, duration, isAllDay, isRecurring, ...eventData } = input;
 
-    // Update event fields
-    const response = await supabase
-      .from('event')
-      .update(eventData)
-      .eq('id', eventId)
-      .select()
-      .single();
+      // Filter out undefined values and map field names
+      const updatePayload: any = {};
+      Object.entries(eventData).forEach(([key, value]) => {
+        if (value !== undefined) {
+          // Map camelCase to snake_case
+          if (key === 'duration') {
+            updatePayload.duration_minutes = value;
+          } else if (key === 'isAllDay') {
+            updatePayload.is_all_day = value;
+          } else if (key === 'isRecurring') {
+            updatePayload.is_recurring = value;
+          } else {
+            updatePayload[key] = value;
+          }
+        }
+      });
 
-    if (response.error) return response;
+      // Add explicitly passed boolean fields
+      if (isAllDay !== undefined) updatePayload.is_all_day = isAllDay;
+      if (isRecurring !== undefined) updatePayload.is_recurring = isRecurring;
+      if (duration !== undefined) updatePayload.duration_minutes = duration;
 
-    // Update tags if provided
-    if (tags !== undefined) {
-      // Delete existing tags
-      await supabase.from('event_tag').delete().eq('event_id', eventId);
+      // Update event fields
+      const response = await supabase
+        .from('event')
+        .update(updatePayload)
+        .eq('id', eventId)
+        .select()
+        .single();
 
-      // Insert new tags
-      if (tags.length > 0) {
-        const tagInserts = tags.map(tagId => ({
-          event_id: eventId,
-          tag_id: tagId,
-        }));
+      if (response.error) return response;
 
-        const tagRes = await supabase
-          .from('event_tag')
-          .insert(tagInserts);
+      // Update tags if provided
+      if (tags !== undefined) {
+        
+        // Delete existing tags
+        const delRes = await supabase.from('event_tag').delete().eq('event_id', eventId);
 
-        if (tagRes.error) return tagRes;
+        // Insert new tags
+        if (tags.length > 0) {
+          const tagInserts = tags.map(tagId => ({
+            event_id: eventId,
+            tag_id: tagId,
+          }));
+          
+          const tagRes = await supabase
+            .from('event_tag')
+            .insert(tagInserts);
+
+          if (tagRes.error) {
+            console.error('[eventService] Tag update error:', tagRes.error);
+            return tagRes;
+          }
+        }
       }
-    }
 
-    return response;
+      // Return the response with updated tags
+      if (tags !== undefined) {
+        return { data: { ...response.data, tags } };
+      }
+
+      return response;
+    } catch (error) {
+      console.error('[eventService] updateEvent error:', { error, eventId });
+      return { error };
+    }
   },
 
   /**
@@ -184,15 +273,29 @@ export const eventService = {
     // Ensure session is ready before INSERT to prevent 403 RLS errors
     await userService.ensureSessionReady();
     
-    return supabase
+    const payload = {
+      family_id: familyId,
+      created_by: userId,
+      name: input.name,
+      color: input.color || '#3B82F6',
+    } as any;
+    
+    const result = await supabase
       .from('tag_definition')
-      .insert({
-        family_id: familyId,
-        name: input.name,
-        color: input.color || '#3B82F6',
-      } as TagDefinitionRow)
+      .insert(payload)
       .select()
       .single();
+    
+    if (result.error) {
+      console.error('[eventService] Tag creation error:', {
+        code: (result.error as any).code,
+        message: result.error.message,
+        details: (result.error as any).details,
+        hint: (result.error as any).hint,
+      });
+    }
+    
+    return result;
   },
 
   /**

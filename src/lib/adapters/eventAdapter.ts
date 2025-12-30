@@ -312,12 +312,16 @@ export const eventAdapter = {
         logger.warn('event.update.session.not.ready', { error: sessionError });
         // Fallback to offline with pending sync
         const updated = { ...event, ...input };
+        // Ensure familyId is preserved
+        if (!updated.familyId) {
+          updated.familyId = event.familyId;
+        }
         await offlineAdapter.put('events', updated);
         await offlineAdapter.sync.add({
           type: 'event',
           action: 'update',
           data: updated,
-          familyId: event.familyId,
+          familyId: updated.familyId,
         });
         return { data: updated };
       }
@@ -334,12 +338,16 @@ export const eventAdapter = {
         }
 
         const updated = { ...event, ...input };
+        // Ensure familyId is preserved
+        if (!updated.familyId) {
+          updated.familyId = event.familyId;
+        }
         await offlineAdapter.put('events', updated);
         await offlineAdapter.sync.add({
           type: 'event',
           action: 'update',
           data: updated,
-          familyId: event.familyId,
+          familyId: updated.familyId,
         });
 
         return { data: updated };
@@ -352,7 +360,9 @@ export const eventAdapter = {
 
       return { data: response.data as Event };
     } catch (error) {
-      logger.error('event.update.exception', { error, eventId });
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : '';
+      logger.error('event.update.exception', { error: errorMsg, stack: errorStack, eventId, input });
 
       // Fallback to offline
       const event = await offlineAdapter.getEventById(eventId);

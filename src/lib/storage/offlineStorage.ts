@@ -251,7 +251,8 @@ export const generateOfflineId = (prefix: string = 'offline'): string => {
 };
 
 // Check if an ID is from offline (generated locally, not a UUID)
-export const isOfflineId = (id: string): boolean => {
+export const isOfflineId = (id: string | undefined): boolean => {
+  if (!id) return false;
   // Offline IDs are generated with prefixes like 'offline-', 'family-', 'exp-', 'rec-', 'sub-'
   // followed by timestamp and random string. UUIDs have a different format.
   const offlinePrefixes = ['offline-', 'family-', 'exp-', 'rec-', 'sub-'];
