@@ -39,19 +39,23 @@ export const getCurrentFamilyPreference = async (userId: string) => {
     .maybeSingle();
 };
 
-export const upsertUserPreference = async (data: {
-  user_id: string;
+export const upsertUserPreference = async (payload: {
+  theme?: string;
+  language?: string;
   current_family_id?: string | null;
-  language?: string | null;
-  theme?: string | null;
-  updated_at?: string;
 }) => {
+  // Use ensureSessionReady to guarantee the token is applied to the client
+  const session = await ensureSessionReady();
+
+  const finalPayload = {
+    user_id: session.user!.id,
+    ...payload,
+    updated_at: new Date().toISOString(),
+  };
+
   return supabase
     .from('user_preference')
-    .upsert({
-      ...data,
-      updated_at: data.updated_at || new Date().toISOString()
-    }, { onConflict: 'user_id' });
+    .upsert(finalPayload, { onConflict: 'user_id' });
 };
 
 export const updateCurrentFamily = async (userId: string, familyId: string | null) => {
@@ -61,7 +65,9 @@ export const updateCurrentFamily = async (userId: string, familyId: string | nul
       user_id: userId,
       current_family_id: familyId,
       updated_at: new Date().toISOString()
-    }, { onConflict: 'user_id' });
+    }, { onConflict: 'user_id' })
+    .select()
+    .single();
 };
 
 // ============================================================================
@@ -70,4 +76,33 @@ export const updateCurrentFamily = async (userId: string, familyId: string | nul
 
 export const getSession = async () => {
   return supabase.auth.getSession();
+};
+
+/**
+ * Ensures the auth session is ready before write operations.
+ * 
+ * Simply validates that:
+ * 1. Session exists
+ * 2. User is loaded
+ * 3. Access token is present
+ * 
+ * CRITICAL: Calls this before any INSERT/UPDATE/DELETE operation.
+ * If it throws, the error is real (auth issue, RLS policy, etc.) and should not be retried.
+ */
+export const ensureSessionReady = async () => {
+  const { data: { session } } = await getSession();
+
+  if (!session) {
+    throw new Error('No active session - user not authenticated');
+  }
+
+  if (!session.access_token) {
+    throw new Error('Session access token not ready yet');
+  }
+
+  if (!session.user) {
+    throw new Error('Session user data not loaded');
+  }
+
+  return session;
 };

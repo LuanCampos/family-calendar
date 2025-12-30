@@ -103,7 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         let shouldUpsert = false;
 
         if (!data) {
-          // No server record: explicitly write theme and language to ensure
+          // No server record: explicitly write all preferences to ensure
           // the server reflects the app's current state. Use localStorage
           // values when available, otherwise use sensible defaults.
           const browserLang = typeof navigator !== 'undefined' ? navigator.language.slice(0, 2) : 'en';
@@ -124,12 +124,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           try {
             await userService.upsertUserPreference(payload);
           } catch (upsertErr) {
-            // Non-fatal, log for diagnostics
-            console.error('Failed to upsert user preferences on first auth:', upsertErr);
+            // Non-fatal: Log and continue. Errors here are real auth/RLS issues,
+            // not transient race conditions. User can still use the app offline.
+            console.warn('Failed to upsert user preferences on first auth:', upsertErr instanceof Error ? upsertErr.message : String(upsertErr));
           }
         }
       } catch (err) {
-        console.error('Error syncing local preferences to server:', err);
+        console.warn('Error syncing local preferences to server:', err);
       }
     };
 

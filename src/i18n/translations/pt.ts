@@ -197,6 +197,7 @@ export const pt = {
   families: 'Famílias',
   members: 'Membros',
   member: 'Membro',
+  you: 'Você',
   invite: 'Convidar',
   inviteMember: 'Convidar Membro',
   sendInvitation: 'Enviar Convite',

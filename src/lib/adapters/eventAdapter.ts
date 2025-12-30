@@ -1,4 +1,5 @@
 import { eventService } from '@/lib/services/eventService';
+import * as userService from '@/lib/services/userService';
 import { offlineAdapter } from '@/lib/adapters/offlineAdapter';
 import { logger } from '@/lib/logger';
 import { generateRecurringInstances } from '@/lib/utils/recurrenceUtils';
@@ -163,6 +164,38 @@ export const eventAdapter = {
       }
 
       // Online path
+      // CRITICAL: Validate session before write operation (prevents 403 RLS race conditions)
+      try {
+        await userService.ensureSessionReady();
+      } catch (sessionError) {
+        logger.warn('event.create.session.not.ready', { error: sessionError });
+        // Fallback to offline with pending sync
+        const offlineId = offlineAdapter.generateOfflineId();
+        const event: Event = {
+          id: offlineId,
+          title: input.title,
+          description: input.description,
+          date: input.date,
+          time: input.time,
+          duration: input.duration,
+          isAllDay: input.isAllDay,
+          familyId,
+          createdBy: userId,
+          tags: input.tags || [],
+          isPending: true,
+        };
+
+        await offlineAdapter.put('events', event);
+        await offlineAdapter.sync.add({
+          type: 'event',
+          action: 'insert',
+          data: event,
+          familyId,
+        });
+
+        return { data: event };
+      }
+
       const response = await eventService.createEvent(familyId, input, userId);
 
       if (response.error) {
@@ -272,6 +305,23 @@ export const eventAdapter = {
       }
 
       // Online path
+      // CRITICAL: Validate session before write operation
+      try {
+        await userService.ensureSessionReady();
+      } catch (sessionError) {
+        logger.warn('event.update.session.not.ready', { error: sessionError });
+        // Fallback to offline with pending sync
+        const updated = { ...event, ...input };
+        await offlineAdapter.put('events', updated);
+        await offlineAdapter.sync.add({
+          type: 'event',
+          action: 'update',
+          data: updated,
+          familyId: event.familyId,
+        });
+        return { data: updated };
+      }
+
       const response = await eventService.updateEvent(eventId, input);
 
       if (response.error) {
@@ -353,6 +403,22 @@ export const eventAdapter = {
       }
 
       // Online path
+      // CRITICAL: Validate session before write operation
+      try {
+        await userService.ensureSessionReady();
+      } catch (sessionError) {
+        logger.warn('event.delete.session.not.ready', { error: sessionError });
+        // Fallback to offline with pending sync
+        await offlineAdapter.deleteEvent(eventId);
+        await offlineAdapter.sync.add({
+          type: 'event',
+          action: 'delete',
+          data: { id: eventId },
+          familyId,
+        });
+        return {};
+      }
+
       const response = await eventService.deleteEvent(eventId);
 
       if (response.error) {
@@ -472,6 +538,32 @@ export const eventAdapter = {
       }
 
       // Online families: try online first
+      // CRITICAL: Validate session before write operation
+      try {
+        await userService.ensureSessionReady();
+      } catch (sessionError) {
+        logger.warn('tag.create.session.not.ready', { error: sessionError });
+        // Fallback to offline with pending sync
+        const offlineId = offlineAdapter.generateOfflineId();
+        const tag: EventTag = {
+          id: offlineId,
+          name: input.name,
+          color: input.color || '#3B82F6',
+          familyId,
+          createdBy: userId,
+        };
+
+        await offlineAdapter.put('tag_definitions', tag);
+        await offlineAdapter.sync.add({
+          type: 'tag',
+          action: 'insert',
+          data: tag,
+          familyId,
+        });
+
+        return { data: tag };
+      }
+
       const response = await eventService.createEventTag(familyId, input, userId);
 
       if (response.error) {
@@ -567,6 +659,30 @@ export const eventAdapter = {
         return { data: updated };
       }
 
+      // Online path
+      // CRITICAL: Validate session before write operation
+      try {
+        await userService.ensureSessionReady();
+      } catch (sessionError) {
+        logger.warn('tag.update.session.not.ready', { error: sessionError });
+        // Fallback to offline with pending sync
+        const tag = await offlineAdapter.getTagById(tagId);
+        if (!tag) {
+          return { error: 'Tag not found' };
+        }
+
+        const updated = { ...tag, ...input };
+        await offlineAdapter.put('tag_definitions', updated);
+        await offlineAdapter.sync.add({
+          type: 'tag',
+          action: 'update',
+          data: updated,
+          familyId,
+        });
+
+        return { data: updated };
+      }
+
       const response = await eventService.updateEventTag(tagId, input);
 
       if (response.error) {
@@ -641,6 +757,23 @@ export const eventAdapter = {
         }
 
         logger.info('tag.delete.offline.success', { tagId });
+        return {};
+      }
+
+      // Online path
+      // CRITICAL: Validate session before write operation
+      try {
+        await userService.ensureSessionReady();
+      } catch (sessionError) {
+        logger.warn('tag.delete.session.not.ready', { error: sessionError });
+        // Fallback to offline with pending sync
+        await offlineAdapter.deleteTag(tagId);
+        await offlineAdapter.sync.add({
+          type: 'tag',
+          action: 'delete',
+          data: { id: tagId },
+          familyId,
+        });
         return {};
       }
 
@@ -739,17 +872,24 @@ export const eventAdapter = {
       }
 
       // If online, try to create in Supabase
+      // CRITICAL: Validate session before write operation
       if (!isOfflineFamily && navigator.onLine) {
-        const response = await eventService.createRecurringEvent(familyId, input, userId);
+        try {
+          await userService.ensureSessionReady();
+          const response = await eventService.createRecurringEvent(familyId, input, userId);
 
-        if (response.error) {
-          logger.warn('event.recurring.create.online.failed', { error: response.error });
-        } else if (response.data) {
-          // Sync successful response back to offline storage
-          await offlineAdapter.put('events', response.data);
-          logger.info('event.recurring.create.online.success', {
-            eventId: response.data.id,
-          });
+          if (response.error) {
+            logger.warn('event.recurring.create.online.failed', { error: response.error });
+          } else if (response.data) {
+            // Sync successful response back to offline storage
+            await offlineAdapter.put('events', response.data);
+            logger.info('event.recurring.create.online.success', {
+              eventId: response.data.id,
+            });
+          }
+        } catch (sessionError) {
+          logger.warn('event.recurring.create.session.not.ready', { error: sessionError });
+          // Session not ready - keep offline version with pending flag for later sync
         }
       }
 

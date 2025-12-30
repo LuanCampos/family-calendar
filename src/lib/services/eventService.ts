@@ -1,11 +1,17 @@
 import { supabase } from '@/lib/supabase';
+import * as userService from '@/lib/services/userService';
 import { generateRecurringInstances } from '@/lib/utils/recurrenceUtils';
 import type { EventInput, EventTagInput, Event } from '@/types/calendar';
 import type { EventRow, TagDefinitionRow, SupabaseChannel } from '@/types/database';
 
 /**
  * Event Service - Direct Supabase API calls
- * No branching logic, pure data operations
+ * 
+ * IMPORTANT: Write operations (create, update, delete) must validate that
+ * the auth session is ready and has a valid access token.
+ * This prevents 403 RLS race condition errors during initial auth.
+ * 
+ * No branching logic, pure data operations.
  */
 
 export const eventService = {
@@ -57,8 +63,14 @@ export const eventService = {
 
   /**
    * Create a new event
+   * 
+   * Note: Auth session MUST be validated by the caller or eventAdapter.
+   * This protects against 403 RLS race condition on initial auth.
    */
   createEvent: async (familyId: string, input: EventInput, userId: string) => {
+    // Ensure session is ready before INSERT to prevent 403 RLS errors
+    await userService.ensureSessionReady();
+    
     const { tags, ...eventData } = input;
 
     const response = await supabase
@@ -97,6 +109,9 @@ export const eventService = {
    * Update an event
    */
   updateEvent: async (eventId: string, input: Partial<EventInput>) => {
+    // Ensure session is ready before UPDATE to prevent 403 RLS errors
+    await userService.ensureSessionReady();
+    
     const { tags, ...eventData } = input;
 
     // Update event fields
@@ -136,6 +151,9 @@ export const eventService = {
    * Delete an event (hard delete)
    */
   deleteEvent: async (eventId: string) => {
+    // Ensure session is ready before DELETE to prevent 403 RLS errors
+    await userService.ensureSessionReady();
+    
     // First delete all tags
     await supabase.from('event_tag').delete().eq('event_id', eventId);
 
@@ -158,8 +176,14 @@ export const eventService = {
 
   /**
    * Create a new tag definition
+   * 
+   * Note: Auth session MUST be validated by the caller or eventAdapter.
+   * This protects against 403 RLS race condition on initial auth.
    */
   createEventTag: async (familyId: string, input: EventTagInput, userId: string) => {
+    // Ensure session is ready before INSERT to prevent 403 RLS errors
+    await userService.ensureSessionReady();
+    
     return supabase
       .from('tag_definition')
       .insert({
@@ -175,6 +199,9 @@ export const eventService = {
    * Update a tag definition
    */
   updateEventTag: async (tagId: string, input: Partial<EventTagInput>) => {
+    // Ensure session is ready before UPDATE to prevent 403 RLS errors
+    await userService.ensureSessionReady();
+    
     return supabase
       .from('tag_definition')
       .update(input)
@@ -187,6 +214,9 @@ export const eventService = {
    * Delete a tag definition
    */
   deleteEventTag: async (tagId: string) => {
+    // Ensure session is ready before DELETE to prevent 403 RLS errors
+    await userService.ensureSessionReady();
+    
     // First delete all event_tag associations
     await supabase.from('event_tag').delete().eq('tag_id', tagId);
 

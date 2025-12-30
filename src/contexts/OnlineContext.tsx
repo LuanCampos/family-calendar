@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { offlineAdapter } from '@/lib/adapters/offlineAdapter';
 import * as familyService from '@/lib/services/familyService';
+import * as userService from '@/lib/services/userService';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
@@ -73,10 +74,6 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Note: Old expense/income/category features have been removed
   // This function is now simplified for the calendar-only data model
   const syncFamily = async (familyId: string): Promise<{ newFamilyId?: string; error?: Error }> => {
-    if (!session?.user) {
-      return { error: new Error('Você precisa estar logado para sincronizar') };
-    }
-
     if (!isOnline) {
       return { error: new Error('Você está offline') };
     }
@@ -113,6 +110,11 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     };
 
     try {
+      // Ensure auth is ready and has valid access token (prevents 403 RLS race condition)
+      // This must happen BEFORE any database operations
+      const session = await userService.ensureSessionReady();
+      const sessionUser = session.user;
+
       // Get offline family
       const offlineFamily = await offlineAdapter.get<any>('families', familyId);
       if (!offlineFamily) {
@@ -137,7 +139,7 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       
       const { data: cloudFamily, error: familyError } = await familyService.insertFamily(
         offlineFamily.name,
-        session.user.id
+        sessionUser.id
       );
 
       if (familyError) {
@@ -150,7 +152,7 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       // Create owner membership
       const { error: memberError } = await familyService.insertFamilyMember({
         family_id: newFamilyId,
-        user_id: session.user.id,
+        user_id: sessionUser.id,
         role: 'owner',
       });
 

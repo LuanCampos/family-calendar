@@ -498,43 +498,52 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Create family (cloud if online + authenticated, offline otherwise)
   const createFamily = async (name: string) => {
-    // Always get fresh session from Supabase to ensure we have the latest auth state
-    const { data: { session: currentSession } } = await userService.getSession();
-    const sessionUser = currentSession?.user;
-
-    if (!navigator.onLine || !sessionUser) {
-      // Create offline family
-      console.log('Creating offline family. Online:', navigator.onLine, 'User:', !!sessionUser);
+    // Check online status first (cheap operation)
+    if (!navigator.onLine) {
+      console.log('Creating offline family (navigator.onLine = false)');
       return createOfflineFamily(name);
     }
 
-    console.log('Creating cloud family for user:', sessionUser.email);
+    try {
+      // Get fresh session and validate it's ready (prevents 403 RLS race condition)
+      // This ensures the access token is applied to the client before any DB operation
+      const session = await userService.ensureSessionReady();
+      const sessionUser = session.user;
 
-    // Create cloud family
-    const { data: family, error } = await familyService.insertFamily(name, sessionUser.id);
+      console.log('Creating cloud family for user:', sessionUser?.email);
 
-    if (error) {
-      // Fallback to offline on error
-      console.error('Cloud family creation failed, creating offline:', error);
+      // Create cloud family
+      const { data: family, error } = await familyService.insertFamily(name, sessionUser.id);
+
+      if (error) {
+        // Fallback to offline on error (e.g., network error, RLS error, etc.)
+        console.error('Cloud family creation failed, creating offline:', error);
+        return createOfflineFamily(name);
+      }
+
+      // Ensure creator becomes a member/owner
+      const { error: memberError } = await familyService.insertFamilyMember({
+        family_id: family.id,
+        user_id: sessionUser.id,
+        role: 'owner',
+        user_email: sessionUser.email || null,
+      });
+
+      if (memberError && (memberError as any).code !== '23505') {
+        console.error('Member creation error:', memberError);
+      }
+
+      await refreshFamilies();
+      await selectFamily(family.id);
+
+      return { error: null, family: { ...family, isOffline: false } };
+    } catch (err) {
+      // Auth validation failed (user not authenticated, token not ready, etc.)
+      // Fall back to offline creation
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      console.error('Auth validation failed, creating offline family:', errorMessage);
       return createOfflineFamily(name);
     }
-
-    // Ensure creator becomes a member/owner
-    const { error: memberError } = await familyService.insertFamilyMember({
-      family_id: family.id,
-      user_id: sessionUser.id,
-      role: 'owner',
-      user_email: sessionUser.email || null,
-    });
-
-    if (memberError && (memberError as any).code !== '23505') {
-      console.error('Member creation error:', memberError);
-    }
-
-    await refreshFamilies();
-    await selectFamily(family.id);
-
-    return { error: null, family: { ...family, isOffline: false } };
   };
 
   // Select family
@@ -552,6 +561,13 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         await refreshFamilies();
       }
       return { error: null };
+    }
+
+    // CRITICAL: Validate session before write operation
+    try {
+      await userService.ensureSessionReady();
+    } catch (sessionError) {
+      return { error: 'Session not ready' };
     }
 
     const { error } = await familyService.updateFamilyName(familyId, name);
@@ -585,6 +601,13 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       return { error: null };
     }
 
+    // CRITICAL: Validate session before write operation
+    try {
+      await userService.ensureSessionReady();
+    } catch (sessionError) {
+      return { error: 'Session not ready' };
+    }
+
     const { error } = await familyService.deleteFamily(familyId);
 
     if (!error) {
@@ -610,6 +633,13 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       return deleteFamily(familyId);
     }
 
+    // CRITICAL: Validate session before write operation
+    try {
+      await userService.ensureSessionReady();
+    } catch (sessionError) {
+      return { error: 'Session not ready' };
+    }
+
     const { error } = await familyService.deleteMemberByFamilyAndUser(familyId, user.id);
 
     if (!error) {
@@ -629,61 +659,86 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Invite member
   const inviteMember = async (email: string) => {
-    if (!user || !currentFamilyId) return { error: new Error('Not authenticated or no family selected') };
+    if (!currentFamilyId) return { error: new Error('No family selected') };
     
     if (offlineAdapter.isOfflineId(currentFamilyId || '')) {
       return { error: new Error('Convites não disponíveis em famílias offline. Sincronize primeiro.') };
     }
 
-    // Include family_name in the invitation for display purposes
-    const { error } = await familyService.insertInvitation({
-      family_id: currentFamilyId,
-      email: email.toLowerCase(),
-      invited_by: user.id,
-      family_name: currentFamily?.name || 'Família'
-    });
+    try {
+      // Ensure auth is ready (prevents 403 RLS race condition)
+      const session = await userService.ensureSessionReady();
+      const sessionUser = session.user;
 
-    if (!error) await refreshInvitations();
-    return { error };
+      // Include family_name in the invitation for display purposes
+      const { error } = await familyService.insertInvitation({
+        family_id: currentFamilyId,
+        email: email.toLowerCase(),
+        invited_by: sessionUser.id,
+        family_name: currentFamily?.name || 'Família'
+      });
+
+      if (!error) await refreshInvitations();
+      return { error };
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      console.error('Auth validation failed in inviteMember:', errorMessage);
+      return { error: new Error(errorMessage) };
+    }
   };
 
   // Accept invitation
   const acceptInvitation = async (invitationId: string) => {
-    if (!user) return { error: new Error('Not authenticated') };
-
     const invitation = myPendingInvitations.find(i => i.id === invitationId);
     if (!invitation) return { error: new Error('Invitation not found') };
 
-    // Update invitation status
-    const { error: updateError } = await familyService.updateInvitationStatus(invitationId, 'accepted');
+    try {
+      // Ensure auth is ready (prevents 403 RLS race condition)
+      const session = await userService.ensureSessionReady();
+      const sessionUser = session.user;
 
-    if (updateError) return { error: updateError };
+      // Update invitation status
+      const { error: updateError } = await familyService.updateInvitationStatus(invitationId, 'accepted');
 
-    // Add user to family
-    const { error: memberError } = await familyService.insertFamilyMember({
-      family_id: invitation.family_id,
-      user_id: user.id,
-      role: 'member',
-      user_email: user.email || null,
-    });
+      if (updateError) return { error: updateError };
 
-    if (memberError) return { error: memberError };
+      // Add user to family
+      const { error: memberError } = await familyService.insertFamilyMember({
+        family_id: invitation.family_id,
+        user_id: sessionUser.id,
+        role: 'member',
+        user_email: sessionUser.email || null,
+      });
 
-    // Refresh families first and wait for it to complete
-    await refreshFamilies();
-    await refreshInvitations();
-    
-    // Small delay to ensure state is updated before selecting
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    // Now select the family
-    await selectFamily(invitation.family_id);
+      if (memberError) return { error: memberError };
 
-    return { error: null };
+      // Refresh families first and wait for it to complete
+      await refreshFamilies();
+      await refreshInvitations();
+      
+      // Small delay to ensure state is updated before selecting
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Now select the family
+      await selectFamily(invitation.family_id);
+
+      return { error: null };
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      console.error('Auth validation failed in acceptInvitation:', errorMessage);
+      return { error: new Error(errorMessage) };
+    }
   };
 
   // Reject invitation
   const rejectInvitation = async (invitationId: string) => {
+    // CRITICAL: Validate session before write operation
+    try {
+      await userService.ensureSessionReady();
+    } catch (sessionError) {
+      return { error: 'Session not ready' };
+    }
+
     const { error } = await familyService.updateInvitationStatus(invitationId, 'rejected');
 
     if (!error) await refreshInvitations();
@@ -692,6 +747,13 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Cancel invitation
   const cancelInvitation = async (invitationId: string) => {
+    // CRITICAL: Validate session before write operation
+    try {
+      await userService.ensureSessionReady();
+    } catch (sessionError) {
+      return { error: 'Session not ready' };
+    }
+
     const { error } = await familyService.deleteInvitation(invitationId);
 
     if (!error) await refreshInvitations();
@@ -700,6 +762,13 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Update member role
   const updateMemberRole = async (memberId: string, role: FamilyRole) => {
+    // CRITICAL: Validate session before write operation
+    try {
+      await userService.ensureSessionReady();
+    } catch (sessionError) {
+      return { error: 'Session not ready' };
+    }
+
     const { error } = await familyService.updateMemberRole(memberId, role);
 
     if (!error) await refreshMembers();

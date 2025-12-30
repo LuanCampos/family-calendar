@@ -197,6 +197,7 @@ export const en = {
   families: 'Families',
   members: 'Members',
   member: 'Member',
+  you: 'You',
   invite: 'Invite',
   inviteMember: 'Invite Member',
   sendInvitation: 'Send Invitation',
