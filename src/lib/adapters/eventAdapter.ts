@@ -324,7 +324,7 @@ export const eventAdapter = {
   },
 
   /**
-   * Delete an event (soft delete)
+   * Delete an event (hard delete)
    */
   deleteEvent: async (eventId: string, familyId: string): Promise<{ error?: any }> => {
     logger.debug('event.delete.start', { eventId });

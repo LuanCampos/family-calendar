@@ -13,10 +13,8 @@ export interface EventRow {
   date: string; // YYYY-MM-DD
   time: string | null; // HH:mm
   duration_minutes: number | null;
-  created_by: string;
   created_at: string;
   updated_at: string;
-  deleted_at: string | null;
 }
 
 export interface EventTagRow {
@@ -29,7 +27,6 @@ export interface TagDefinitionRow {
   family_id: string;
   name: string;
   color: string;
-  created_by: string;
   created_at: string;
 }
 

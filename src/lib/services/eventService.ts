@@ -16,8 +16,7 @@ export const eventService = {
     let query = supabase
       .from('event')
       .select('*')
-      .eq('family_id', familyId)
-      .is('deleted_at', null);
+      .eq('family_id', familyId);
 
     if (startDate) {
       query = query.gte('date', startDate);
@@ -66,7 +65,6 @@ export const eventService = {
       .from('event')
       .insert({
         family_id: familyId,
-        created_by: userId,
         ...eventData,
       } as EventRow)
       .select()
@@ -135,19 +133,9 @@ export const eventService = {
   },
 
   /**
-   * Delete an event (soft delete)
+   * Delete an event (hard delete)
    */
   deleteEvent: async (eventId: string) => {
-    return supabase
-      .from('event')
-      .update({ deleted_at: new Date().toISOString() })
-      .eq('id', eventId);
-  },
-
-  /**
-   * Permanently delete an event
-   */
-  permanentlyDeleteEvent: async (eventId: string) => {
     // First delete all tags
     await supabase.from('event_tag').delete().eq('event_id', eventId);
 
@@ -176,7 +164,6 @@ export const eventService = {
       .from('tag_definition')
       .insert({
         family_id: familyId,
-        created_by: userId,
         name: input.name,
         color: input.color || '#3B82F6',
       } as TagDefinitionRow)
@@ -270,7 +257,6 @@ export const eventService = {
         .from('event')
         .insert({
           family_id: familyId,
-          created_by: userId,
           ...eventData,
         } as EventRow)
         .select()

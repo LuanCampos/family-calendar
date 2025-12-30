@@ -166,7 +166,10 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         const { data, error } = await familyService.insertEventForSync({
           family_id: newFamilyId,
           title: event.title,
+          description: event.description || null,
           date: event.date,
+          time: event.time || null,
+          duration_minutes: event.duration || null,
           is_recurring: event.is_recurring,
           recurrence_rule: event.recurrence_rule,
         });

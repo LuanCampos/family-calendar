@@ -19,7 +19,7 @@ export const mapEventRow = (row: EventRow, tags: string[] = []): Event => ({
   time: row.time ?? undefined,
   duration: row.duration_minutes ?? undefined,
   familyId: row.family_id,
-  createdBy: row.created_by,
+  createdBy: '', // Events belong to family, not creator - RLS enforces access
   tags,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
@@ -34,7 +34,7 @@ export const mapTagDefinitionRow = (row: TagDefinitionRow): EventTag => ({
   name: row.name,
   color: row.color,
   familyId: row.family_id,
-  createdBy: row.created_by,
+  createdBy: '', // Tags belong to family, not creator - RLS enforces access
   createdAt: row.created_at,
 });
 

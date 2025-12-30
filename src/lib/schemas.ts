@@ -18,10 +18,8 @@ export const EventRowSchema = z.object({
   date: z.string(), // YYYY-MM-DD
   time: z.string().nullable(), // HH:mm
   duration_minutes: z.number().int().nullable(),
-  created_by: z.string().min(1),
   created_at: z.string(),
   updated_at: z.string(),
-  deleted_at: z.string().nullable(),
 });
 
 export type EventRowValidated = z.infer<typeof EventRowSchema>;
@@ -34,7 +32,6 @@ export const TagDefinitionRowSchema = z.object({
   family_id: z.string().min(1),
   name: z.string().min(1).max(100),
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
-  created_by: z.string().min(1),
   created_at: z.string(),
 });
 

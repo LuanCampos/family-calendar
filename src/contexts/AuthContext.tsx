@@ -98,31 +98,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         const localTheme = typeof window !== 'undefined' ? localStorage.getItem('budget-app-theme') : null;
         const localLanguage = typeof window !== 'undefined' ? localStorage.getItem('budget-app-language') : null;
-        const localCurrency = typeof window !== 'undefined' ? localStorage.getItem('budget-app-currency') : null;
 
         const payload: any = { user_id: user.id };
         let shouldUpsert = false;
 
         if (!data) {
-          // No server record: explicitly write all three preferences to ensure
+          // No server record: explicitly write theme and language to ensure
           // the server reflects the app's current state. Use localStorage
-          // values when available, otherwise use sensible defaults so the
-          // server doesn't end up with an unexpected default.
+          // values when available, otherwise use sensible defaults.
           const browserLang = typeof navigator !== 'undefined' ? navigator.language.slice(0, 2) : 'en';
           const themeToWrite = localTheme || 'dark';
           const languageToWrite = (localLanguage === 'pt' || localLanguage === 'en') ? localLanguage : (browserLang === 'pt' ? 'pt' : 'en');
-          const currencyToWrite = (localCurrency === 'BRL' || localCurrency === 'USD') ? localCurrency : 'BRL';
 
           payload.theme = themeToWrite;
           payload.language = languageToWrite;
-          payload.currency = currencyToWrite;
           shouldUpsert = true;
         } else {
           // Partial record: fill missing fields from localStorage
           const prefs = data as userService.UserPreference;
           if ((!prefs.theme || prefs.theme === null) && localTheme) { payload.theme = localTheme; shouldUpsert = true; }
           if ((!prefs.language || prefs.language === null) && localLanguage) { payload.language = localLanguage; shouldUpsert = true; }
-          if ((!prefs.currency || prefs.currency === null) && localCurrency) { payload.currency = localCurrency; shouldUpsert = true; }
         }
 
         if (shouldUpsert) {

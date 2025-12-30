@@ -2,7 +2,7 @@
  * User Service - Centralized Supabase API calls for user operations
  * 
  * This service handles all database operations related to:
- * - User preferences (language, theme, currency, current family)
+ * - User preferences (language, theme, current family)
  * - User authentication helpers
  * 
  * All Supabase queries for user-related entities should go through this service.
@@ -18,7 +18,6 @@ export interface UserPreference {
   id: string;
   user_id: string;
   language: string | null;
-  currency: string | null;
   theme: string | null;
   current_family_id: string | null;
   updated_at: string;
@@ -44,7 +43,6 @@ export const upsertUserPreference = async (data: {
   user_id: string;
   current_family_id?: string | null;
   language?: string | null;
-  currency?: string | null;
   theme?: string | null;
   updated_at?: string;
 }) => {
