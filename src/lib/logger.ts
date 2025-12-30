@@ -10,6 +10,12 @@
  *   logger.debug('sync.start', { queueLength });
  */
 
+// ============================================================================
+// DEBUG FLAGS - Toggle for troubleshooting
+// ============================================================================
+// Set to true to log all API calls with timing information
+export const DEBUG_API_CALLS = false;
+
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 export interface LogEntry {
@@ -37,6 +43,8 @@ class Logger {
    * Log at info level
    */
   info(event: string, context?: Record<string, any>) {
+    // Only log info in development
+    if (!this.isDev) return;
     this.log('info', event, context);
   }
 
@@ -61,6 +69,25 @@ class Logger {
   }
 
   /**
+   * Log API calls with timing (for debugging)
+   * Usage: logger.apiCall('GET', '/users', { userId: '123' })
+   */
+  apiCall(method: string, endpoint: string, params?: Record<string, any>) {
+    if (!DEBUG_API_CALLS) return;
+    console.log(`%c[API] ${method} ${endpoint}`, 'color: #0066cc; font-weight: bold;', params || '');
+  }
+
+  /**
+   * Log API response with timing
+   * Usage: logger.apiResponse('GET', '/users', 200, { duration: 45 })
+   */
+  apiResponse(method: string, endpoint: string, status: number, response?: Record<string, any>) {
+    if (!DEBUG_API_CALLS) return;
+    const statusColor = status >= 400 ? '#cc0000' : '#00aa00';
+    console.log(`%c[API] ${method} ${endpoint} -> ${status}`, `color: ${statusColor}; font-weight: bold;`, response || '');
+  }
+
+  /**
    * Internal log method
    */
   private log(level: LogLevel, event: string, context?: Record<string, any>) {
@@ -76,14 +103,14 @@ class Logger {
       this.logs.shift();
     }
 
-    // Console output
-    const prefix = `[${entry.timestamp}] ${level.toUpperCase()}: ${event}`;
-    const style = this.getConsoleStyle(level);
-
-    if (this.isDev && context) {
-      console.log(`%c${prefix}`, style, context);
-    } else if (!this.isDev && level !== 'debug') {
-      console.log(`${prefix}`, context || '');
+    // Console output - only show warn and error (both dev and prod)
+    if (level === 'warn' || level === 'error') {
+      const prefix = `[${entry.timestamp}] ${level.toUpperCase()}: ${event}`;
+      if (context) {
+        console[level]?.(prefix, context);
+      } else {
+        console[level]?.(prefix);
+      }
     }
   }
 

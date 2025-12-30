@@ -13,55 +13,102 @@
 
 import { supabase } from '../supabase';
 import * as userService from './userService';
+import { logger } from '../logger';
 
 // ============================================================================
 // FAMILY QUERIES
 // ============================================================================
 
 export const getFamiliesByUser = async (userId: string) => {
-  return supabase
+  logger.apiCall('GET', 'family_member', { userId });
+  const result = await supabase
     .from('family_member')
-    .select(`
-      family_id,
-      family (
-        id,
-        name,
-        created_by,
-        created_at
-      )
-    `)
+    .select('family_id')
     .eq('user_id', userId);
+  
+  if (result.error) {
+    logger.apiResponse('GET', 'family_member', 400, { error: result.error.message });
+    return result;
+  }
+  
+  logger.apiResponse('GET', 'family_member', 200, { count: result.data?.length });
+  
+  if (!result.data || result.data.length === 0) {
+    return { data: [], error: null };
+  }
+
+  // Get family details separately to avoid RLS issues with joins
+  const familyIds = result.data.map(fm => fm.family_id);
+
+  const familiesResult = await supabase
+    .from('family')
+    .select('id, name, created_by, created_at')
+    .in('id', familyIds);
+
+  if (familiesResult.error) {
+    logger.error('getFamiliesByUser: error fetching families', familiesResult.error);
+    return familiesResult;
+  }
+
+  // Format as the original query expected
+  const formattedData = familiesResult.data?.map(family => ({
+    family_id: family.id,
+    family: family
+  })) || [];
+
+  return { data: formattedData, error: null };
 };
 
-export const insertFamily = async (name: string, createdBy: string) => {
+export const insertFamily = async (name: string) => {
   // Ensure session is ready before INSERT to prevent 403 RLS errors
   await userService.ensureSessionReady();
   
-  return supabase
+  logger.apiCall('POST', 'family', { name });
+  // Use insert + select to get the inserted row back
+  const result = await supabase
     .from('family')
-    .insert({ name, created_by: createdBy })
+    .insert({ name })
     .select()
     .single();
+  
+  if (result.error) {
+    logger.apiResponse('POST', 'family', 400, { error: result.error.message, code: (result.error as any).code });
+    return result;
+  }
+  
+  if (!result.data) {
+    logger.error('insertFamily: No data returned from INSERT', { name });
+    return { data: null, error: new Error('No data returned from INSERT') };
+  }
+  
+  logger.apiResponse('POST', 'family', 201, { familyId: result.data.id });
+  return result;
 };
 
 export const updateFamilyName = async (familyId: string, name: string) => {
   // Ensure session is ready before UPDATE to prevent 403 RLS errors
   await userService.ensureSessionReady();
   
-  return supabase
+  logger.apiCall('PATCH', `family/${familyId}`, { name });
+  const result = await supabase
     .from('family')
     .update({ name })
     .eq('id', familyId);
+  logger.apiResponse('PATCH', `family/${familyId}`, result.error ? 400 : 200);
+  return result;
 };
 
 export const deleteFamily = async (familyId: string) => {
   // Ensure session is ready before DELETE to prevent 403 RLS errors
   await userService.ensureSessionReady();
   
-  return supabase
+  logger.apiCall('DELETE', `family/${familyId}`);
+  const result = await supabase
     .from('family')
     .delete()
     .eq('id', familyId);
+  logger.apiResponse('DELETE', `family/${familyId}`, result.error ? 400 : 200);
+  return result;
 };
 
 // ============================================================================
@@ -69,10 +116,13 @@ export const deleteFamily = async (familyId: string) => {
 // ============================================================================
 
 export const getMembersByFamily = async (familyId: string) => {
-  return supabase
+  logger.apiCall('GET', `family_member?family_id=${familyId}`);
+  const result = await supabase
     .from('family_member')
     .select('*')
     .eq('family_id', familyId);
+  logger.apiResponse('GET', `family_member?family_id=${familyId}`, result.error ? 400 : 200, { count: result.data?.length });
+  return result;
 };
 
 export const insertFamilyMember = async (payload: {
@@ -84,9 +134,15 @@ export const insertFamilyMember = async (payload: {
   // Ensure session is ready before INSERT to prevent 403 RLS errors
   await userService.ensureSessionReady();
   
-  return supabase
+  logger.apiCall('POST', 'family_member', { familyId: payload.family_id, userId: payload.user_id });
+  // Use upsert in case the member was already created by a trigger
+  const result = await supabase
     .from('family_member')
-    .insert(payload);
+    .upsert(payload, { onConflict: 'family_id,user_id' })
+    .select()
+    .single();
+  logger.apiResponse('POST', 'family_member', result.error ? 400 : 201);
+  return result;
 };
 
 export const updateMemberRole = async (memberId: string, role: string) => {
@@ -135,7 +191,8 @@ export const deleteMembersByFamily = async (familyId: string) => {
 // ============================================================================
 
 export const getInvitationsByEmail = async (email: string) => {
-  return supabase
+  logger.apiCall('GET', `family_invitation?email=${email}`);
+  const result = await supabase
     .from('family_invitation')
     .select(`
       *,
@@ -145,22 +202,30 @@ export const getInvitationsByEmail = async (email: string) => {
     `)
     .eq('email', email)
     .eq('status', 'pending');
+  logger.apiResponse('GET', `family_invitation?email=${email}`, result.error ? 400 : 200, { count: result.data?.length });
+  return result;
 };
 
 export const getInvitationsByEmailSimple = async (email: string) => {
-  return supabase
+  logger.apiCall('GET', `family_invitation?email=${email}`);
+  const result = await supabase
     .from('family_invitation')
     .select('*')
     .eq('email', email)
     .eq('status', 'pending');
+  logger.apiResponse('GET', `family_invitation?email=${email}`, result.error ? 400 : 200, { count: result.data?.length });
+  return result;
 };
 
 export const getInvitationsByFamily = async (familyId: string) => {
-  return supabase
+  logger.apiCall('GET', `family_invitation?family_id=${familyId}`);
+  const result = await supabase
     .from('family_invitation')
     .select('*')
     .eq('family_id', familyId)
     .eq('status', 'pending');
+  logger.apiResponse('GET', `family_invitation?family_id=${familyId}`, result.error ? 400 : 200, { count: result.data?.length });
+  return result;
 };
 
 export const getFamilyNamesByIds = async (familyIds: string[]) => {
@@ -233,6 +298,7 @@ export const insertWithSelect = async (table: string, data: any) => {
   // Ensure session is ready before INSERT to prevent 403 RLS errors
   await userService.ensureSessionReady();
   
+  // Use insert + select to get the inserted row back
   return supabase.from(table).insert(data).select().single();
 };
 
@@ -242,6 +308,7 @@ export const insertEventForSync = async (data: any) => {
   // Ensure session is ready before INSERT to prevent 403 RLS errors
   await userService.ensureSessionReady();
   
+  // Use insert + select to get the inserted row back
   return supabase.from('event').insert(data).select().single();
 };
 
@@ -249,6 +316,7 @@ export const insertTagDefinitionForSync = async (data: { family_id: string; name
   // Ensure session is ready before INSERT to prevent 403 RLS errors
   await userService.ensureSessionReady();
   
+  // Use insert + select to get the inserted row back
   return supabase.from('tag').insert(data).select().single();
 };
 
@@ -256,5 +324,6 @@ export const insertEventTagForSync = async (data: { event_id: string; tag_id: st
   // Ensure session is ready before INSERT to prevent 403 RLS errors
   await userService.ensureSessionReady();
   
+  // Use insert + select to get the inserted row back
   return supabase.from('event_tag').insert(data).select().single();
 };

@@ -507,16 +507,16 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       // Get fresh session and validate it's ready (prevents 403 RLS race condition)
       // This ensures the access token is applied to the client before any DB operation
       const session = await userService.ensureSessionReady();
-      const sessionUser = session.user;
 
-      // Create cloud family
-      const { data: family, error } = await familyService.insertFamily(name, sessionUser.id);
+      // Create cloud family (created_by is automatically set to auth.uid())
+      const { data: family, error } = await familyService.insertFamily(name);
 
-      if (error) {
+      if (error || !family) {
         // Fallback to offline on error (e.g., network error, RLS error, etc.)
         console.warn('[FAMILY] Cloud family creation failed:', {
-          code: (error as any).code,
-          message: error.message,
+          code: (error as any)?.code,
+          message: error?.message,
+          hasData: !!family,
         });
         return createOfflineFamily(name);
       }
@@ -524,9 +524,9 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       // Ensure creator becomes a member/owner
       const { error: memberError } = await familyService.insertFamilyMember({
         family_id: family.id,
-        user_id: sessionUser.id,
+        user_id: session.user.id,
         role: 'owner',
-        user_email: sessionUser.email || null,
+        user_email: session.user.email || null,
       });
 
       if (memberError) {
