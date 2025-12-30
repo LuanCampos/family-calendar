@@ -695,25 +695,19 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     try {
       // Ensure auth is ready (prevents 403 RLS race condition)
-      const session = await userService.ensureSessionReady();
-      const sessionUser = session.user;
+      await userService.ensureSessionReady();
 
-      // Update invitation status
+      // Update invitation status to 'accepted'
+      // NOTE: A database trigger automatically creates the family_member record
+      // when this update completes, so we don't need to insert it manually here.
       const { error: updateError } = await familyService.updateInvitationStatus(invitationId, 'accepted');
 
       if (updateError) return { error: updateError };
 
-      // Add user to family
-      const { error: memberError } = await familyService.insertFamilyMember({
-        family_id: invitation.family_id,
-        user_id: sessionUser.id,
-        role: 'member',
-        user_email: sessionUser.email || null,
-      });
+      // Wait a bit for the trigger to execute and create the family_member record
+      await new Promise(resolve => setTimeout(resolve, 300));
 
-      if (memberError) return { error: memberError };
-
-      // Refresh families first and wait for it to complete
+      // Refresh families and invitations
       await refreshFamilies();
       await refreshInvitations();
       
@@ -726,7 +720,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       return { error: null };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      console.error('Auth validation failed in acceptInvitation:', errorMessage);
+      console.error('Accept invitation failed:', errorMessage);
       return { error: new Error(errorMessage) };
     }
   };

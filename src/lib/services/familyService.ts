@@ -135,13 +135,19 @@ export const insertFamilyMember = async (payload: {
   await userService.ensureSessionReady();
   
   logger.apiCall('POST', 'family_member', { familyId: payload.family_id, userId: payload.user_id });
-  // Use upsert in case the member was already created by a trigger
+  // Use upsert in case the member already exists (e.g., from invite acceptance trigger)
   const result = await supabase
     .from('family_member')
     .upsert(payload, { onConflict: 'family_id,user_id' })
     .select()
     .single();
-  logger.apiResponse('POST', 'family_member', result.error ? 400 : 201);
+  
+  if (result.error) {
+    logger.apiResponse('POST', 'family_member', 400, { error: result.error.message });
+    return result;
+  }
+  
+  logger.apiResponse('POST', 'family_member', result.data ? 201 : 200);
   return result;
 };
 
@@ -253,6 +259,8 @@ export const updateInvitationStatus = async (invitationId: string, status: 'acce
   // Ensure session is ready before UPDATE to prevent 403 RLS errors
   await userService.ensureSessionReady();
   
+  // NOTE: When status is set to 'accepted', a trigger in the database automatically
+  // creates the corresponding family_member record. No need to manually insert it here.
   return supabase
     .from('family_invitation')
     .update({ status })
