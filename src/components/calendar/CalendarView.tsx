@@ -44,23 +44,18 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     setCurrentDate,
   } = useCalendar();
 
-  // Swipe gesture handling
-  const [touchStart, setTouchStart] = React.useState<number | null>(null);
-  const [touchEnd, setTouchEnd] = React.useState<number | null>(null);
+  // Swipe gesture handling with refs to avoid stale state
+  const touchStartRef = React.useRef<number | null>(null);
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStart(e.targetTouches[0].clientX);
+    touchStartRef.current = e.targetTouches[0].clientX;
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    setTouchEnd(e.changedTouches[0].clientX);
-    handleSwipe();
-  };
-
-  const handleSwipe = () => {
-    if (!touchStart || !touchEnd) return;
+    if (!touchStartRef.current) return;
     
-    const distance = touchStart - touchEnd;
+    const touchEnd = e.changedTouches[0].clientX;
+    const distance = touchStartRef.current - touchEnd;
     const isLeftSwipe = distance > 50;
     const isRightSwipe = distance < -50;
 
@@ -70,6 +65,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     if (isRightSwipe) {
       goToPreviousMonth();
     }
+
+    // Reset touch
+    touchStartRef.current = null;
   };
 
   const startDate = format(startOfMonth(currentDate), 'yyyy-MM-dd');
@@ -152,7 +150,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const filteredEvents = filterEventsByTags(enrichedEvents, selectedFilterTags);
 
   // Get events for selected date
-  const selectedDateEvents = selectedDate ? filteredEvents.filter(e => e.date === selectedDate) : [];
+  const dateForList = selectedDate || format(new Date(), 'yyyy-MM-dd');
+  const selectedDateEvents = filteredEvents.filter(e => e.date === dateForList);
 
   return (
     <div 
@@ -178,6 +177,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
       <div className="flex-1 overflow-y-auto min-h-0">
         <CalendarGrid
+          key={format(currentDate, 'yyyy-MM')}
           currentDate={currentDate}
           events={filteredEvents}
           selectedDate={selectedDate}
@@ -190,7 +190,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       <DayEventsList
         isOpen={isDayListOpen}
         onClose={() => setIsDayListOpen(false)}
-        selectedDate={selectedDate || format(new Date(), 'yyyy-MM-dd')}
+        selectedDate={dateForList}
         events={selectedDateEvents}
         onEventClick={handleEventClick}
         onAddNewEvent={handleAddNewEvent}

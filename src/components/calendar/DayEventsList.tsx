@@ -70,20 +70,9 @@ export const DayEventsList: React.FC<DayEventsListProps> = ({
         <div className="flex-1 overflow-y-auto space-y-1.5 sm:space-y-2 p-2.5 sm:p-3 min-h-0">
           {sortedEvents.length === 0 ? (
             <div className="border border-dashed border-border rounded-lg p-4 sm:p-5 bg-muted/20 text-center">
-              <p className="text-xs sm:text-sm text-muted-foreground mb-2">
-                {t('noTags')}
-              </p>
-              <p className="text-xs text-muted-foreground mb-4">
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 Nenhum evento para este dia
               </p>
-              <Button 
-                size="sm" 
-                onClick={handleAddNew}
-                className="w-full text-xs sm:text-sm"
-              >
-                <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
-                {t('newEvent')}
-              </Button>
             </div>
           ) : (
             <div className="space-y-2">

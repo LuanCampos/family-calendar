@@ -141,10 +141,6 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                           }}
                           title={event.title}
                           aria-label={`${event.title}${event.time ? ` at ${event.time}` : ''}`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onEventClick?.(event);
-                          }}
                         >
                           {event.isAllDay ? (
                             <>📅 {event.title}</>
