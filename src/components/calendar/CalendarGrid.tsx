@@ -2,6 +2,7 @@ import React from 'react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, startOfWeek, endOfWeek } from 'date-fns';
 import type { Event, EventTag } from '@/types/calendar';
 import { isEventTagArray } from '@/lib/utils/eventUtils';
+import { getContrastColor } from '@/lib/utils/colorUtils';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -128,26 +129,16 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                       return (
                         <div
                           key={event.id}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onEventClick?.(event);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
-                              onEventClick?.(event);
-                            }
-                          }}
                           role="listitem"
-                          tabIndex={0}
                           className={cn(
-                            'text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded truncate font-medium text-white',
-                            'cursor-pointer hover:opacity-80 transition-opacity hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-1'
+                            'text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded truncate font-medium',
+                            'transition-opacity'
                           )}
                           style={{
                             backgroundColor: tagColor,
+                            color: getContrastColor(tagColor),
                           }}
-                          title={`${t('clickToEdit')}: ${event.title}`}
+                          title={event.title}
                           aria-label={`${event.title}${event.time ? ` at ${event.time}` : ''}`}
                         >
                           {event.isAllDay ? (

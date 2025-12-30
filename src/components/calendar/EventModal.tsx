@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { TimePicker } from '@/components/ui/time-picker';
 import { Trash2, AlertCircle, Check, Clock, Timer, Sun } from 'lucide-react';
 import { getTagIds } from '@/lib/utils/eventUtils';
+import { getContrastColor } from '@/lib/utils/colorUtils';
 import type { Event, EventInput, EventTag, RecurrenceRule } from '@/types/calendar';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -280,7 +281,7 @@ export const EventModal: React.FC<EventModalProps> = ({
                     style={{
                       borderColor: selectedTags.includes(tag.id) ? tag.color : tag.color + '40',
                       backgroundColor: selectedTags.includes(tag.id) ? tag.color : tag.color + '15',
-                      color: selectedTags.includes(tag.id) ? tag.color : 'hsl(var(--foreground))',
+                      color: selectedTags.includes(tag.id) ? getContrastColor(tag.color) : 'hsl(var(--foreground))',
                     }}
                     title={tag.name}
                   >

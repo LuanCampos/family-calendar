@@ -5,6 +5,7 @@ import { filterEventsByTags } from '@/lib/utils/filterUtils';
 import { Header } from '../header';
 import { CalendarGrid } from './CalendarGrid';
 import { EventModal } from './EventModal';
+import { DayEventsList } from './DayEventsList';
 import { useCalendar } from '@/hooks/useCalendar';
 import { useEvents } from '@/hooks/useEvents';
 import { useEventTags } from '@/hooks/useEventTags';
@@ -53,6 +54,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const tags = availableTags || loadedTags;
 
   const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const [isDayListOpen, setIsDayListOpen] = React.useState(false);
   const [editingEvent, setEditingEvent] = React.useState<Event | undefined>();
   const { selectedFilterTags, toggleTagFilter, clearFilters } = useFilterTags();
 
@@ -60,13 +62,14 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     console.log('Date clicked:', date);
     selectDate(date);
     setEditingEvent(undefined);
-    setIsModalOpen(true);
+    setIsDayListOpen(true);
   };
 
   const handleEventClick = (event: Event) => {
     console.log('Event clicked:', event);
     selectDate(event.date);
     setEditingEvent(event);
+    setIsDayListOpen(false);
     setIsModalOpen(true);
   };
 
@@ -109,6 +112,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     }
   };
 
+  const handleAddNewEvent = () => {
+    setEditingEvent(undefined);
+    setIsModalOpen(true);
+  };
+
   // Enrich events with tag data
   const enrichedEvents = enrichEventsWithTags(events, tags);
 
@@ -146,6 +154,15 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           onEventClick={handleEventClick}
         />
       </div>
+
+      <DayEventsList
+        isOpen={isDayListOpen}
+        onClose={() => setIsDayListOpen(false)}
+        selectedDate={selectedDate || format(new Date(), 'yyyy-MM-dd')}
+        events={selectedDateEvents}
+        onEventClick={handleEventClick}
+        onAddNewEvent={handleAddNewEvent}
+      />
 
       <EventModal
         isOpen={isModalOpen}
