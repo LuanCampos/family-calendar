@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -47,6 +47,29 @@ export const EventModal: React.FC<EventModalProps> = ({
     editingEvent ? getTagIds(editingEvent.tags) : []
   );
   const [showValidation, setShowValidation] = useState(false);
+
+  // Sincronizar estado quando editingEvent muda
+  useEffect(() => {
+    if (isOpen) {
+      if (editingEvent) {
+        setTitle(editingEvent.title);
+        setDescription(editingEvent.description || '');
+        setTime(editingEvent.time || '');
+        setDuration(editingEvent.duration?.toString() || '60');
+        setIsAllDay(editingEvent.isAllDay || false);
+        setSelectedTags(getTagIds(editingEvent.tags));
+      } else {
+        // Novo evento - limpar campos
+        setTitle('');
+        setDescription('');
+        setTime('');
+        setDuration('60');
+        setIsAllDay(false);
+        setSelectedTags([]);
+      }
+      setShowValidation(false);
+    }
+  }, [editingEvent, isOpen]);
 
   const isValid = title.trim().length > 0;
 

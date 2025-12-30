@@ -133,6 +133,9 @@ export const TagManager: React.FC<TagManagerProps> = ({
   useEffect(() => {
     if (isOpen) {
       setShowNameError(false);
+    } else {
+      // Limpar estado quando modal fecha
+      handleCancelEdit();
     }
   }, [isOpen]);
 
