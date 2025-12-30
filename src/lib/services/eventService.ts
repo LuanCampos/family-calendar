@@ -14,7 +14,7 @@ export const eventService = {
    */
   getEvents: async (familyId: string, startDate?: string, endDate?: string) => {
     let query = supabase
-      .from('events')
+      .from('event')
       .select('*')
       .eq('family_id', familyId)
       .is('deleted_at', null);
@@ -35,12 +35,12 @@ export const eventService = {
   getEvent: async (eventId: string) => {
     const [eventRes, tagsRes] = await Promise.all([
       supabase
-        .from('events')
+        .from('event')
         .select('*')
         .eq('id', eventId)
         .single(),
       supabase
-        .from('event_tags')
+        .from('event_tag')
         .select('tag_id')
         .eq('event_id', eventId),
     ]);
@@ -63,7 +63,7 @@ export const eventService = {
     const { tags, ...eventData } = input;
 
     const response = await supabase
-      .from('events')
+      .from('event')
       .insert({
         family_id: familyId,
         created_by: userId,
@@ -82,12 +82,12 @@ export const eventService = {
       }));
 
       const tagRes = await supabase
-        .from('event_tags')
+        .from('event_tag')
         .insert(tagInserts);
 
       if (tagRes.error) {
         // Rollback event creation if tag insertion fails
-        await supabase.from('events').delete().eq('id', response.data.id);
+        await supabase.from('event').delete().eq('id', response.data.id);
         return tagRes;
       }
     }
@@ -103,7 +103,7 @@ export const eventService = {
 
     // Update event fields
     const response = await supabase
-      .from('events')
+      .from('event')
       .update(eventData)
       .eq('id', eventId)
       .select()
@@ -114,7 +114,7 @@ export const eventService = {
     // Update tags if provided
     if (tags !== undefined) {
       // Delete existing tags
-      await supabase.from('event_tags').delete().eq('event_id', eventId);
+      await supabase.from('event_tag').delete().eq('event_id', eventId);
 
       // Insert new tags
       if (tags.length > 0) {
@@ -124,7 +124,7 @@ export const eventService = {
         }));
 
         const tagRes = await supabase
-          .from('event_tags')
+          .from('event_tag')
           .insert(tagInserts);
 
         if (tagRes.error) return tagRes;
@@ -139,7 +139,7 @@ export const eventService = {
    */
   deleteEvent: async (eventId: string) => {
     return supabase
-      .from('events')
+      .from('event')
       .update({ deleted_at: new Date().toISOString() })
       .eq('id', eventId);
   },
@@ -149,10 +149,10 @@ export const eventService = {
    */
   permanentlyDeleteEvent: async (eventId: string) => {
     // First delete all tags
-    await supabase.from('event_tags').delete().eq('event_id', eventId);
+    await supabase.from('event_tag').delete().eq('event_id', eventId);
 
     // Then delete the event
-    return supabase.from('events').delete().eq('id', eventId);
+    return supabase.from('event').delete().eq('id', eventId);
   },
 
   // --- Tag Definitions ---
@@ -162,7 +162,7 @@ export const eventService = {
    */
   getEventTags: async (familyId: string) => {
     return supabase
-      .from('tag_definitions')
+      .from('tag_definition')
       .select('*')
       .eq('family_id', familyId)
       .order('name', { ascending: true });
@@ -173,7 +173,7 @@ export const eventService = {
    */
   createEventTag: async (familyId: string, input: EventTagInput, userId: string) => {
     return supabase
-      .from('tag_definitions')
+      .from('tag_definition')
       .insert({
         family_id: familyId,
         created_by: userId,
@@ -189,7 +189,7 @@ export const eventService = {
    */
   updateEventTag: async (tagId: string, input: Partial<EventTagInput>) => {
     return supabase
-      .from('tag_definitions')
+      .from('tag_definition')
       .update(input)
       .eq('id', tagId)
       .select()
@@ -201,10 +201,10 @@ export const eventService = {
    */
   deleteEventTag: async (tagId: string) => {
     // First delete all event_tag associations
-    await supabase.from('event_tags').delete().eq('tag_id', tagId);
+    await supabase.from('event_tag').delete().eq('tag_id', tagId);
 
     // Then delete the tag definition
-    return supabase.from('tag_definitions').delete().eq('id', tagId);
+    return supabase.from('tag_definition').delete().eq('id', tagId);
   },
 
   // --- Realtime Subscriptions ---
@@ -214,13 +214,13 @@ export const eventService = {
    */
   subscribeToEvents: (familyId: string, callback: (event: SupabaseChannel) => void) => {
     return supabase
-      .channel(`events:${familyId}`)
+      .channel(`event:${familyId}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'events',
+          table: 'event',
           filter: `family_id=eq.${familyId}`,
         },
         callback
@@ -233,13 +233,13 @@ export const eventService = {
    */
   subscribeToTags: (familyId: string, callback: (event: SupabaseChannel) => void) => {
     return supabase
-      .channel(`tags:${familyId}`)
+      .channel(`tag_definition:${familyId}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'tag_definitions',
+          table: 'tag_definition',
           filter: `family_id=eq.${familyId}`,
         },
         callback
@@ -267,7 +267,7 @@ export const eventService = {
 
       // Create parent event with the recurrence rule
       const response = await supabase
-        .from('events')
+        .from('event')
         .insert({
           family_id: familyId,
           created_by: userId,
@@ -301,7 +301,7 @@ export const eventService = {
         }));
 
         const tagRes = await supabase
-          .from('event_tags')
+          .from('event_tag')
           .insert(tagInserts);
 
         if (tagRes.error) {
