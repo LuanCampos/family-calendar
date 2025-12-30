@@ -50,13 +50,13 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
   ];
 
   return (
-    <div className="flex-1 overflow-auto bg-background p-2 sm:p-3 md:p-2 lg:p-2.5" role="main">
+    <div className="flex-1 overflow-auto bg-background p-1 sm:p-2 md:p-2 lg:p-2.5 h-full" role="main">
       {/* Weekday headers - responsive text size */}
-      <div className="grid grid-cols-7 gap-1 sm:gap-2 md:gap-1.5 mb-0.5 sm:mb-1 md:mb-0.5" role="row">
+      <div className="grid grid-cols-7 gap-0.5 sm:gap-1 md:gap-1.5 mb-0.5 sm:mb-1" role="row">
         {weekDays.map((day) => (
           <div
             key={day}
-            className="text-center font-semibold text-xs sm:text-sm text-muted-foreground py-1 sm:py-2"
+            className="text-center font-semibold text-xs sm:text-sm text-muted-foreground py-0.5 sm:py-1"
             role="columnheader"
             aria-label={day}
           >
@@ -65,8 +65,8 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
         ))}
       </div>
 
-      {/* Calendar grid - Responsive row heights */}
-      <div className="grid grid-cols-7 gap-1 sm:gap-2 md:gap-1.5 auto-rows-[50px] sm:auto-rows-[70px] md:auto-rows-[85px] lg:auto-rows-[105px]" role="grid">
+      {/* Calendar grid - Responsive row heights, auto-fill remaining space */}
+      <div className="grid grid-cols-7 gap-0.5 sm:gap-1 md:gap-1.5 lg:gap-2 auto-rows-fr" role="grid">
         {daysInCalendar.map((day) => {
           const dateStr = format(day, 'yyyy-MM-dd');
           const dayEvents = eventsByDate[dateStr] || [];
@@ -93,18 +93,19 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
               }}
               aria-label={`${dayLabel}${dayEvents.length > 0 ? `, ${dayEvents.length} ${dayEvents.length === 1 ? 'event' : 'events'}` : ''}`}
               className={cn(
-                'rounded border md:rounded-lg transition-all cursor-pointer flex flex-col overflow-hidden focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1',
+                'rounded text-xs sm:text-sm border border-border transition-all cursor-pointer flex flex-col overflow-hidden focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1',
                 'hover:shadow-md hover:border-primary hover:scale-[1.02] md:hover:scale-[1.01]',
                 !isCurrentMonth && 'bg-muted/30 opacity-50',
                 isCurrentMonth && 'bg-card',
                 isTodayDate && 'border-primary bg-primary/5 shadow-sm md:shadow-md',
-                isSelected && 'ring-2 ring-primary'
+                isSelected && 'ring-2 ring-primary',
+                'min-h-[100px] sm:min-h-[100px] md:min-h-[80px] lg:min-h-[100px]'
               )}
             >
               {/* Day number - Responsive font size */}
               <div
                 className={cn(
-                  'px-1 sm:px-2 md:px-1.5 py-1 md:py-1.5 font-semibold text-xs sm:text-sm flex items-center justify-between flex-shrink-0',
+                  'px-0.5 sm:px-1 md:px-1.5 py-0.5 sm:py-1 font-semibold text-xs sm:text-sm flex items-center justify-between flex-shrink-0',
                   !isCurrentMonth && 'text-muted-foreground',
                   isCurrentMonth && isTodayDate && 'bg-primary/10 text-primary'
                 )}
@@ -114,8 +115,8 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                 </span>
               </div>
 
-              {/* Events - Responsive with overflow handling */}
-              <div className="flex-1 px-1 md:px-1.5 overflow-hidden flex flex-col gap-0.5 md:gap-0.5" role="list">
+              {/* Events - Responsive with overflow handling, flex to fill space */}
+              <div className="flex-1 px-0.5 sm:px-1 md:px-1.5 overflow-hidden flex flex-col gap-0.5" role="list">
                 {dayEvents.length > 0 ? (
                   <>
                     {dayEvents.slice(0, 2).map((event) => {
@@ -131,8 +132,8 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                           key={event.id}
                           role="listitem"
                           className={cn(
-                            'text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded truncate font-medium',
-                            'transition-opacity'
+                            'text-xs px-1 sm:px-1.5 py-0.5 rounded truncate font-medium',
+                            'transition-opacity hover:opacity-90 cursor-pointer'
                           )}
                           style={{
                             backgroundColor: tagColor,
@@ -140,6 +141,10 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                           }}
                           title={event.title}
                           aria-label={`${event.title}${event.time ? ` at ${event.time}` : ''}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEventClick?.(event);
+                          }}
                         >
                           {event.isAllDay ? (
                             <>📅 {event.title}</>

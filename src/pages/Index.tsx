@@ -21,7 +21,7 @@ const CalendarContent = () => {
   }
 
   return (
-    <div className="h-screen bg-background flex flex-col">
+    <div className="h-screen w-screen bg-background flex flex-col overflow-hidden">
       <CalendarView
         userEmail={user?.email}
         onTagManager={() => setIsTagManagerOpen(true)}

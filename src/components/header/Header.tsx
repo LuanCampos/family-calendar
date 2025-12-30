@@ -8,6 +8,7 @@ import {
   Settings,
   Filter,
   X,
+  CalendarDays,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -86,14 +87,14 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="bg-card border-b border-border" role="banner">
-      <div className="px-4 sm:px-6 md:px-4 py-3 md:py-2.5">
-        {/* Single row header */}
-        <div className="flex items-center justify-between gap-3 sm:gap-6 md:gap-4">
+      <div className="px-2 sm:px-4 md:px-4 py-2 md:py-2.5">
+        {/* Mobile: Single row when space allows, Desktop: Single row */}
+        <div className="flex flex-row items-center justify-between gap-1 sm:gap-3 md:gap-4">
           {/* Left: Icon + Month/Year (Main focus) */}
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+          <div className="flex items-center gap-1 sm:gap-3 min-w-0 flex-1">
             {/* Calendar icon */}
-            <div className="p-2 rounded-lg bg-primary/10 flex-shrink-0 flex items-center justify-center" aria-hidden="true">
-              <CalendarIcon className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+            <div className="p-1 sm:p-2 rounded-lg bg-primary/10 flex-shrink-0 flex items-center justify-center" aria-hidden="true">
+              <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-primary" />
             </div>
 
             {/* Month/Year selector */}
@@ -101,7 +102,7 @@ export const Header: React.FC<HeaderProps> = ({
               <PopoverTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="text-base sm:text-lg font-bold capitalize truncate border border-transparent hover:shadow-md hover:border-primary hover:scale-[1.02] px-2 sm:px-3 h-auto transition-all"
+                  className="text-xs sm:text-base md:text-lg font-bold capitalize truncate border border-transparent hover:shadow-md hover:border-primary hover:scale-[1.02] px-1 sm:px-2 md:px-3 h-auto transition-all"
                   title="Select month/year"
                   aria-expanded={isCalendarOpen}
                   aria-haspopup="dialog"
@@ -158,44 +159,46 @@ export const Header: React.FC<HeaderProps> = ({
             </Popover>
           </div>
 
-          {/* Middle: Navigation buttons (Previous/Today/Next) */}
-          <div className="flex items-center gap-1 flex-shrink-0" role="group" aria-label="Month navigation">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onPrevious}
-              aria-label="Previous month"
-              title="Previous month"
-              className="border border-transparent transition-all hover:shadow-md hover:border-primary hover:scale-[1.02]"
-            >
-              <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-            </Button>
+          {/* Middle & Right: Responsive action bar - compact on mobile */}
+          <div className="flex items-center gap-0 sm:gap-1 flex-nowrap justify-end flex-shrink-0" role="group" aria-label="Controls">
+            {/* Navigation buttons (Previous/Today/Next) */}
+            <div className="flex items-center gap-0 sm:gap-1 flex-shrink-0" role="group" aria-label="Month navigation">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onPrevious}
+                aria-label="Previous month"
+                title="Previous month"
+                className="hidden sm:inline-flex border border-transparent transition-all hover:shadow-md hover:border-primary hover:scale-[1.02] p-0.5 h-7 w-7 sm:h-auto sm:w-auto sm:px-2"
+              >
+                <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" aria-hidden="true" />
+              </Button>
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onToday}
-              className="text-xs font-medium transition-all hover:shadow-md hover:border-primary hover:scale-[1.02]"
-              aria-label="Go to today"
-              title={t('today')}
-            >
-              {t('today')}
-            </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onToday}
+                className="border border-transparent transition-all hover:shadow-md hover:border-primary hover:scale-[1.02] p-0.5 h-7 w-7 sm:h-auto sm:w-auto sm:px-2"
+                aria-label="Go to today"
+                title={t('today')}
+              >
+                <CalendarDays className="h-3 w-3 sm:h-4 sm:w-4" aria-hidden="true" />
+              </Button>
 
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onNext}
-              aria-label="Next month"
-              title="Next month"
-              className="border border-transparent transition-all hover:shadow-md hover:border-primary hover:scale-[1.02]"
-            >
-              <ChevronRight className="h-4 w-4" aria-hidden="true" />
-            </Button>
-          </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onNext}
+                aria-label="Next month"
+                title="Next month"
+                className="hidden sm:inline-flex border border-transparent transition-all hover:shadow-md hover:border-primary hover:scale-[1.02] p-0.5 h-7 w-7 sm:h-auto sm:w-auto sm:px-2"
+              >
+                <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" aria-hidden="true" />
+              </Button>
+            </div>
 
-          {/* Right: Action buttons (Filter + Tags + Settings) */}
-          <div className="flex items-center gap-1 flex-shrink-0" role="toolbar" aria-label="Actions">
+            {/* Action buttons (Filter + Tags + Settings) */}
+            <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0" role="toolbar" aria-label="Actions">
             {/* Filter button */}
             {availableTags && availableTags.length > 0 && (
               <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
@@ -205,11 +208,11 @@ export const Header: React.FC<HeaderProps> = ({
                     size="sm"
                     aria-label="Filter events by tags"
                     title={selectedFilterTags.length > 0 ? `Filtering by ${selectedFilterTags.length} tag(s)` : 'Filter events'}
-                    className="border border-transparent transition-all hover:shadow-md hover:border-primary hover:scale-[1.02]"
+                    className="border border-transparent transition-all hover:shadow-md hover:border-primary hover:scale-[1.02] p-0.5 h-7 w-7 sm:h-auto sm:w-auto sm:px-2"
                   >
-                    <Filter className="h-4 w-4" aria-hidden="true" />
+                    <Filter className="h-3 w-3 sm:h-4 sm:w-4" aria-hidden="true" />
                     {selectedFilterTags.length > 0 && (
-                      <span className="ml-1.5 text-xs font-semibold">{selectedFilterTags.length}</span>
+                      <span className="ml-0.5 sm:ml-1.5 text-xs font-semibold hidden sm:inline">{selectedFilterTags.length}</span>
                     )}
                   </Button>
                 </PopoverTrigger>
@@ -264,9 +267,9 @@ export const Header: React.FC<HeaderProps> = ({
                 size="sm"
                 aria-label="Manage tags"
                 title="Manage tags"
-                className="border border-transparent transition-all hover:shadow-md hover:border-primary hover:scale-[1.02]"
+                className="border border-transparent transition-all hover:shadow-md hover:border-primary hover:scale-[1.02] p-0.5 h-7 w-7 sm:h-auto sm:w-auto sm:px-2"
               >
-                <Tag className="h-4 w-4" aria-hidden="true" />
+                <Tag className="h-3 w-3 sm:h-4 sm:w-4" aria-hidden="true" />
               </Button>
             )}
 
@@ -278,11 +281,12 @@ export const Header: React.FC<HeaderProps> = ({
                 size="sm"
                 aria-label="Settings"
                 title="Settings"
-                className="border border-transparent transition-all hover:shadow-md hover:border-primary hover:scale-[1.02]"
+                className="border border-transparent transition-all hover:shadow-md hover:border-primary hover:scale-[1.02] p-0.5 h-7 w-7 sm:h-auto sm:w-auto sm:px-2"
               >
-                <Settings className="h-4 w-4" aria-hidden="true" />
+                <Settings className="h-3 w-3 sm:h-4 sm:w-4" aria-hidden="true" />
               </Button>
             )}
+            </div>
           </div>
         </div>
       </div>

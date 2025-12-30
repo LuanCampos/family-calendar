@@ -21,9 +21,11 @@ const App = () => (
             <FamilyProvider>
               <CalendarProvider>
                 <TooltipProvider>
-                  <Toaster />
-                  <Sonner />
-                  <Index />
+                  <div className="h-screen w-screen overflow-hidden">
+                    <Toaster />
+                    <Sonner />
+                    <Index />
+                  </div>
                 </TooltipProvider>
               </CalendarProvider>
             </FamilyProvider>

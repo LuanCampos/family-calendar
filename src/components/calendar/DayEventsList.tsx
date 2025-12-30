@@ -60,14 +60,14 @@ export const DayEventsList: React.FC<DayEventsListProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] sm:max-w-md max-h-[90vh] flex flex-col gap-0 p-0 rounded-lg sm:rounded-xl">
-        <DialogHeader className="border-b px-4 sm:px-5 pt-3 sm:pt-4 pb-2.5 sm:pb-3">
-          <DialogTitle className="text-base sm:text-lg font-bold">
+      <DialogContent className="w-[95vw] sm:w-[90vw] sm:max-w-md max-h-[95vh] sm:max-h-[90vh] flex flex-col gap-0 p-0 rounded-lg sm:rounded-xl overflow-hidden">
+        <DialogHeader className="border-b px-3 sm:px-4 pt-2.5 sm:pt-3 pb-2 sm:pb-2.5 flex-shrink-0">
+          <DialogTitle className="text-sm sm:text-base font-bold">
             {displayDate}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto space-y-2 sm:space-y-2.5 p-3 sm:p-4">
+        <div className="flex-1 overflow-y-auto space-y-1.5 sm:space-y-2 p-2.5 sm:p-3 min-h-0">
           {sortedEvents.length === 0 ? (
             <div className="border border-dashed border-border rounded-lg p-4 sm:p-5 bg-muted/20 text-center">
               <p className="text-xs sm:text-sm text-muted-foreground mb-2">

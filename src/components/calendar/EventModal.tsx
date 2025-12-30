@@ -158,12 +158,12 @@ export const EventModal: React.FC<EventModalProps> = ({
       </AlertDialog>
 
       <Dialog open={isOpen} onOpenChange={handleClose}>
-        <DialogContent className="w-[100vw] sm:max-w-lg max-h-[100vh] overflow-y-auto rounded-lg sm:rounded-xl shadow-lg flex flex-col gap-0 p-0">
-        <DialogHeader className="border-b px-4 sm:px-5 pt-3 sm:pt-4 pb-2.5 sm:pb-3">
-          <DialogTitle className="text-lg sm:text-xl font-bold">
+        <DialogContent className="w-[95vw] sm:w-[90vw] md:w-full sm:max-w-lg max-h-[95vh] sm:max-h-[90vh] rounded-lg sm:rounded-xl shadow-lg flex flex-col gap-0 p-0 overflow-hidden">
+        <DialogHeader className="border-b px-3 sm:px-4 pt-2.5 sm:pt-3 pb-2 sm:pb-2.5 flex-shrink-0">
+          <DialogTitle className="text-base sm:text-lg font-bold">
             {editingEvent ? t('editEvent') : t('newEvent')}
           </DialogTitle>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1.5">
+          <p className="text-xs text-muted-foreground mt-1">
             {(() => {
               const date = new Date(selectedDate);
               const dayOfWeek = t(`day-${date.getDay()}` as any);
@@ -173,7 +173,7 @@ export const EventModal: React.FC<EventModalProps> = ({
           </p>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto space-y-2.5 sm:space-y-3 p-3 sm:p-4">
+        <div className="flex-1 overflow-y-auto space-y-2 sm:space-y-2.5 p-2.5 sm:p-3 min-h-0">
           {/* Title field */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
@@ -339,7 +339,7 @@ export const EventModal: React.FC<EventModalProps> = ({
         </div>
 
         {/* Footer buttons */}
-        <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 justify-between pt-2 sm:pt-2.5 border-t px-4 sm:px-5 py-2.5 sm:py-3">
+        <DialogFooter className="flex flex-col-reverse sm:flex-row gap-1.5 sm:gap-2 justify-between border-t px-3 sm:px-4 py-2 sm:py-2.5 flex-shrink-0">
           <Button
             variant="destructive"
             size="sm"

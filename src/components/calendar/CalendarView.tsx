@@ -44,6 +44,34 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     setCurrentDate,
   } = useCalendar();
 
+  // Swipe gesture handling
+  const [touchStart, setTouchStart] = React.useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = React.useState<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    setTouchEnd(e.changedTouches[0].clientX);
+    handleSwipe();
+  };
+
+  const handleSwipe = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe) {
+      goToNextMonth();
+    }
+    if (isRightSwipe) {
+      goToPreviousMonth();
+    }
+  };
+
   const startDate = format(startOfMonth(currentDate), 'yyyy-MM-dd');
   const endDate = format(endOfMonth(currentDate), 'yyyy-MM-dd');
 
@@ -127,7 +155,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const selectedDateEvents = selectedDate ? filteredEvents.filter(e => e.date === selectedDate) : [];
 
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div 
+      className="flex flex-col h-full bg-background overflow-hidden"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       <Header
         currentDate={currentDate}
         onPrevious={goToPreviousMonth}
@@ -144,7 +176,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         onClearFilters={clearFilters}
       />
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto min-h-0">
         <CalendarGrid
           currentDate={currentDate}
           events={filteredEvents}
