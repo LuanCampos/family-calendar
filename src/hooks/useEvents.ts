@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { storageAdapter } from '@/lib/adapters/storageAdapter';
 import { useFamily } from '@/contexts/FamilyContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -15,6 +15,7 @@ export const useEvents = (startDate?: string, endDate?: string) => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const cacheRef = useRef<Map<string, Event[]>>(new Map());
 
   // Load events
   const loadEvents = useCallback(async () => {
@@ -24,8 +25,18 @@ export const useEvents = (startDate?: string, endDate?: string) => {
     setError(null);
 
     try {
+      const key = `${currentFamilyId}:${startDate || ''}:${endDate || ''}`;
+      if (cacheRef.current.has(key)) {
+        const cached = cacheRef.current.get(key)!;
+        setEvents(cached);
+        logger.debug('events.cache.hit', { key, count: cached.length });
+      } else {
+        logger.debug('events.cache.miss', { key });
+      }
+
       const data = await storageAdapter.getEvents(currentFamilyId, startDate, endDate);
       setEvents(data);
+      cacheRef.current.set(key, data);
       logger.info('events.loaded', { count: data.length });
     } catch (err) {
       logger.error('events.load.error', { error: err });
@@ -64,7 +75,12 @@ export const useEvents = (startDate?: string, endDate?: string) => {
           if (response.data) {
             // For recurring events, we store only the parent
             // Instances will be generated on demand when fetching events
-            setEvents(prev => [...prev, response.data]);
+            setEvents(prev => {
+              const next = [...prev, response.data!];
+              const key = `${currentFamilyId}:${startDate || ''}:${endDate || ''}`;
+              cacheRef.current.set(key, next);
+              return next;
+            });
             logger.info('event.recurring.created', { 
               parentId: response.data.id
             });
@@ -82,7 +98,12 @@ export const useEvents = (startDate?: string, endDate?: string) => {
           logger.debug('useEvents.storageAdapter.createEvent.result', { response });
 
           if (response.data) {
-            setEvents(prev => [...prev, response.data]);
+            setEvents(prev => {
+              const next = [...prev, response.data!];
+              const key = `${currentFamilyId}:${startDate || ''}:${endDate || ''}`;
+              cacheRef.current.set(key, next);
+              return next;
+            });
             logger.info('event.created', { eventId: response.data.id });
           }
 
@@ -109,9 +130,12 @@ export const useEvents = (startDate?: string, endDate?: string) => {
         const response = await storageAdapter.updateEvent(eventId, input);
 
         if (response.data) {
-          setEvents(prev =>
-            prev.map(e => (e.id === eventId ? response.data : e))
-          );
+          setEvents(prev => {
+            const next = prev.map(e => (e.id === eventId ? response.data! : e));
+            const key = `${currentFamilyId || ''}:${startDate || ''}:${endDate || ''}`;
+            if (currentFamilyId) cacheRef.current.set(key, next);
+            return next;
+          });
           logger.info('event.updated', { eventId });
         }
 
@@ -142,7 +166,12 @@ export const useEvents = (startDate?: string, endDate?: string) => {
         const response = await storageAdapter.deleteEvent(eventId, currentFamilyId);
 
         if (!response.error) {
-          setEvents(prev => prev.filter(e => e.id !== eventId));
+          setEvents(prev => {
+            const next = prev.filter(e => e.id !== eventId);
+            const key = `${currentFamilyId}:${startDate || ''}:${endDate || ''}`;
+            cacheRef.current.set(key, next);
+            return next;
+          });
           logger.info('event.deleted', { eventId });
         } else {
           logger.error('event.delete.error', { error: response.error });

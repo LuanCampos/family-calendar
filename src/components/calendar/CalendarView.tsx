@@ -122,7 +122,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const startDate = format(startOfMonth(currentDate), 'yyyy-MM-dd');
   const endDate = format(endOfMonth(currentDate), 'yyyy-MM-dd');
 
-  const { events, createEvent: createNewEvent, updateEvent: updateExistingEvent, deleteEvent: deleteExistingEvent } = useEvents(startDate, endDate);
+  const { events, createEvent: createNewEvent, updateEvent: updateExistingEvent, deleteEvent: deleteExistingEvent, reloadEvents } = useEvents(startDate, endDate);
   const { tags: loadedTags } = useEventTags();
   
   // Use tags from props if available, otherwise use loaded tags
@@ -166,6 +166,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           return;
         }
         toast.success(t('eventUpdated'));
+        // Ensure UI reflects latest tag colors and expansions
+        await reloadEvents();
       } else {
         const result = await createNewEvent(input);
         if (result.error) {
@@ -173,6 +175,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           return;
         }
         toast.success(t('eventCreated'));
+        // Refresh view to apply tag color mapping
+        await reloadEvents();
       }
       setIsModalOpen(false);
     } catch (error) {

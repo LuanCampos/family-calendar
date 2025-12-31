@@ -51,6 +51,7 @@ export const EventModal: React.FC<EventModalProps> = ({
   availableTags,
 }) => {
   const { t } = useLanguage();
+  const [date, setDate] = useState<string>(editingEvent?.date || selectedDate);
   const [title, setTitle] = useState(editingEvent?.title || '');
   const [description, setDescription] = useState(editingEvent?.description || '');
   const [time, setTime] = useState(editingEvent?.time || '');
@@ -69,6 +70,7 @@ export const EventModal: React.FC<EventModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       if (editingEvent) {
+        setDate(editingEvent.date);
         setTitle(editingEvent.title);
         setDescription(editingEvent.description || '');
         setTime(editingEvent.time || '');
@@ -79,6 +81,7 @@ export const EventModal: React.FC<EventModalProps> = ({
         setRecurrenceRule(editingEvent.recurrenceRule || null);
       } else {
         // Novo evento - limpar campos
+        setDate(selectedDate);
         setTitle('');
         setDescription('');
         setTime('');
@@ -102,7 +105,7 @@ export const EventModal: React.FC<EventModalProps> = ({
     const input: EventInput = {
       title: title.trim(),
       description: description.trim() || undefined,
-      date: selectedDate,
+      date,
       isAllDay,
       time: isAllDay ? undefined : (time || undefined),
       duration: isAllDay ? undefined : (duration ? parseInt(duration) : undefined),
@@ -128,6 +131,7 @@ export const EventModal: React.FC<EventModalProps> = ({
   };
 
   const handleClose = () => {
+    setDate(selectedDate);
     setTitle('');
     setDescription('');
     setTime('');
@@ -166,10 +170,10 @@ export const EventModal: React.FC<EventModalProps> = ({
           </DialogTitle>
           <p className="text-sm text-muted-foreground mt-1.5 font-medium">
             {(() => {
-              const date = new Date(selectedDate);
-              const dayOfWeek = t(`day-${date.getDay()}` as any);
-              const month = t(`month-${date.getMonth()}` as any);
-              return `${dayOfWeek}, ${date.getDate()} de ${month} de ${date.getFullYear()}`;
+              const d = new Date(date);
+              const dayOfWeek = t(`day-${d.getDay()}` as any);
+              const month = t(`month-${d.getMonth()}` as any);
+              return `${dayOfWeek}, ${d.getDate()} de ${month} de ${d.getFullYear()}`;
             })()}
           </p>
         </DialogHeader>
