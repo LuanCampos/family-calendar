@@ -166,7 +166,7 @@ export const eventService = {
       // Ensure session is ready before UPDATE to prevent 403 RLS errors
       await userService.ensureSessionReady();
       
-      const { tags, duration, isAllDay, isRecurring, ...eventData } = input;
+      const { tags, ...eventData } = input;
 
       // Filter out undefined values and map field names
       const updatePayload: any = {};
@@ -179,16 +179,19 @@ export const eventService = {
             updatePayload.is_all_day = value;
           } else if (key === 'isRecurring') {
             updatePayload.is_recurring = value;
+          } else if (key === 'recurrenceRule') {
+            updatePayload.recurrence_rule = value;
           } else {
             updatePayload[key] = value;
           }
         }
       });
 
-      // Add explicitly passed boolean fields
-      if (isAllDay !== undefined) updatePayload.is_all_day = isAllDay;
-      if (isRecurring !== undefined) updatePayload.is_recurring = isRecurring;
-      if (duration !== undefined) updatePayload.duration_minutes = duration;
+      // If toggling to all-day, explicitly clear time and duration
+      if (input.isAllDay === true) {
+        updatePayload.time = null;
+        updatePayload.duration_minutes = null;
+      }
 
       // Update event fields
       const response = await supabase

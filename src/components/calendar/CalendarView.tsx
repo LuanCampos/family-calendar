@@ -46,28 +46,37 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
   // Swipe gesture handling with refs to avoid stale state
   const touchStartRef = React.useRef<number | null>(null);
+  const touchStartYRef = React.useRef<number | null>(null);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartRef.current = e.targetTouches[0].clientX;
+    touchStartYRef.current = e.targetTouches[0].clientY;
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    if (!touchStartRef.current) return;
+    if (!touchStartRef.current || !touchStartYRef.current) return;
     
-    const touchEnd = e.changedTouches[0].clientX;
-    const distance = touchStartRef.current - touchEnd;
-    const isLeftSwipe = distance > 50;
-    const isRightSwipe = distance < -50;
+    const touchEndX = e.changedTouches[0].clientX;
+    const touchEndY = e.changedTouches[0].clientY;
+    const distanceX = touchStartRef.current - touchEndX;
+    const distanceY = Math.abs(touchStartYRef.current - touchEndY);
+    
+    // Only trigger swipe if horizontal movement is dominant
+    if (distanceY < 50) {
+      const isLeftSwipe = distanceX > 75;
+      const isRightSwipe = distanceX < -75;
 
-    if (isLeftSwipe) {
-      goToNextMonth();
-    }
-    if (isRightSwipe) {
-      goToPreviousMonth();
+      if (isLeftSwipe) {
+        goToNextMonth();
+      }
+      if (isRightSwipe) {
+        goToPreviousMonth();
+      }
     }
 
     // Reset touch
     touchStartRef.current = null;
+    touchStartYRef.current = null;
   };
 
   const startDate = format(startOfMonth(currentDate), 'yyyy-MM-dd');
@@ -183,7 +192,6 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           selectedDate={selectedDate}
           onSelectDate={selectDate}
           onDateClick={handleDateClick}
-          onEventClick={handleEventClick}
         />
       </div>
 

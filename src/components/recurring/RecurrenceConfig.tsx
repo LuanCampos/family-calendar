@@ -98,7 +98,7 @@ export const RecurrenceConfig = ({
   if (!isRecurring) {
     return (
       <div className="flex items-center space-x-2 p-2 rounded-lg hover:bg-accent/50 transition-colors cursor-pointer group"
-           onClick={handleToggleRecurrence}>
+           onClick={disabled ? undefined : handleToggleRecurrence}>
         <Checkbox
           id="is-recurring"
           checked={isRecurring}

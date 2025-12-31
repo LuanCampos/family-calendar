@@ -5,6 +5,7 @@ import { CalendarView } from '@/components/calendar';
 import { TagManager } from '@/components/tags';
 import { SettingsPanel } from '@/components/settings';
 import { FamilySetup } from '@/components/family';
+import { OnlineStatusBar } from '@/components/common';
 import { useEventTags } from '@/hooks/useEventTags';
 import { useOnline } from '@/contexts/OnlineContext';
 
@@ -21,7 +22,7 @@ const CalendarContent = () => {
   }
 
   return (
-    <div className="h-screen w-screen bg-background flex flex-col overflow-hidden">
+    <div className="h-screen w-screen bg-gradient-to-br from-background via-background to-muted/20 flex flex-col overflow-hidden">
       <CalendarView
         userEmail={user?.email}
         onTagManager={() => setIsTagManagerOpen(true)}
@@ -31,6 +32,9 @@ const CalendarContent = () => {
         isSyncing={isSyncing}
         syncProgress={syncProgress}
       />
+
+      {/* Online Status Bar - sempre visível */}
+      <OnlineStatusBar />
 
       {/* Modals */}
       <TagManager

@@ -288,6 +288,12 @@ export const eventAdapter = {
         logger.info('event.update.offline', { eventId });
 
         const updated = { ...event, ...input };
+        // If toggling to all-day, clear time and duration locally
+        if (input.isAllDay === true) {
+          delete (updated as any).time;
+          delete (updated as any).duration;
+          (updated as any).isAllDay = true;
+        }
         await offlineAdapter.put('events', updated);
         
         // Only sync if it's an online family temporarily offline
@@ -312,6 +318,11 @@ export const eventAdapter = {
         logger.warn('event.update.session.not.ready', { error: sessionError });
         // Fallback to offline with pending sync
         const updated = { ...event, ...input };
+        if (input.isAllDay === true) {
+          delete (updated as any).time;
+          delete (updated as any).duration;
+          (updated as any).isAllDay = true;
+        }
         // Ensure familyId is preserved
         if (!updated.familyId) {
           updated.familyId = event.familyId;
@@ -338,6 +349,11 @@ export const eventAdapter = {
         }
 
         const updated = { ...event, ...input };
+        if (input.isAllDay === true) {
+          delete (updated as any).time;
+          delete (updated as any).duration;
+          (updated as any).isAllDay = true;
+        }
         // Ensure familyId is preserved
         if (!updated.familyId) {
           updated.familyId = event.familyId;
@@ -371,6 +387,11 @@ export const eventAdapter = {
       }
 
       const updated = { ...event, ...input };
+      if (input.isAllDay === true) {
+        delete (updated as any).time;
+        delete (updated as any).duration;
+        (updated as any).isAllDay = true;
+      }
       await offlineAdapter.put('events', updated);
       await offlineAdapter.sync.add({
         type: 'event',

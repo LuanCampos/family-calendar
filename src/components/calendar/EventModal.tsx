@@ -158,12 +158,12 @@ export const EventModal: React.FC<EventModalProps> = ({
       </AlertDialog>
 
       <Dialog open={isOpen} onOpenChange={handleClose}>
-        <DialogContent className="w-[95vw] sm:w-[90vw] md:w-full sm:max-w-lg max-h-[95vh] sm:max-h-[90vh] rounded-lg sm:rounded-xl shadow-lg flex flex-col gap-0 p-0 overflow-hidden">
-        <DialogHeader className="border-b px-3 sm:px-4 pt-2.5 sm:pt-3 pb-2 sm:pb-2.5 flex-shrink-0">
-          <DialogTitle className="text-base sm:text-lg font-bold">
+        <DialogContent className="w-[96vw] sm:w-[90vw] md:w-full sm:max-w-lg max-h-[96vh] sm:max-h-[92vh] rounded-2xl sm:rounded-xl shadow-2xl flex flex-col gap-0 p-0 overflow-hidden">
+        <DialogHeader className="border-b bg-gradient-to-br from-card to-muted/30 px-4 sm:px-5 pt-4 sm:pt-4 pb-3 sm:pb-3 flex-shrink-0">
+          <DialogTitle className="text-lg font-semibold">
             {editingEvent ? t('editEvent') : t('newEvent')}
           </DialogTitle>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-sm text-muted-foreground mt-1.5 font-medium">
             {(() => {
               const date = new Date(selectedDate);
               const dayOfWeek = t(`day-${date.getDay()}` as any);
@@ -173,15 +173,15 @@ export const EventModal: React.FC<EventModalProps> = ({
           </p>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto space-y-2 sm:space-y-2.5 p-2.5 sm:p-3 min-h-0">
+        <div className="flex-1 overflow-y-auto space-y-3 sm:space-y-3 p-4 sm:p-5 min-h-0">
           {/* Title field */}
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="title" className="text-xs sm:text-sm font-semibold">
-                {t('eventTitle')} <span className="text-red-500">*</span>
+              <Label htmlFor="title" className="text-sm font-medium">
+                {t('eventTitle')} <span className="text-destructive">*</span>
               </Label>
               {isValid && (
-                <Check className="h-4 w-4 text-green-500" />
+                <Check className="h-5 w-5 text-green-600" />
               )}
             </div>
             <Input
@@ -190,19 +190,19 @@ export const EventModal: React.FC<EventModalProps> = ({
               onChange={(e) => setTitle(e.target.value)}
               placeholder={t('eventTitlePlaceholder')}
               autoFocus
-              className={`text-sm ${showValidation && !isValid ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+              className={`text-sm h-10 ${showValidation && !isValid ? 'border-destructive focus-visible:ring-destructive' : ''}`}
             />
             {showValidation && !isValid && (
-              <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
-                <AlertCircle className="h-3 w-3" />
+              <p className="text-sm text-destructive flex items-center gap-1.5 mt-1.5">
+                <AlertCircle className="h-4 w-4" />
                 {t('eventTitleRequired')}
               </p>
             )}
           </div>
 
           {/* Description field */}
-          <div className="space-y-1.5">
-            <Label htmlFor="description" className="text-xs sm:text-sm font-semibold">
+          <div className="space-y-2">
+            <Label htmlFor="description" className="text-sm font-medium">
               {t('eventDescription')}
             </Label>
             <Textarea
@@ -210,14 +210,15 @@ export const EventModal: React.FC<EventModalProps> = ({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder={t('eventDescriptionPlaceholder')}
-              className="min-h-16 sm:min-h-20 text-sm resize-none"
+              className="min-h-24 sm:min-h-28 text-sm resize-none"
             />
           </div>
 
           {/* All-day and Recurrence toggles */}
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             {/* All-day checkbox */}
-            <div className="flex items-center space-x-2 p-2 rounded-lg hover:bg-accent/50 transition-colors cursor-pointer group">
+            <div className="flex items-center space-x-2 p-2 rounded-lg hover:bg-accent/50 transition-colors cursor-pointer group"
+                 onClick={() => setIsAllDay(!isAllDay)}>
               <Checkbox
                 id="isAllDay"
                 checked={isAllDay}
@@ -237,13 +238,13 @@ export const EventModal: React.FC<EventModalProps> = ({
 
           {/* Time and Duration fields */}
           {!isAllDay && (
-            <div className="space-y-1.5">
-              <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* Start Time */}
-                <div className="space-y-1 p-2 rounded-lg border border-transparent bg-card shadow-sm hover:border-primary hover:shadow-md transition-all duration-200">
-                  <div className="flex items-center gap-1.5">
-                    <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary flex-shrink-0" />
-                    <Label htmlFor="time" className="text-xs sm:text-sm font-semibold">
+                <div className="space-y-2 p-3 rounded-xl border-2 border-border bg-card shadow-sm hover:border-primary hover:shadow-md transition-all duration-200">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-primary flex-shrink-0" />
+                    <Label htmlFor="time" className="text-sm font-medium">
                       {t('eventTime')}
                     </Label>
                   </div>
@@ -254,7 +255,7 @@ export const EventModal: React.FC<EventModalProps> = ({
                       value={time}
                       onChange={(e) => setTime(e.target.value)}
                       placeholder="HH:MM"
-                      className="text-xs sm:text-sm flex-1 font-mono"
+                      className="text-sm flex-1 font-mono h-9"
                     />
                     <div className="flex-shrink-0">
                       <TimePicker
@@ -267,10 +268,10 @@ export const EventModal: React.FC<EventModalProps> = ({
                 </div>
 
                 {/* Duration */}
-                <div className="space-y-1 p-2 rounded-lg border border-transparent bg-card shadow-sm hover:border-primary hover:shadow-md transition-all duration-200">
-                  <div className="flex items-center gap-1.5">
-                    <Timer className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary flex-shrink-0" />
-                    <Label htmlFor="duration" className="text-xs sm:text-sm font-semibold">
+                <div className="space-y-2 p-3 rounded-xl border-2 border-border bg-card shadow-sm hover:border-primary hover:shadow-md transition-all duration-200">
+                  <div className="flex items-center gap-2">
+                    <Timer className="h-4 w-4 text-primary flex-shrink-0" />
+                    <Label htmlFor="duration" className="text-sm font-medium">
                       {t('eventDuration')} (min)
                     </Label>
                   </div>
@@ -281,7 +282,7 @@ export const EventModal: React.FC<EventModalProps> = ({
                     step="15"
                     value={duration}
                     onChange={(e) => setDuration(e.target.value)}
-                    className="text-xs sm:text-sm"
+                    className="text-sm h-9"
                   />
                 </div>
               </div>
@@ -296,9 +297,9 @@ export const EventModal: React.FC<EventModalProps> = ({
 
           {/* Tags section */}
           {availableTags.length > 0 && (
-            <div className="space-y-1.5">
-              <Label className="text-xs sm:text-sm font-semibold">{t('tags')}</Label>
-              <div className="flex flex-wrap gap-1.5">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">{t('tags')}</Label>
+              <div className="flex flex-wrap gap-2">
                 {availableTags.map((tag) => (
                   <button
                     key={tag.id}
@@ -309,7 +310,7 @@ export const EventModal: React.FC<EventModalProps> = ({
                           : [...prev, tag.id]
                       );
                     }}
-                    className="px-3 py-1.5 sm:py-2 rounded-full border transition-all text-xs sm:text-sm font-medium whitespace-nowrap hover:shadow-md hover:scale-[1.05] cursor-pointer"
+                    className="px-3 py-2 rounded-full border-2 transition-all text-sm font-medium whitespace-nowrap hover:shadow-md hover:scale-[1.05] active:scale-95 cursor-pointer"
                     style={{
                       borderColor: selectedTags.includes(tag.id) ? tag.color : tag.color + '40',
                       backgroundColor: selectedTags.includes(tag.id) ? tag.color : tag.color + '15',
@@ -317,7 +318,7 @@ export const EventModal: React.FC<EventModalProps> = ({
                     }}
                     title={tag.name}
                   >
-                    {selectedTags.includes(tag.id) && <span className="mr-1.5">✓</span>}
+                    {selectedTags.includes(tag.id) && <span className="mr-2">✓</span>}
                     {tag.name}
                   </button>
                 ))}
@@ -327,8 +328,8 @@ export const EventModal: React.FC<EventModalProps> = ({
 
           {/* No tags message */}
           {availableTags.length === 0 && (
-            <div className="border border-dashed border-border rounded-lg p-3 bg-muted/20">
-              <p className="text-xs sm:text-sm text-muted-foreground text-center mb-1">
+            <div className="border-2 border-dashed border-border rounded-xl p-4 bg-muted/30">
+              <p className="text-sm text-muted-foreground text-center mb-1.5">
                 {t('noTags')}
               </p>
               <p className="text-xs text-muted-foreground text-center">
@@ -339,7 +340,7 @@ export const EventModal: React.FC<EventModalProps> = ({
         </div>
 
         {/* Footer buttons */}
-        <DialogFooter className="flex flex-col-reverse sm:flex-row gap-1.5 sm:gap-2 justify-between border-t px-3 sm:px-4 py-2 sm:py-2.5 flex-shrink-0">
+        <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-2 justify-between border-t px-4 sm:px-5 py-3 sm:py-3 flex-shrink-0 bg-gradient-to-br from-muted/30 to-card">
           <Button
             variant="destructive"
             size="sm"
@@ -347,9 +348,8 @@ export const EventModal: React.FC<EventModalProps> = ({
             className="gap-2 order-last sm:order-none"
             style={{ display: editingEvent && onDelete ? 'flex' : 'none' }}
           >
-            <Trash2 className="h-4 w-4" />
-            <span className="hidden sm:inline">{t('delete')}</span>
-            <span className="sm:hidden">{t('delete')}</span>
+            <Trash2 className="h-5 w-5 sm:h-4 sm:w-4" />
+            {t('delete')}
           </Button>
           
           <div className="flex gap-2 ml-auto w-full sm:w-auto">

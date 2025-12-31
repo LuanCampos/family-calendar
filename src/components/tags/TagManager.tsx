@@ -195,45 +195,44 @@ export const TagManager: React.FC<TagManagerProps> = ({
       </AlertDialog>
 
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="w-[95vw] sm:max-w-md max-h-[90vh] flex flex-col gap-0 p-0 rounded-lg sm:rounded-xl">
-        <DialogHeader className="border-b px-4 sm:px-5 pt-3 sm:pt-4 pb-2.5 sm:pb-3">
-          <DialogTitle className="text-base sm:text-lg font-bold">
+        <DialogContent className="w-[96vw] sm:max-w-md max-h-[96vh] flex flex-col gap-0 p-0 rounded-2xl sm:rounded-xl shadow-2xl">
+        <DialogHeader className="border-b bg-gradient-to-br from-card to-muted/30 px-4 sm:px-5 pt-4 sm:pt-4 pb-3 sm:pb-3">
+          <DialogTitle className="text-lg font-semibold">
             {t('manageTags')}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto space-y-2.5 sm:space-y-3 p-3 sm:p-4">
+        <div className="flex-1 overflow-y-auto space-y-3 sm:space-y-3 p-4 sm:p-5">
           {error && (
-            <div className="border border-destructive/50 rounded-lg p-2.5 sm:p-3 bg-destructive/10 flex items-start gap-2">
+            <div className="border-2 border-destructive/50 rounded-xl p-3 sm:p-3.5 bg-destructive/10 flex items-start gap-2.5">
               <AlertCircle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
-              <p className="text-xs sm:text-sm text-destructive">{error}</p>
+              <p className="text-sm text-destructive">{error}</p>
             </div>
           )}
           {success && (
-            <div className="border border-green-500/50 rounded-lg p-2.5 sm:p-3 bg-green-500/10 flex items-start gap-2">
+            <div className="border-2 border-green-500/50 rounded-xl p-3 sm:p-3.5 bg-green-500/10 flex items-start gap-2.5">
               <Check className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-              <p className="text-xs sm:text-sm text-green-600">{success}</p>
+              <p className="text-sm text-green-600">{success}</p>
             </div>
           )}
           
           {/* Create/Edit tag */}
-          <div className="space-y-2 sm:space-y-2.5 bg-muted/20 p-2.5 sm:p-3 rounded-lg">
+          <div className="space-y-3 sm:space-y-3 bg-muted/30 p-4 sm:p-4 rounded-xl border-2 border-border">
             {editingTag && (
-              <div className="flex items-center justify-between mb-1">
-                <p className="text-xs sm:text-sm font-semibold text-primary">{t('editingTag')}</p>
+              <div className="flex items-center justify-between mb-1.5">
+                <p className="text-sm font-medium text-primary">Editando tag</p>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={handleCancelEdit}
-                  className="h-7 text-xs"
                 >
                   {t('cancel')}
                 </Button>
               </div>
             )}
             <div>
-              <Label htmlFor="tagName" className="text-xs sm:text-sm font-semibold">
-                {t('tagName')} <span className="text-red-500">*</span>
+              <Label htmlFor="tagName" className="text-sm font-medium">
+                {t('tagName')} <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="tagName"
@@ -241,20 +240,20 @@ export const TagManager: React.FC<TagManagerProps> = ({
                 onChange={(e) => setNewTagName(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder={t('tagNamePlaceholder')}
-                className={`text-xs sm:text-sm mt-1 ${showNameError && !isNameValid ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                className={`text-sm mt-2 h-9 ${showNameError && !isNameValid ? 'border-destructive focus-visible:ring-destructive' : ''}`}
               />
               {showNameError && !isNameValid && (
-                <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
+                <p className="text-sm text-destructive mt-2 flex items-center gap-1.5">
+                  <AlertCircle className="h-4 w-4" />
                   {t('tagNameRequired')}
                 </p>
               )}
             </div>
             <div>
-              <Label htmlFor="tagColor" className="text-xs sm:text-sm font-semibold">
+              <Label htmlFor="tagColor" className="text-sm font-medium">
                 {t('tagColor')}
               </Label>
-              <div className="mt-2">
+              <div className="mt-2.5">
                 <ColorPicker
                   value={newTagColor}
                   onChange={(color) => setNewTagColor(color)}
@@ -266,16 +265,16 @@ export const TagManager: React.FC<TagManagerProps> = ({
               size="sm"
               onClick={handleCreateOrUpdateTag}
               disabled={isLoading || !isNameValid}
-              className="w-full text-xs sm:text-sm"
+              className="w-full"
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5 sm:mr-2 animate-spin" />
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   <span>{t('saving')}</span>
                 </>
               ) : (
                 <>
-                  <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+                  <Plus className="h-4 w-4 mr-2" />
                   <span>{editingTag ? t('updateTag') : t('createTag')}</span>
                 </>
               )}
@@ -283,11 +282,11 @@ export const TagManager: React.FC<TagManagerProps> = ({
           </div>
 
           {/* Existing tags */}
-          <div className="space-y-1.5">
-            <p className="text-xs sm:text-sm font-semibold text-muted-foreground px-1">{tags.length} {tags.length === 1 ? 'tag' : 'tags'}</p>
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-muted-foreground px-1">{tags.length} {tags.length === 1 ? 'tag' : 'tags'}</p>
             {tags.length === 0 ? (
-              <div className="border border-dashed border-border rounded-lg p-3 sm:p-4 bg-muted/20 text-center">
-                <p className="text-xs sm:text-sm text-muted-foreground mb-1">
+              <div className="border-2 border-dashed border-border rounded-xl p-5 sm:p-6 bg-muted/30 text-center">
+                <p className="text-sm text-muted-foreground mb-1.5">
                   {t('noTags')}
                 </p>
                 <p className="text-xs text-muted-foreground">
@@ -295,11 +294,11 @@ export const TagManager: React.FC<TagManagerProps> = ({
                 </p>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {tags.map(tag => (
                   <div key={tag.id} className="flex items-center gap-2">
                     <button
-                      className="px-3 py-1.5 sm:py-2 rounded-full border transition-all text-xs sm:text-sm font-medium whitespace-nowrap hover:shadow-md hover:scale-[1.05] cursor-pointer flex-1"
+                      className="px-3 py-2 rounded-full border-2 transition-all text-sm font-medium whitespace-nowrap hover:shadow-md hover:scale-[1.03] cursor-default flex-1"
                       style={{
                         borderColor: tag.color + '40',
                         backgroundColor: tag.color + '15',
@@ -314,7 +313,7 @@ export const TagManager: React.FC<TagManagerProps> = ({
                       variant="ghost"
                       size="sm"
                       onClick={() => handleEditTag(tag)}
-                      className="h-8 px-2 text-xs text-primary hover:text-primary hover:bg-primary/10 flex-shrink-0"
+                      className="h-9 w-9 p-0 text-primary hover:text-primary hover:bg-primary/10 flex-shrink-0"
                       title={t('editTag')}
                     >
                       <Pencil className="h-4 w-4" />
@@ -323,7 +322,7 @@ export const TagManager: React.FC<TagManagerProps> = ({
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDeleteTag(tag.id)}
-                      className="h-8 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
+                      className="h-9 w-9 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
                       title={t('deleteTag')}
                     >
                       <Trash2 className="h-4 w-4" />

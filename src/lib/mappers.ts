@@ -18,12 +18,15 @@ export const mapEventRow = (row: EventRow, tags: string[] = []): Event => ({
   date: row.date,
   time: row.time ?? undefined,
   duration: row.duration_minutes ?? undefined,
+  isAllDay: row.is_all_day ?? undefined,
   familyId: row.family_id,
   createdBy: '', // Events belong to family, not creator - RLS enforces access
   tags,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
   isPending: false,
+  isRecurring: row.is_recurring ?? undefined,
+  recurrenceRule: row.recurrence_rule ?? undefined,
 });
 
 /**

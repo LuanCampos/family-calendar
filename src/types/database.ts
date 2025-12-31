@@ -13,6 +13,9 @@ export interface EventRow {
   date: string; // YYYY-MM-DD
   time: string | null; // HH:mm
   duration_minutes: number | null;
+  is_all_day: boolean | null;
+  is_recurring: boolean | null;
+  recurrence_rule: any | null; // JSON field
   created_at: string;
   updated_at: string;
 }
