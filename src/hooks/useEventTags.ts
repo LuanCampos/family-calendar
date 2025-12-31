@@ -43,10 +43,10 @@ export const useEventTags = () => {
   // Create tag
   const createTag = useCallback(
     async (input: EventTagInput) => {
-      console.log('[useEventTags] createTag called:', { currentFamilyId, user: user?.id, input });
+      logger.debug('useEventTags.create.called', { currentFamilyId, user: user?.id, input });
       
       if (!currentFamilyId) {
-        console.error('[useEventTags] Missing currentFamilyId:', { currentFamilyId });
+        logger.error('useEventTags.create.missingFamilyId', { currentFamilyId });
         setError('Family not loaded');
         return { error: 'Family not loaded' };
       }
@@ -55,20 +55,17 @@ export const useEventTags = () => {
       const userId = user?.id || 'offline-user';
 
       try {
-        console.log('[useEventTags] Calling storageAdapter.createEventTag...');
+        logger.debug('useEventTags.storageAdapter.createEventTag.start');
         const response = await storageAdapter.createEventTag(
           currentFamilyId,
           input,
           userId
         );
-
-        console.log('[useEventTags] createTag response:', response);
+        logger.debug('useEventTags.storageAdapter.createEventTag.result', { response });
 
         if (response.data) {
-          console.log('[useEventTags] Adding tag to state:', response.data);
           setTags(prev => {
             const newTags = [...prev, response.data];
-            console.log('[useEventTags] New tags state:', newTags);
             return newTags;
           });
           logger.info('tag.created', { tagId: response.data.id });
@@ -81,7 +78,6 @@ export const useEventTags = () => {
 
         return response;
       } catch (err) {
-        console.error('[useEventTags] createTag exception:', err);
         logger.error('tag.create.exception', { error: err });
         setError('Failed to create tag');
         return { error: err };

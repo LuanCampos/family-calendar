@@ -13,6 +13,8 @@
 // ============================================================================
 // DEBUG FLAGS - Toggle for troubleshooting
 // ============================================================================
+// Master flag to enable debug logs (non-printing by default)
+export const DEBUG_ENABLED = false;
 // Set to true to log all API calls with timing information
 export const DEBUG_API_CALLS = false;
 
@@ -35,7 +37,7 @@ class Logger {
    * Log at debug level (development only)
    */
   debug(event: string, context?: Record<string, any>) {
-    if (!this.isDev) return;
+    if (!DEBUG_ENABLED) return;
     this.log('debug', event, context);
   }
 
@@ -43,7 +45,7 @@ class Logger {
    * Log at info level
    */
   info(event: string, context?: Record<string, any>) {
-    // Only log info in development
+    // Only record info in development
     if (!this.isDev) return;
     this.log('info', event, context);
   }

@@ -67,19 +67,18 @@ export const TagManager: React.FC<TagManagerProps> = ({
     try {
       if (editingTag) {
         // Update existing tag
-        console.log('Updating tag:', { id: editingTag.id, name: newTagName.trim(), color: newTagColor });
+        (async () => (await import('@/lib/logger')).logger.debug('tagManager.update.start', { id: editingTag.id, name: newTagName.trim(), color: newTagColor }))();
         const response = await onUpdateTag?.(editingTag.id, {
           name: newTagName.trim(),
           color: newTagColor,
         });
-
-        console.log('Tag update response:', response);
+        (async () => (await import('@/lib/logger')).logger.debug('tagManager.update.result', { response }))();
 
         if (response && response.error) {
-          console.error('Tag update error:', response.error);
+          (await import('@/lib/logger')).logger.error('tagManager.update.error', { error: response.error });
           setError(t('tagError'));
         } else if (response && response.data) {
-          console.log('Tag updated successfully:', response.data);
+          (await import('@/lib/logger')).logger.info('tagManager.update.success', { tagId: response.data.id });
           setNewTagName('');
           setNewTagColor('#3B82F6');
           setEditingTag(null);
@@ -88,24 +87,23 @@ export const TagManager: React.FC<TagManagerProps> = ({
           setSuccess(t('tagUpdated'));
           setTimeout(() => setSuccess(null), 3000);
         } else {
-          console.warn('Unexpected response format:', response);
+          (await import('@/lib/logger')).logger.warn('tagManager.update.unexpectedResponse', { response });
           setError(t('tagError'));
         }
       } else {
         // Create new tag
-        console.log('Creating tag:', { name: newTagName.trim(), color: newTagColor });
+        (await import('@/lib/logger')).logger.debug('tagManager.create.start', { name: newTagName.trim(), color: newTagColor });
         const response = await onCreateTag({
           name: newTagName.trim(),
           color: newTagColor,
         });
-
-        console.log('Tag creation response:', response);
+        (await import('@/lib/logger')).logger.debug('tagManager.create.result', { response });
 
         if (response && response.error) {
-          console.error('Tag creation error:', response.error);
+          (await import('@/lib/logger')).logger.error('tagManager.create.error', { error: response.error });
           setError(t('tagError'));
         } else if (response && response.data) {
-          console.log('Tag created successfully:', response.data);
+          (await import('@/lib/logger')).logger.info('tagManager.create.success', { tagId: response.data.id });
           setNewTagName('');
           setNewTagColor('#3B82F6');
           setError(null);
@@ -113,12 +111,12 @@ export const TagManager: React.FC<TagManagerProps> = ({
           setSuccess(t('tagCreated'));
           setTimeout(() => setSuccess(null), 3000);
         } else {
-          console.warn('Unexpected response format:', response);
+          (await import('@/lib/logger')).logger.warn('tagManager.create.unexpectedResponse', { response });
           setError(t('tagError'));
         }
       }
     } catch (err) {
-      console.error('Tag operation exception:', err);
+      (await import('@/lib/logger')).logger.error('tagManager.operation.exception', { error: err });
       setError(t('tagError'));
     } finally {
       setIsLoading(false);

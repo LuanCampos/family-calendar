@@ -27,6 +27,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
   const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 });
   const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
   const daysInCalendar = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
+  const weeksInCalendar = Math.ceil(daysInCalendar.length / 7);
 
   // Group events by date
   const eventsByDate = events.reduce((acc, event) => {
@@ -48,9 +49,9 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
   ];
 
   return (
-    <div className="flex-1 overflow-auto bg-background p-2 sm:p-3 md:p-4 h-full" role="main">
+    <div className="flex flex-col flex-1 bg-background p-2 sm:p-3 md:p-4 h-full overflow-hidden" role="main">
       {/* Weekday headers - responsive text size */}
-      <div className="grid grid-cols-7 gap-1 sm:gap-1.5 md:gap-2 mb-1.5 sm:mb-2" role="row">
+      <div className="grid grid-cols-7 gap-1 sm:gap-1.5 md:gap-2 mb-1.5 sm:mb-2 flex-none" role="row">
         {weekDays.map((day) => (
           <div
             key={day}
@@ -63,8 +64,12 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
         ))}
       </div>
 
-      {/* Calendar grid - Responsive row heights, auto-fill remaining space */}
-      <div className="grid grid-cols-7 gap-1 sm:gap-1.5 md:gap-2 auto-rows-fr" role="grid">
+      {/* Calendar grid - fills remaining space and adapts row height */}
+      <div
+        className="grid grid-cols-7 gap-1 sm:gap-1.5 md:gap-2 auto-rows-[minmax(0,1fr)] flex-1 min-h-0"
+        role="grid"
+        style={{ gridTemplateRows: `repeat(${weeksInCalendar}, minmax(0, 1fr))` }}
+      >
         {daysInCalendar.map((day) => {
           const dateStr = format(day, 'yyyy-MM-dd');
           const dayEvents = eventsByDate[dateStr] || [];
@@ -91,14 +96,13 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
               }}
               aria-label={`${dayLabel}${dayEvents.length > 0 ? `, ${dayEvents.length} ${dayEvents.length === 1 ? 'event' : 'events'}` : ''}`}
               className={cn(
-                'rounded-lg text-sm sm:text-sm border-2 transition-all cursor-pointer flex flex-col overflow-hidden',
+                'rounded-lg text-sm sm:text-sm border-2 transition-all cursor-pointer flex flex-col overflow-hidden h-full',
                 'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
                 'hover:shadow-lg hover:border-primary hover:scale-[1.03] active:scale-[0.98]',
                 !isCurrentMonth && 'bg-muted/40 opacity-60',
                 isCurrentMonth && 'bg-card shadow-sm',
                 isTodayDate && 'border-primary bg-primary/10 shadow-md ring-1 ring-primary/20',
-                isSelected && 'ring-2 ring-primary ring-offset-2 shadow-xl',
-                'h-[75px] sm:h-[85px] md:h-[80px] lg:h-[95px]'
+                isSelected && 'ring-2 ring-primary ring-offset-2 shadow-xl'
               )}
             >
               {/* Day number - Responsive font size */}

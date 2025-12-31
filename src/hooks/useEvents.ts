@@ -43,10 +43,10 @@ export const useEvents = (startDate?: string, endDate?: string) => {
   // Create event
   const createEvent = useCallback(
     async (input: EventInput) => {
-      console.log('[useEvents] createEvent called:', { currentFamilyId, user: user?.id, input });
+      logger.debug('useEvents.create.called', { currentFamilyId, user: user?.id, input });
       
       if (!currentFamilyId) {
-        console.error('[useEvents] Missing currentFamilyId:', { currentFamilyId });
+        logger.error('useEvents.create.missingFamilyId', { currentFamilyId });
         setError('Family not loaded');
         return { error: 'Family not loaded' };
       }
@@ -57,10 +57,9 @@ export const useEvents = (startDate?: string, endDate?: string) => {
       try {
         // Check if this is a recurring event
         if (input.isRecurring && input.recurrenceRule) {
-          console.log('[useEvents] Calling storageAdapter.createRecurringEvent...');
+          logger.debug('useEvents.storageAdapter.createRecurringEvent.start');
           const response = await storageAdapter.createRecurringEvent(currentFamilyId, input, userId);
-
-          console.log('[useEvents] createRecurringEvent response:', response);
+          logger.debug('useEvents.storageAdapter.createRecurringEvent.result', { response });
 
           if (response.data) {
             // For recurring events, we store only the parent
@@ -78,10 +77,9 @@ export const useEvents = (startDate?: string, endDate?: string) => {
 
           return response;
         } else {
-          console.log('[useEvents] Calling storageAdapter.createEvent...');
+          logger.debug('useEvents.storageAdapter.createEvent.start');
           const response = await storageAdapter.createEvent(currentFamilyId, input, userId);
-
-          console.log('[useEvents] createEvent response:', response);
+          logger.debug('useEvents.storageAdapter.createEvent.result', { response });
 
           if (response.data) {
             setEvents(prev => [...prev, response.data]);
@@ -96,7 +94,6 @@ export const useEvents = (startDate?: string, endDate?: string) => {
           return response;
         }
       } catch (err) {
-        console.error('[useEvents] createEvent exception:', err);
         logger.error('event.create.exception', { error: err });
         setError('Failed to create event');
         return { error: err };

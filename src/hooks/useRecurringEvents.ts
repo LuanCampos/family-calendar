@@ -20,7 +20,7 @@ export const useRecurringEvents = () => {
    */
   const createRecurringEvent = useCallback(
     async (input: EventInput) => {
-      console.log('[useRecurringEvents] createRecurringEvent called:', {
+      logger.debug('useRecurringEvents.create.called', {
         currentFamilyId,
         user: user?.id,
         input,
@@ -43,14 +43,13 @@ export const useRecurringEvents = () => {
         setLoading(true);
         setError(null);
 
-        console.log('[useRecurringEvents] Calling storageAdapter.createRecurringEvent...');
+        logger.debug('useRecurringEvents.storageAdapter.createRecurringEvent.start');
         const response = await storageAdapter.createRecurringEvent(
           currentFamilyId,
           input,
           userId
         );
-
-        console.log('[useRecurringEvents] createRecurringEvent response:', response);
+        logger.debug('useRecurringEvents.storageAdapter.createRecurringEvent.result', { response });
 
         if (response.data) {
           logger.info('event.recurring.created', {
@@ -65,7 +64,6 @@ export const useRecurringEvents = () => {
 
         return response;
       } catch (err) {
-        console.error('[useRecurringEvents] createRecurringEvent exception:', err);
         logger.error('event.recurring.create.exception', { error: err });
         setError('Failed to create recurring event');
         return { error: err };

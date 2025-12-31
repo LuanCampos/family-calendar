@@ -118,17 +118,17 @@ export const eventAdapter = {
     input: EventInput,
     userId: string
   ): Promise<{ data?: Event; error?: any }> => {
-    console.log('[eventAdapter] createEvent called:', { familyId, userId, input });
+    logger.debug('event.create.called', { familyId, userId, input });
     logger.debug('event.create.start', { familyId, title: input.title });
 
     try {
       const isOfflineFamily = offlineAdapter.isOfflineId(familyId);
       const isOffline = !navigator.onLine;
       
-      console.log('[eventAdapter] Connection status:', { isOfflineFamily, isOffline, navigator_onLine: navigator.onLine });
+      logger.debug('event.create.connection', { isOfflineFamily, isOffline, navigator_onLine: navigator.onLine });
 
       if (isOfflineFamily || isOffline) {
-        console.log('[eventAdapter] Using offline path');
+        logger.debug('event.create.path.offline');
         logger.info('event.create.offline', { familyId });
 
         const offlineId = offlineAdapter.generateOfflineId();
@@ -539,17 +539,17 @@ export const eventAdapter = {
     input: EventTagInput,
     userId: string
   ): Promise<{ data?: EventTag; error?: any }> => {
-    console.log('[eventAdapter] createEventTag called:', { familyId, userId, input });
+    logger.debug('tag.create.called', { familyId, userId, input });
     logger.debug('tag.create.start', { familyId, name: input.name });
 
     try {
       const isOfflineFamily = offlineAdapter.isOfflineId(familyId);
       
-      console.log('[eventAdapter] Tag creation - Connection status:', { isOfflineFamily, familyId });
+      logger.debug('tag.create.connection', { isOfflineFamily, familyId });
 
       // Offline families (with offlineId) always use offline storage
       if (isOfflineFamily) {
-        console.log('[eventAdapter] Using offline path for offline family');
+        logger.debug('tag.create.path.offline');
         logger.info('tag.create.offline-family', { familyId });
 
         const offlineId = offlineAdapter.generateOfflineId();

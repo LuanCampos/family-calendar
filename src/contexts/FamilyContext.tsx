@@ -127,7 +127,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setFamilies(offlineFamilies);
       }
     } catch (e) {
-      console.log('Error loading families, using offline only');
+      (await import('@/lib/logger')).logger.warn('families.refresh.error', { error: e });
       setFamilies(offlineFamilies);
     }
   }, [user, loadOfflineFamilies]);
@@ -158,7 +158,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setMembers(data);
       }
     } catch (e) {
-      console.log('Family tables not yet created');
+      (await import('@/lib/logger')).logger.warn('families.members.table.missing');
       setMembers([]);
     }
   }, [currentFamilyId, user?.id]);
@@ -189,7 +189,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const { data: myInvites, error } = await familyService.getInvitationsByEmailSimple(user.email);
 
       if (error) {
-        console.log('Error fetching invitations:', error);
+        (await import('@/lib/logger')).logger.warn('invitations.fetch.error', { error });
         setMyPendingInvitations([]);
         return;
       }
@@ -211,7 +211,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setMyPendingInvitations([]);
       }
     } catch (e) {
-      console.log('Error in refreshMyInvitations:', e);
+      (await import('@/lib/logger')).logger.error('invitations.refreshMy.error', { error: e });
       setMyPendingInvitations([]);
     }
   }, [user?.email]);
@@ -273,7 +273,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
       }
     } catch (e) {
-      console.log('User preferences table not yet created');
+      (await import('@/lib/logger')).logger.warn('user.preferences.table.missing');
     }
   }, [user]);
 
@@ -291,7 +291,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     try {
       await userService.updateCurrentFamily(user.id, familyId);
     } catch (e) {
-      console.log('User preferences table not yet created');
+      (await import('@/lib/logger')).logger.warn('user.preferences.table.missing');
     }
   }, [user]);
 
@@ -330,7 +330,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             allFamilies = [...cloudFamilies, ...offlineFamilies];
           }
         } catch (e) {
-          console.log('Error loading families, using offline only');
+          (await import('@/lib/logger')).logger.warn('families.init.load.error', { error: e });
         }
       }
       
@@ -367,7 +367,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             }
           }
         } catch (e) {
-          console.log('User preferences table not yet created');
+          (await import('@/lib/logger')).logger.warn('user.preferences.table.missing');
         }
         
         // Auto-select first family if user has families but no selection
@@ -439,7 +439,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           lastFamiliesLengthRef.current === families.length) {
         // We already tried to reload for this ID and family still not found
         // User was likely removed from this family - select another one if available
-        console.log('Family not found after reload, selecting another family:', currentFamilyId);
+        (await import('@/lib/logger')).logger.warn('family.missing.after.reload', { currentFamilyId });
         
         // Find remaining families to select from
         const remainingFamilies = families.filter(f => f.id !== currentFamilyId);
