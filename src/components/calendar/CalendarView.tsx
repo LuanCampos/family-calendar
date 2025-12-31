@@ -1,4 +1,5 @@
 import React from 'react';
+import { cn } from '@/lib/utils';
 import type { Event, EventInput, EventTag } from '@/types/calendar';
 import { enrichEventsWithTags } from '@/lib/utils/eventUtils';
 import { filterEventsByTags } from '@/lib/utils/filterUtils';
@@ -48,6 +49,29 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   // Swipe gesture handling with refs to avoid stale state
   const touchStartRef = React.useRef<number | null>(null);
   const touchStartYRef = React.useRef<number | null>(null);
+  const [monthAnimDir, setMonthAnimDir] = React.useState<'none' | 'left' | 'right'>('none');
+  const animatingRef = React.useRef(false);
+
+  // Haptic feedback helper, only vibrates when user activation is active
+  const canHaptic = () => {
+    try {
+      const ua = (navigator as any).userActivation;
+      const isActive = ua ? !!ua.isActive : true;
+      return isActive && document.visibilityState === 'visible' && document.hasFocus();
+    } catch {
+      return false;
+    }
+  };
+
+  const triggerHaptic = (duration = 10) => {
+    try {
+      if (!('vibrate' in navigator)) return;
+      if (!canHaptic()) return;
+      navigator.vibrate(duration);
+    } catch {
+      // ignore blocked vibrations
+    }
+  };
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartRef.current = e.targetTouches[0].clientX;
@@ -56,22 +80,37 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (!touchStartRef.current || !touchStartYRef.current) return;
-    
+    if (animatingRef.current) return; // prevent repeated triggers during animation
+
     const touchEndX = e.changedTouches[0].clientX;
     const touchEndY = e.changedTouches[0].clientY;
     const distanceX = touchStartRef.current - touchEndX;
     const distanceY = Math.abs(touchStartYRef.current - touchEndY);
-    
+
     // Only trigger swipe if horizontal movement is dominant
-    if (distanceY < 50) {
-      const isLeftSwipe = distanceX > 75;
-      const isRightSwipe = distanceX < -75;
+    if (distanceY < 60) {
+      const isLeftSwipe = distanceX > 40;
+      const isRightSwipe = distanceX < -40;
 
       if (isLeftSwipe) {
+        setMonthAnimDir('left');
+        animatingRef.current = true;
         goToNextMonth();
+        triggerHaptic(10);
+        setTimeout(() => {
+          animatingRef.current = false;
+          setMonthAnimDir('none');
+        }, 300);
       }
       if (isRightSwipe) {
+        setMonthAnimDir('right');
+        animatingRef.current = true;
         goToPreviousMonth();
+        triggerHaptic(10);
+        setTimeout(() => {
+          animatingRef.current = false;
+          setMonthAnimDir('none');
+        }, 300);
       }
     }
 
@@ -171,8 +210,28 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     >
       <Header
         currentDate={currentDate}
-        onPrevious={goToPreviousMonth}
-        onNext={goToNextMonth}
+        onPrevious={() => {
+          if (animatingRef.current) return;
+          setMonthAnimDir('right');
+          animatingRef.current = true;
+          goToPreviousMonth();
+          triggerHaptic(10);
+          setTimeout(() => {
+            animatingRef.current = false;
+            setMonthAnimDir('none');
+          }, 300);
+        }}
+        onNext={() => {
+          if (animatingRef.current) return;
+          setMonthAnimDir('left');
+          animatingRef.current = true;
+          goToNextMonth();
+          triggerHaptic(10);
+          setTimeout(() => {
+            animatingRef.current = false;
+            setMonthAnimDir('none');
+          }, 300);
+        }}
         onToday={goToToday}
         onDateChange={setCurrentDate}
         onTagManager={onTagManager}
@@ -184,8 +243,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         onToggleTagFilter={toggleTagFilter}
         onClearFilters={clearFilters}
       />
-
-      <div className="flex-1 overflow-y-auto min-h-0">
+      <div className={cn(
+        'flex-1 overflow-y-auto min-h-0',
+        monthAnimDir === 'left' && 'month-slide-left',
+        monthAnimDir === 'right' && 'month-slide-right'
+      )}>
         <CalendarGrid
           key={format(currentDate, 'yyyy-MM')}
           currentDate={currentDate}

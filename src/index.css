@@ -91,6 +91,29 @@
   }
 }
 
+/* Month change animations for mobile swipe feedback */
+@keyframes month-enter-left {
+  from { transform: translateX(12%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes month-enter-right {
+  from { transform: translateX(-12%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.month-slide-left {
+  animation: month-enter-left 240ms ease-out;
+}
+
+.month-slide-right {
+  animation: month-enter-right 240ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .month-slide-left, .month-slide-right { animation: none; }
+}
+
 @layer components {
   /* Dashboard Card Styles */
   .dashboard-card {
