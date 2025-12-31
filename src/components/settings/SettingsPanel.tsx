@@ -4,12 +4,12 @@ import { Button } from '@/components/ui/button';
 import TriggerButton from '@/components/ui/trigger-button';
 import {
   Dialog,
-  DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
   DialogDescription,
 } from '@/components/ui/dialog';
+import { ModalContent } from '@/components/ui/modal-content';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -468,9 +468,9 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
             <TriggerButton user={user} myPendingInvitations={myPendingInvitations} getUserInitials={getUserInitials} getDisplayName={getDisplayName} />
           </DialogTrigger>
         )}
-        <DialogContent className="sm:max-w-md max-h-[85vh] flex flex-col gap-0 p-0">
+        <ModalContent size="md">
           <DialogHeader className="dashboard-card-header px-6 pt-6 pb-4">
-            <DialogTitle className="flex items-center gap-2 text-base font-semibold">
+            <DialogTitle className="flex items-center gap-2 text-base sm:text-lg font-semibold">
               <User className="h-5 w-5" />
               {t('editProfile')}
             </DialogTitle>
@@ -495,7 +495,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
               </Button>
             </div>
           </div>
-        </DialogContent>
+        </ModalContent>
       </Dialog>
     );
   }
@@ -509,9 +509,9 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
             <TriggerButton user={user} myPendingInvitations={myPendingInvitations} getUserInitials={getUserInitials} getDisplayName={getDisplayName} />
           </DialogTrigger>
         )}
-        <DialogContent className="sm:max-w-md max-h-[85vh] flex flex-col gap-0 p-0">
+        <ModalContent size="md">
           <DialogHeader className="dashboard-card-header px-6 pt-6 pb-4">
-            <DialogTitle className="flex items-center gap-2 text-base font-semibold">
+            <DialogTitle className="flex items-center gap-2 text-base sm:text-lg font-semibold">
               <KeyRound className="h-5 w-5" />
               {t('changePassword')}
             </DialogTitle>
@@ -539,7 +539,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
               </Button>
             </div>
           </div>
-        </DialogContent>
+        </ModalContent>
       </Dialog>
     );
   }
@@ -553,9 +553,9 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
             <TriggerButton user={user} myPendingInvitations={myPendingInvitations} getUserInitials={getUserInitials} getDisplayName={getDisplayName} />
           </DialogTrigger>
         )}
-        <DialogContent className="sm:max-w-md max-h-[85vh] flex flex-col gap-0 p-0">
+        <ModalContent size="md">
           <DialogHeader className="dashboard-card-header px-6 pt-6 pb-4">
-            <DialogTitle className="flex items-center gap-2 text-base font-semibold">
+            <DialogTitle className="flex items-center gap-2 text-base sm:text-lg font-semibold">
               <LogIn className="h-5 w-5" />
               {t('loginOrSignup')}
             </DialogTitle>
@@ -675,7 +675,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
               {t('back')}
             </Button>
           </div>
-        </DialogContent>
+        </ModalContent>
       </Dialog>
     );
   }
@@ -689,9 +689,9 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
             <TriggerButton user={user} myPendingInvitations={myPendingInvitations} getUserInitials={getUserInitials} getDisplayName={getDisplayName} />
           </DialogTrigger>
         )}
-        <DialogContent className="sm:max-w-md max-h-[85vh] overflow-hidden flex flex-col gap-0 p-0">
+        <ModalContent size="md">
           <DialogHeader className="dashboard-card-header px-5 pt-5 pb-3 flex-shrink-0">
-            <DialogTitle className="text-lg font-semibold">{t('settings')}</DialogTitle>
+            <DialogTitle className="text-lg sm:text-xl font-semibold">{t('settings')}</DialogTitle>
           </DialogHeader>
           
           <Tabs defaultValue={myPendingInvitations.length > 0 ? 'family' : 'general'} className="flex-1 flex flex-col min-h-0 overflow-hidden">
@@ -1097,7 +1097,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
               </TabsContent>
             </div>
           </Tabs>
-        </DialogContent>
+        </ModalContent>
       </Dialog>
 
       {/* Delete Alert */}
@@ -1134,7 +1134,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
 
       {/* Create Family Dialog */}
       <Dialog open={showCreateFamilyDialog} onOpenChange={setShowCreateFamilyDialog}>
-        <DialogContent className="sm:max-w-sm">
+        <ModalContent size="sm" maxHeight="auto">
           <DialogHeader>
             <DialogTitle className="text-base">{t('createFamily')}</DialogTitle>
             <DialogDescription>
@@ -1154,7 +1154,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
               {t('createFamily')}
             </Button>
           </div>
-        </DialogContent>
+        </ModalContent>
       </Dialog>
     </>
   );

@@ -1,10 +1,10 @@
 import React from 'react';
 import {
   Dialog,
-  DialogContent,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { ModalContent } from '@/components/ui/modal-content';
 import { Button } from '@/components/ui/button';
 import { Plus, Clock, Sun } from 'lucide-react';
 import { format, parse } from 'date-fns';
@@ -62,9 +62,9 @@ export const DayEventsList: React.FC<DayEventsListProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[96vw] sm:w-[90vw] sm:max-w-md max-h-[96vh] sm:max-h-[92vh] flex flex-col gap-0 p-0 rounded-2xl sm:rounded-xl overflow-hidden shadow-2xl">
+      <ModalContent size="md">
         <DialogHeader className="border-b bg-gradient-to-br from-card to-muted/30 px-4 sm:px-5 pt-4 sm:pt-4 pb-3 sm:pb-3 flex-shrink-0">
-          <DialogTitle className="text-lg font-semibold">
+          <DialogTitle className="text-lg sm:text-xl font-semibold">
             {displayDate}
           </DialogTitle>
         </DialogHeader>
@@ -100,7 +100,7 @@ export const DayEventsList: React.FC<DayEventsListProps> = ({
             {t('newEvent')}
           </Button>
         </div>
-      </DialogContent>
+      </ModalContent>
     </Dialog>
   );
 };

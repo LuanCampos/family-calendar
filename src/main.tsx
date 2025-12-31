@@ -28,4 +28,14 @@ import "./index.css";
   }
 })();
 
+// Set CSS variable for accurate viewport height (accounts for browser UI chrome)
+function setViewportHeightVar() {
+  const vh = window.innerHeight * 0.01;
+  document.documentElement.style.setProperty('--app-vh', `${vh}px`);
+}
+
+setViewportHeightVar();
+window.addEventListener('resize', setViewportHeightVar);
+window.addEventListener('orientationchange', setViewportHeightVar);
+
 createRoot(document.getElementById("root")!).render(<App />);

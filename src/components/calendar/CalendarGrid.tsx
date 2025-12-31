@@ -28,6 +28,18 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
   const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
   const daysInCalendar = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
   const weeksInCalendar = Math.ceil(daysInCalendar.length / 7);
+  const [maxPreview, setMaxPreview] = React.useState(4);
+
+  React.useEffect(() => {
+    const compute = () => {
+      const w = window.innerWidth;
+      const next = w >= 1024 ? 6 : w >= 640 ? 5 : 4;
+      setMaxPreview(next);
+    };
+    compute();
+    window.addEventListener('resize', compute);
+    return () => window.removeEventListener('resize', compute);
+  }, []);
 
   // Group events by date
   const eventsByDate = events.reduce((acc, event) => {
@@ -127,7 +139,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
               <div className="flex-1 px-0.5 sm:px-1 pb-0.5 overflow-hidden flex flex-col gap-0.5" role="list">
                 {dayEvents.length > 0 ? (
                   <>
-                    {dayEvents.slice(0, 4).map((event) => {
+                    {dayEvents.slice(0, maxPreview).map((event) => {
                       const tagColor =
                         Array.isArray(event.tags) && event.tags.length > 0
                           ? isEventTagArray(event.tags)
@@ -151,9 +163,9 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                         </div>
                       );
                     })}
-                    {dayEvents.length > 4 && (
+                    {dayEvents.length > maxPreview && (
                       <div className="text-[0.5rem] text-primary font-bold px-0.5" role="listitem">
-                        +{dayEvents.length - 4}
+                        +{dayEvents.length - maxPreview}
                       </div>
                     )}
                   </>

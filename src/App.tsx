@@ -21,7 +21,7 @@ const App = () => (
             <FamilyProvider>
               <CalendarProvider>
                 <TooltipProvider>
-                  <div className="h-screen w-screen overflow-hidden">
+                  <div className="w-screen overflow-hidden" style={{ height: 'calc(var(--app-vh, 1vh) * 100)' }}>
                     <Toaster />
                     <Sonner />
                     <Index />

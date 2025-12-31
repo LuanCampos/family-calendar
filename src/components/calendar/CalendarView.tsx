@@ -13,6 +13,7 @@ import { useFilterTags } from '@/hooks/useFilterTags';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { toast } from 'sonner';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { logger } from '@/lib/logger';
 
 interface CalendarViewProps {
   onTagManager?: () => void;
@@ -94,19 +95,14 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const { selectedFilterTags, toggleTagFilter, clearFilters } = useFilterTags();
 
   const handleDateClick = (date: string) => {
-    // Debug: date click
-    // Note: printed only when DEBUG_ENABLED=true via logger
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    (async () => (await import('@/lib/logger')).logger.debug('ui.date.click', { date }))();
+    logger.debug('ui.date.click', { date });
     selectDate(date);
     setEditingEvent(undefined);
     setIsDayListOpen(true);
   };
 
   const handleEventClick = (event: Event) => {
-    // Debug: event click
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    (async () => (await import('@/lib/logger')).logger.debug('ui.event.click', { eventId: event.id }))();
+    logger.debug('ui.event.click', { eventId: event.id });
     selectDate(event.date);
     setEditingEvent(event);
     setIsDayListOpen(false);
@@ -132,7 +128,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       }
       setIsModalOpen(false);
     } catch (error) {
-      (await import('@/lib/logger')).logger.error('ui.event.save.error', { error });
+      logger.error('ui.event.save.error', { error });
       toast.error(t('eventError'));
     }
   };
@@ -147,7 +143,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       toast.success(t('eventDeleted'));
       setIsModalOpen(false);
     } catch (error) {
-      (await import('@/lib/logger')).logger.error('ui.event.delete.error', { error });
+      logger.error('ui.event.delete.error', { error });
       toast.error(t('eventError'));
     }
   };

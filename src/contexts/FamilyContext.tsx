@@ -4,6 +4,7 @@ import * as familyService from '@/lib/services/familyService';
 import * as userService from '@/lib/services/userService';
 import { useAuth } from '@/contexts/AuthContext';
 import { offlineAdapter } from '@/lib/adapters/offlineAdapter';
+import { logger } from '@/lib/logger';
 
 export type FamilyRole = 'owner' | 'admin' | 'member';
 
@@ -127,7 +128,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setFamilies(offlineFamilies);
       }
     } catch (e) {
-      (await import('@/lib/logger')).logger.warn('families.refresh.error', { error: e });
+      logger.warn('families.refresh.error', { error: e });
       setFamilies(offlineFamilies);
     }
   }, [user, loadOfflineFamilies]);
@@ -158,7 +159,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setMembers(data);
       }
     } catch (e) {
-      (await import('@/lib/logger')).logger.warn('families.members.table.missing');
+      logger.warn('families.members.table.missing');
       setMembers([]);
     }
   }, [currentFamilyId, user?.id]);
@@ -189,7 +190,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const { data: myInvites, error } = await familyService.getInvitationsByEmailSimple(user.email);
 
       if (error) {
-        (await import('@/lib/logger')).logger.warn('invitations.fetch.error', { error });
+        logger.warn('invitations.fetch.error', { error });
         setMyPendingInvitations([]);
         return;
       }
@@ -211,7 +212,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setMyPendingInvitations([]);
       }
     } catch (e) {
-      (await import('@/lib/logger')).logger.error('invitations.refreshMy.error', { error: e });
+      logger.error('invitations.refreshMy.error', { error: e });
       setMyPendingInvitations([]);
     }
   }, [user?.email]);
@@ -273,7 +274,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
       }
     } catch (e) {
-      (await import('@/lib/logger')).logger.warn('user.preferences.table.missing');
+      logger.warn('user.preferences.table.missing');
     }
   }, [user]);
 
@@ -291,7 +292,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     try {
       await userService.updateCurrentFamily(user.id, familyId);
     } catch (e) {
-      (await import('@/lib/logger')).logger.warn('user.preferences.table.missing');
+      logger.warn('user.preferences.table.missing');
     }
   }, [user]);
 
@@ -330,7 +331,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             allFamilies = [...cloudFamilies, ...offlineFamilies];
           }
         } catch (e) {
-          (await import('@/lib/logger')).logger.warn('families.init.load.error', { error: e });
+          logger.warn('families.init.load.error', { error: e });
         }
       }
       
@@ -367,7 +368,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             }
           }
         } catch (e) {
-          (await import('@/lib/logger')).logger.warn('user.preferences.table.missing');
+          logger.warn('user.preferences.table.missing');
         }
         
         // Auto-select first family if user has families but no selection
@@ -439,7 +440,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           lastFamiliesLengthRef.current === families.length) {
         // We already tried to reload for this ID and family still not found
         // User was likely removed from this family - select another one if available
-        (await import('@/lib/logger')).logger.warn('family.missing.after.reload', { currentFamilyId });
+        logger.warn('family.missing.after.reload', { currentFamilyId });
         
         // Find remaining families to select from
         const remainingFamilies = families.filter(f => f.id !== currentFamilyId);

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
-  DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import { ModalContent } from '@/components/ui/modal-content';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -73,7 +73,8 @@ export const EventModal: React.FC<EventModalProps> = ({
         setDescription(editingEvent.description || '');
         setTime(editingEvent.time || '');
         setDuration(editingEvent.duration?.toString() || '60');
-        setIsAllDay(editingEvent.isAllDay || false);
+        // Initialize all-day based on explicit flag or absence of time
+        setIsAllDay(editingEvent.isAllDay ?? !editingEvent.time);
         setSelectedTags(getTagIds(editingEvent.tags));
         setRecurrenceRule(editingEvent.recurrenceRule || null);
       } else {
@@ -158,9 +159,9 @@ export const EventModal: React.FC<EventModalProps> = ({
       </AlertDialog>
 
       <Dialog open={isOpen} onOpenChange={handleClose}>
-        <DialogContent className="w-[96vw] sm:w-[90vw] md:w-full sm:max-w-lg max-h-[96vh] sm:max-h-[92vh] rounded-2xl sm:rounded-xl shadow-2xl flex flex-col gap-0 p-0 overflow-hidden">
+        <ModalContent size="lg">
         <DialogHeader className="border-b bg-gradient-to-br from-card to-muted/30 px-4 sm:px-5 pt-4 sm:pt-4 pb-3 sm:pb-3 flex-shrink-0">
-          <DialogTitle className="text-lg font-semibold">
+          <DialogTitle className="text-lg sm:text-xl font-semibold">
             {editingEvent ? t('editEvent') : t('newEvent')}
           </DialogTitle>
           <p className="text-sm text-muted-foreground mt-1.5 font-medium">
@@ -217,12 +218,11 @@ export const EventModal: React.FC<EventModalProps> = ({
           {/* All-day and Recurrence toggles */}
           <div className="space-y-1.5">
             {/* All-day checkbox */}
-            <div className="flex items-center space-x-2 p-2 rounded-lg hover:bg-accent/50 transition-colors cursor-pointer group"
-                 onClick={() => setIsAllDay(!isAllDay)}>
+            <div className="flex items-center space-x-2 p-2 rounded-lg hover:bg-accent/50 transition-colors group">
               <Checkbox
                 id="isAllDay"
                 checked={isAllDay}
-                onCheckedChange={(checked) => setIsAllDay(checked as boolean)}
+                onCheckedChange={(checked) => setIsAllDay(Boolean(checked))}
               />
               <Label
                 htmlFor="isAllDay"
@@ -371,7 +371,7 @@ export const EventModal: React.FC<EventModalProps> = ({
             </Button>
           </div>
         </DialogFooter>
-      </DialogContent>
+      </ModalContent>
       </Dialog>
     </>
   );

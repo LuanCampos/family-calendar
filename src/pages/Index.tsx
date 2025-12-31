@@ -22,7 +22,7 @@ const CalendarContent = () => {
   }
 
   return (
-    <div className="h-screen w-screen bg-gradient-to-br from-background via-background to-muted/20 flex flex-col overflow-hidden">
+    <div className="w-screen bg-gradient-to-br from-background via-background to-muted/20 flex flex-col overflow-hidden" style={{ height: 'calc(var(--app-vh, 1vh) * 100)' }}>
       <CalendarView
         userEmail={user?.email}
         onTagManager={() => setIsTagManagerOpen(true)}

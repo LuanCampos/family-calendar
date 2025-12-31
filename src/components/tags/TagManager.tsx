@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Trash2, Plus, Loader2, Check, AlertCircle, Pencil } from 'lucide-react';
 import {
   Dialog,
-  DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import { ModalContent } from '@/components/ui/modal-content';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -23,6 +23,7 @@ import { Label } from '@/components/ui/label';
 import { ColorPicker } from '@/components/ui/color-picker';
 import type { EventTag, EventTagInput } from '@/types/calendar';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { logger } from '@/lib/logger';
 
 interface TagManagerProps {
   tags: EventTag[];
@@ -67,18 +68,18 @@ export const TagManager: React.FC<TagManagerProps> = ({
     try {
       if (editingTag) {
         // Update existing tag
-        (async () => (await import('@/lib/logger')).logger.debug('tagManager.update.start', { id: editingTag.id, name: newTagName.trim(), color: newTagColor }))();
+        logger.debug('tagManager.update.start', { id: editingTag.id, name: newTagName.trim(), color: newTagColor });
         const response = await onUpdateTag?.(editingTag.id, {
           name: newTagName.trim(),
           color: newTagColor,
         });
-        (async () => (await import('@/lib/logger')).logger.debug('tagManager.update.result', { response }))();
+        logger.debug('tagManager.update.result', { response });
 
         if (response && response.error) {
-          (await import('@/lib/logger')).logger.error('tagManager.update.error', { error: response.error });
+          logger.error('tagManager.update.error', { error: response.error });
           setError(t('tagError'));
         } else if (response && response.data) {
-          (await import('@/lib/logger')).logger.info('tagManager.update.success', { tagId: response.data.id });
+          logger.info('tagManager.update.success', { tagId: response.data.id });
           setNewTagName('');
           setNewTagColor('#3B82F6');
           setEditingTag(null);
@@ -87,23 +88,23 @@ export const TagManager: React.FC<TagManagerProps> = ({
           setSuccess(t('tagUpdated'));
           setTimeout(() => setSuccess(null), 3000);
         } else {
-          (await import('@/lib/logger')).logger.warn('tagManager.update.unexpectedResponse', { response });
+          logger.warn('tagManager.update.unexpectedResponse', { response });
           setError(t('tagError'));
         }
       } else {
         // Create new tag
-        (await import('@/lib/logger')).logger.debug('tagManager.create.start', { name: newTagName.trim(), color: newTagColor });
+        logger.debug('tagManager.create.start', { name: newTagName.trim(), color: newTagColor });
         const response = await onCreateTag({
           name: newTagName.trim(),
           color: newTagColor,
         });
-        (await import('@/lib/logger')).logger.debug('tagManager.create.result', { response });
+        logger.debug('tagManager.create.result', { response });
 
         if (response && response.error) {
-          (await import('@/lib/logger')).logger.error('tagManager.create.error', { error: response.error });
+          logger.error('tagManager.create.error', { error: response.error });
           setError(t('tagError'));
         } else if (response && response.data) {
-          (await import('@/lib/logger')).logger.info('tagManager.create.success', { tagId: response.data.id });
+          logger.info('tagManager.create.success', { tagId: response.data.id });
           setNewTagName('');
           setNewTagColor('#3B82F6');
           setError(null);
@@ -111,12 +112,12 @@ export const TagManager: React.FC<TagManagerProps> = ({
           setSuccess(t('tagCreated'));
           setTimeout(() => setSuccess(null), 3000);
         } else {
-          (await import('@/lib/logger')).logger.warn('tagManager.create.unexpectedResponse', { response });
+          logger.warn('tagManager.create.unexpectedResponse', { response });
           setError(t('tagError'));
         }
       }
     } catch (err) {
-      (await import('@/lib/logger')).logger.error('tagManager.operation.exception', { error: err });
+      logger.error('tagManager.operation.exception', { error: err });
       setError(t('tagError'));
     } finally {
       setIsLoading(false);
@@ -193,9 +194,9 @@ export const TagManager: React.FC<TagManagerProps> = ({
       </AlertDialog>
 
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="w-[96vw] sm:max-w-md max-h-[96vh] flex flex-col gap-0 p-0 rounded-2xl sm:rounded-xl shadow-2xl">
+        <ModalContent size="md">
         <DialogHeader className="border-b bg-gradient-to-br from-card to-muted/30 px-4 sm:px-5 pt-4 sm:pt-4 pb-3 sm:pb-3">
-          <DialogTitle className="text-lg font-semibold">
+          <DialogTitle className="text-lg sm:text-xl font-semibold">
             {t('manageTags')}
           </DialogTitle>
         </DialogHeader>
@@ -331,7 +332,7 @@ export const TagManager: React.FC<TagManagerProps> = ({
             )}
           </div>
         </div>
-      </DialogContent>
+        </ModalContent>
     </Dialog>
     </>
   );
