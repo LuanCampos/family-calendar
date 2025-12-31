@@ -24,7 +24,7 @@ export const useCalendar = () => {
     setCurrentDate(new Date());
   }, []);
 
-  const selectDate = useCallback((date: string) => {
+  const selectDate = useCallback((date: string | null) => {
     setSelectedDate(date);
   }, []);
 

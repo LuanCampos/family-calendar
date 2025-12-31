@@ -190,7 +190,6 @@ export const EventModal: React.FC<EventModalProps> = ({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder={t('eventTitlePlaceholder')}
-              autoFocus
               className={`text-sm h-10 ${showValidation && !isValid ? 'border-destructive focus-visible:ring-destructive' : ''}`}
             />
             {showValidation && !isValid && (

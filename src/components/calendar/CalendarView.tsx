@@ -253,14 +253,21 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           currentDate={currentDate}
           events={filteredEvents}
           selectedDate={selectedDate}
-          onSelectDate={selectDate}
+          onSelectDate={(d) => selectDate(d)}
           onDateClick={handleDateClick}
         />
       </div>
 
       <DayEventsList
         isOpen={isDayListOpen}
-        onClose={() => setIsDayListOpen(false)}
+        onClose={() => {
+          setIsDayListOpen(false);
+          if (!isModalOpen) {
+            selectDate(null);
+          }
+          const el = document.activeElement as HTMLElement | null;
+          if (el && typeof el.blur === 'function') el.blur();
+        }}
         selectedDate={dateForList}
         events={selectedDateEvents}
         onEventClick={handleEventClick}
@@ -272,6 +279,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         onClose={() => {
           setIsModalOpen(false);
           setEditingEvent(undefined);
+          // Clear selected date to remove highlight after closing any event modal
+          selectDate(null);
+          const el = document.activeElement as HTMLElement | null;
+          if (el && typeof el.blur === 'function') el.blur();
         }}
         onSave={handleSaveEvent}
         onDelete={handleDeleteEvent}

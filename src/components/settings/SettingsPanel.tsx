@@ -565,9 +565,9 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
           </DialogHeader>
           <div className="flex-1 overflow-y-auto dashboard-card-content space-y-4">
             <Tabs value={authTab} onValueChange={(v) => setAuthTab(v as 'login' | 'signup')} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-4">
-                <TabsTrigger value="login">{t('login')}</TabsTrigger>
-                <TabsTrigger value="signup">{t('signup')}</TabsTrigger>
+              <TabsList className="w-full mb-4">
+                <TabsTrigger value="login" className="flex-1">{t('login')}</TabsTrigger>
+                <TabsTrigger value="signup" className="flex-1">{t('signup')}</TabsTrigger>
               </TabsList>
               
               <TabsContent value="login" className="mt-0">
@@ -695,9 +695,9 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
           </DialogHeader>
           
           <Tabs defaultValue={myPendingInvitations.length > 0 ? 'family' : 'general'} className="flex-1 flex flex-col min-h-0 overflow-hidden">
-            <TabsList className="grid w-full grid-cols-2 mx-5 flex-shrink-0 h-9" style={{ width: 'calc(100% - 2.5rem)' }}>
-              <TabsTrigger value="general" className="text-sm">{t('preferences')}</TabsTrigger>
-              <TabsTrigger value="family" className="relative text-sm">
+            <TabsList className="w-full mx-5 flex-shrink-0 h-10" style={{ width: 'calc(100% - 2.5rem)' }}>
+              <TabsTrigger value="general" className="text-sm flex-1">{t('preferences')}</TabsTrigger>
+              <TabsTrigger value="family" className="relative text-sm flex-1">
                 {t('family')}
                 {myPendingInvitations.length > 0 && (
                   <span className="ml-1.5 px-1.5 py-0.5 text-[10px] bg-destructive text-destructive-foreground rounded-full">
@@ -891,7 +891,6 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
                             if (e.key === 'Enter') handleUpdateFamilyName();
                             if (e.key === 'Escape') setEditingName(false);
                           }}
-                          autoFocus
                         />
                         <Button size="sm" className="h-10 px-3" onClick={handleUpdateFamilyName}>
                           <Check className="h-4 w-4" />
