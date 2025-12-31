@@ -132,6 +132,15 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const [isDayListOpen, setIsDayListOpen] = React.useState(false);
   const [editingEvent, setEditingEvent] = React.useState<Event | undefined>();
   const { selectedFilterTags, toggleTagFilter, clearFilters } = useFilterTags();
+  // Track when we're opening the modal as a result of clicking "New Event" in the day list.
+  // This avoids a race where closing the day list clears `selectedDate` before the modal reads it.
+  const openingModalRef = React.useRef(false);
+  React.useEffect(() => {
+    if (isModalOpen) {
+      // Modal is now open; clear the transitional flag
+      openingModalRef.current = false;
+    }
+  }, [isModalOpen]);
 
   const handleDateClick = (date: string) => {
     logger.debug('ui.date.click', { date });
@@ -189,6 +198,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
   const handleAddNewEvent = () => {
     setEditingEvent(undefined);
+    // Set flag before opening modal to prevent `selectedDate` from being cleared by day list close
+    openingModalRef.current = true;
     setIsModalOpen(true);
   };
 
@@ -262,7 +273,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         isOpen={isDayListOpen}
         onClose={() => {
           setIsDayListOpen(false);
-          if (!isModalOpen) {
+          // Only clear selection if we're truly closing the day list without opening the modal
+          if (!isModalOpen && !openingModalRef.current) {
             selectDate(null);
           }
           const el = document.activeElement as HTMLElement | null;

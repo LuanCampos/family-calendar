@@ -151,7 +151,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                         <div
                           key={event.id}
                           role="listitem"
-                          className="px-0.5 py-0.5 rounded truncate transition-all text-[0.5rem] font-medium h-3.5 leading-[0.75rem] pointer-events-none"
+                          className="px-0.5 py-0.5 md:py-0 lg:py-0 rounded truncate transition-all text-[0.5rem] md:text-[0.6rem] lg:text-[0.7rem] font-medium h-3.5 leading-[0.75rem] md:leading-[0.82rem] lg:leading-[0.88rem] pointer-events-none flex items-center"
                           style={{
                             backgroundColor: tagColor,
                             color: getContrastColor(tagColor),
@@ -164,7 +164,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                       );
                     })}
                     {dayEvents.length > maxPreview && (
-                      <div className="text-[0.5rem] text-primary font-bold px-0.5" role="listitem">
+                      <div className="text-[0.5rem] md:text-[0.6rem] lg:text-[0.7rem] text-primary font-bold px-0.5" role="listitem">
                         +{dayEvents.length - maxPreview}
                       </div>
                     )}
