@@ -159,8 +159,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
   const handleSaveEvent = async (input: EventInput) => {
     try {
+      logger.debug('ui.calendarView.saveEvent.called', { input });
       if (editingEvent) {
         const result = await updateExistingEvent(editingEvent.id, input);
+        logger.debug('ui.calendarView.updateEvent.result', { error: result.error, data: result.data });
         if (result.error) {
           toast.error(t('eventError'));
           return;
@@ -168,8 +170,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         toast.success(t('eventUpdated'));
         // Ensure UI reflects latest tag colors and expansions
         await reloadEvents();
+        logger.debug('ui.calendarView.events.reloaded.afterUpdate');
       } else {
         const result = await createNewEvent(input);
+        logger.debug('ui.calendarView.createEvent.result', { error: result.error, data: result.data });
         if (result.error) {
           toast.error(t('eventError'));
           return;
@@ -177,6 +181,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         toast.success(t('eventCreated'));
         // Refresh view to apply tag color mapping
         await reloadEvents();
+        logger.debug('ui.calendarView.events.reloaded.afterCreate');
       }
       setIsModalOpen(false);
     } catch (error) {

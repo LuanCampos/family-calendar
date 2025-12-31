@@ -137,11 +137,43 @@ export const useRecurringEvents = () => {
 
         logger.debug('event.recurring.instance.delete.start', { instanceId });
 
-        await storageAdapter.deleteEvent(instanceId, currentFamilyId);
+        // Instance IDs are synthetic: `${parentId}-YYYY-MM-DD`
+        const maybeDate = instanceId.slice(-10);
+        const hasDatePattern = /\d{4}-\d{2}-\d{2}/.test(maybeDate);
 
-        logger.info('event.recurring.instance.deleted', { instanceId });
+        if (!hasDatePattern) {
+          logger.warn('event.recurring.instance.delete.invalidId', { instanceId });
+          return { error: 'Invalid recurring instance id' };
+        }
 
-        return { data: { instanceId } };
+        const dateStr = maybeDate;
+        const parentEventId = instanceId.slice(0, instanceId.length - 11); // remove dash
+
+        const parent = await storageAdapter.getEvent(parentEventId);
+        if (!parent) {
+          logger.error('event.recurring.instance.delete.parentNotFound', { parentEventId });
+          return { error: 'Parent event not found' };
+        }
+
+        const exceptions = new Set(parent.recurrenceExceptions || []);
+        exceptions.add(dateStr);
+
+        const updatedParent = {
+          ...parent,
+          recurrenceExceptions: Array.from(exceptions),
+        } as Event;
+
+        const response = await storageAdapter.updateEvent(parentEventId, {
+          // Only patch recurrenceExceptions field
+          // Casting because updateEvent accepts Partial<EventInput>; adapter merges object
+        } as any);
+
+        // Since adapter merges from offline copy, ensure we persisted exceptions
+        await storageAdapter.offlineAdapter.put('events', updatedParent);
+
+        logger.info('event.recurring.instance.deleted', { instanceId, parentEventId, dateStr });
+
+        return { data: { instanceId, parentEventId, date: dateStr } };
       } catch (err) {
         logger.error('event.recurring.instance.delete.exception', { error: err });
         setError('Failed to delete recurring instance');

@@ -30,6 +30,8 @@ import { ptBR } from 'date-fns/locale';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { RecurrenceConfig, RecurrencePreview } from '@/components/recurring';
+import { storageAdapter } from '@/lib/adapters/storageAdapter';
+import { logger } from '@/lib/logger';
 
 interface EventModalProps {
   isOpen: boolean;
@@ -79,6 +81,23 @@ export const EventModal: React.FC<EventModalProps> = ({
         setIsAllDay(editingEvent.isAllDay ?? !editingEvent.time);
         setSelectedTags(getTagIds(editingEvent.tags));
         setRecurrenceRule(editingEvent.recurrenceRule || null);
+        // If this is an instance missing rule, try to load parent and hydrate rule
+        if (!editingEvent.recurrenceRule && editingEvent.recurringEventId) {
+          (async () => {
+            try {
+              const parent = await storageAdapter.getEvent(editingEvent.recurringEventId!);
+              if (parent && parent.recurrenceRule) {
+                logger.debug('ui.eventModal.hydrateRecurrenceRule.fromParent', {
+                  instanceId: editingEvent.id,
+                  parentId: editingEvent.recurringEventId,
+                });
+                setRecurrenceRule(parent.recurrenceRule);
+              }
+            } catch (err) {
+              logger.warn('ui.eventModal.hydrateRecurrenceRule.failed', { error: err });
+            }
+          })();
+        }
       } else {
         // Novo evento - limpar campos
         setDate(selectedDate);
@@ -113,6 +132,15 @@ export const EventModal: React.FC<EventModalProps> = ({
       isRecurring: !!recurrenceRule,
       recurrenceRule: recurrenceRule || undefined,
     };
+
+    logger.debug('ui.eventModal.save.input', {
+      date,
+      title: input.title,
+      isAllDay: input.isAllDay,
+      isRecurring: input.isRecurring,
+      recurrenceRule: input.recurrenceRule,
+      tagsCount: input.tags?.length || 0,
+    });
 
     onSave(input);
     handleClose();

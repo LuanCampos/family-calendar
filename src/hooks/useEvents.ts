@@ -73,14 +73,8 @@ export const useEvents = (startDate?: string, endDate?: string) => {
           logger.debug('useEvents.storageAdapter.createRecurringEvent.result', { response });
 
           if (response.data) {
-            // For recurring events, we store only the parent
-            // Instances will be generated on demand when fetching events
-            setEvents(prev => {
-              const next = [...prev, response.data!];
-              const key = `${currentFamilyId}:${startDate || ''}:${endDate || ''}`;
-              cacheRef.current.set(key, next);
-              return next;
-            });
+            // Recurring events: refresh list to include generated instances
+            await loadEvents();
             logger.info('event.recurring.created', { 
               parentId: response.data.id
             });
@@ -120,7 +114,7 @@ export const useEvents = (startDate?: string, endDate?: string) => {
         return { error: err };
       }
     },
-    [currentFamilyId, user]
+    [currentFamilyId, user, loadEvents]
   );
 
   // Update event
@@ -130,12 +124,18 @@ export const useEvents = (startDate?: string, endDate?: string) => {
         const response = await storageAdapter.updateEvent(eventId, input);
 
         if (response.data) {
-          setEvents(prev => {
-            const next = prev.map(e => (e.id === eventId ? response.data! : e));
-            const key = `${currentFamilyId || ''}:${startDate || ''}:${endDate || ''}`;
-            if (currentFamilyId) cacheRef.current.set(key, next);
-            return next;
-          });
+          const touchesRecurrence = input.isRecurring !== undefined || input.recurrenceRule !== undefined;
+          if (touchesRecurrence) {
+            // If recurrence toggled/changed, reload to expand instances
+            await loadEvents();
+          } else {
+            setEvents(prev => {
+              const next = prev.map(e => (e.id === eventId ? response.data! : e));
+              const key = `${currentFamilyId || ''}:${startDate || ''}:${endDate || ''}`;
+              if (currentFamilyId) cacheRef.current.set(key, next);
+              return next;
+            });
+          }
           logger.info('event.updated', { eventId });
         }
 
@@ -151,7 +151,7 @@ export const useEvents = (startDate?: string, endDate?: string) => {
         return { error: err };
       }
     },
-    []
+    [loadEvents, currentFamilyId, startDate, endDate]
   );
 
   // Delete event

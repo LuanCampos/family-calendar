@@ -72,6 +72,9 @@ export const Header: React.FC<HeaderProps> = ({
   ];
 
   const monthYear = `${months[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+  const today = new Date();
+  const todayMonth = today.getMonth();
+  const todayYear = today.getFullYear();
 
   const handleMonthSelect = (monthIndex: number) => {
     if (onDateChange) {
@@ -98,7 +101,13 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
 
             {/* Month/Year selector */}
-            <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+            <Popover open={isCalendarOpen} onOpenChange={(open) => {
+              setIsCalendarOpen(open);
+              if (open) {
+                // Sync the year selector to the currently viewed year
+                setSelectedYear(currentDate.getFullYear());
+              }
+            }}>
               <PopoverTrigger asChild>
                 <Button
                   variant="ghost"
@@ -137,24 +146,22 @@ export const Header: React.FC<HeaderProps> = ({
 
                   {/* Month grid */}
                   <div className="grid grid-cols-3 gap-2.5" role="group" aria-label="Mês">
-                    {months.map((month, index) => (
-                      <Button
-                        key={index}
-                        size="default"
-                        variant={
-                          index === currentDate.getMonth() &&
-                          selectedYear === currentDate.getFullYear()
-                            ? 'default'
-                            : 'outline'
-                        }
-                        onClick={() => handleMonthSelect(index)}
-                        className="text-sm h-12 hover:shadow-md hover:border-primary hover:scale-[1.05] transition-all font-medium"
-                        aria-pressed={index === currentDate.getMonth() && selectedYear === currentDate.getFullYear()}
-                        aria-label={month}
-                      >
-                        {month.slice(0, 3)}
-                      </Button>
-                    ))}
+                    {months.map((month, index) => {
+                      const isHighlighted = index === todayMonth && selectedYear === todayYear;
+                      return (
+                        <Button
+                          key={index}
+                          size="default"
+                          variant={isHighlighted ? 'default' : 'outline'}
+                          onClick={() => handleMonthSelect(index)}
+                          className="text-sm h-12 hover:shadow-md hover:border-primary hover:scale-[1.05] transition-all font-medium"
+                          aria-pressed={isHighlighted}
+                          aria-label={month}
+                        >
+                          {month.slice(0, 3)}
+                        </Button>
+                      );
+                    })}
                   </div>
                 </div>
               </PopoverContent>

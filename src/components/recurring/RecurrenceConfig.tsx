@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -94,6 +94,19 @@ export const RecurrenceConfig = ({
       setErrors([]);
     }
   };
+
+  // Keep internal state in sync when initialRule changes (e.g., opening an existing recurring event)
+  useEffect(() => {
+    const hasRule = !!initialRule;
+    setIsRecurring(hasRule);
+    if (hasRule) {
+      setRule(initialRule as RecurrenceRule);
+      // Propagate to parent if needed
+      onRuleChange?.(initialRule as RecurrenceRule);
+    } else {
+      // Do not force default rule here if toggled off; keep previous rule until user re-enables
+    }
+  }, [initialRule]);
 
   if (!isRecurring) {
     return (

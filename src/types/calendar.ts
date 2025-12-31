@@ -32,6 +32,9 @@ export interface Event {
   recurrenceRule?: RecurrenceRule;
   recurringEventId?: string; // Reference to parent recurring event
   isRecurringInstance?: boolean; // true if this is an instance of a recurring event
+  // Recurrence exceptions and overrides
+  recurrenceExceptions?: string[]; // Dates (YYYY-MM-DD) to exclude from generated instances
+  recurrenceOverrides?: Record<string, Partial<EventInput>>; // Per-date overrides applied to instances
 }
 
 export interface EventTag {

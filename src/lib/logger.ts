@@ -105,13 +105,33 @@ class Logger {
       this.logs.shift();
     }
 
-    // Console output - only show warn and error (both dev and prod)
+    // Console output behavior
+    const prefix = `[${entry.timestamp}] ${level.toUpperCase()}: ${event}`;
+    const style = this.getConsoleStyle(level);
+
     if (level === 'warn' || level === 'error') {
-      const prefix = `[${entry.timestamp}] ${level.toUpperCase()}: ${event}`;
       if (context) {
         console[level]?.(prefix, context);
       } else {
         console[level]?.(prefix);
+      }
+      return;
+    }
+
+    // Print info/debug when DEBUG_ENABLED is true
+    if (DEBUG_ENABLED) {
+      if (level === 'info') {
+        if (context) {
+          console.info?.(`%c${prefix}`, style, context);
+        } else {
+          console.info?.(`%c${prefix}`, style);
+        }
+      } else if (level === 'debug') {
+        if (context) {
+          console.debug?.(`%c${prefix}`, style, context);
+        } else {
+          console.debug?.(`%c${prefix}`, style);
+        }
       }
     }
   }

@@ -46,32 +46,87 @@ export const eventAdapter = {
     try {
       if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
         logger.info('event.get.offline', { familyId });
-        const events = await offlineAdapter.getEvents(familyId, startDate, endDate);
-        return expandRecurringEvents(events || [], startDate, endDate);
+        const eventsInRange = await offlineAdapter.getEvents(familyId, startDate, endDate);
+        const recurringParents = await offlineAdapter.getRecurringParents(familyId);
+
+        // Deduplicate parents by id
+        const parentMap = new Map<string, Event>();
+        for (const p of recurringParents) parentMap.set(p.id, p);
+        // If any parent is already in-range list, ensure single expansion
+        for (const e of eventsInRange) {
+          if (e.isRecurring && e.recurrenceRule) parentMap.set(e.id, e);
+        }
+
+        // Expand recurring parents for the requested range
+        const expandedParents = expandRecurringEvents(Array.from(parentMap.values()), startDate, endDate);
+
+        // Include non-recurring events in range
+        const nonRecurring = (eventsInRange || []).filter(e => !e.isRecurring || !e.recurrenceRule);
+
+        logger.debug('event.get.offline.expand.debug', {
+          parentsCount: parentMap.size,
+          expandedCount: expandedParents.length,
+          nonRecurringCount: nonRecurring.length,
+        });
+
+        return [...nonRecurring, ...expandedParents];
       }
 
       // Online path
-      const response = await eventService.getEvents(familyId, startDate, endDate);
+      const [response, parentsRes] = await Promise.all([
+        eventService.getEvents(familyId, startDate, endDate),
+        eventService.getRecurringParents(familyId),
+      ]);
 
       if (response.error) {
         logger.warn('event.get.online.failed', { error: response.error });
         // Fallback to offline
-        const events = await offlineAdapter.getEvents(familyId, startDate, endDate);
-        return expandRecurringEvents(events || [], startDate, endDate);
+        const eventsInRange = await offlineAdapter.getEvents(familyId, startDate, endDate);
+        const recurringParents = await offlineAdapter.getRecurringParents(familyId);
+        const parentMap = new Map<string, Event>();
+        for (const p of recurringParents) parentMap.set(p.id, p);
+        for (const e of eventsInRange) { if (e.isRecurring && e.recurrenceRule) parentMap.set(e.id, e); }
+        const expandedParents = expandRecurringEvents(Array.from(parentMap.values()), startDate, endDate);
+        const nonRecurring = (eventsInRange || []).filter(e => !e.isRecurring || !e.recurrenceRule);
+        return [...nonRecurring, ...expandedParents];
       }
 
-      logger.info('event.get.success', { count: response.data?.length || 0 });
+      logger.info('event.get.success', { count: response.data?.length || 0, parents: parentsRes.data?.length || 0 });
 
       // Sync to offline storage
-      if (response.data && response.data.length > 0) {
-        await offlineAdapter.syncEvents(response.data);
+      const toSync = [ ...(response.data as Event[] || []), ...(parentsRes.data as Event[] || []) ];
+      if (toSync.length > 0) {
+        await offlineAdapter.syncEvents(toSync);
       }
 
-      return expandRecurringEvents((response.data as Event[]) || [], startDate, endDate);
+      const eventsInRange = (response.data as Event[]) || [];
+      const recurringParents = (parentsRes.data as Event[]) || [];
+      const parentMap = new Map<string, Event>();
+      for (const p of recurringParents) parentMap.set(p.id, p);
+      for (const e of eventsInRange) { if (e.isRecurring && e.recurrenceRule) parentMap.set(e.id, e); }
+      const expandedParents = expandRecurringEvents(Array.from(parentMap.values()), startDate, endDate);
+      const nonRecurring = eventsInRange.filter(e => !e.isRecurring || !e.recurrenceRule);
+      logger.debug('event.get.online.expand.debug', {
+        parentsCount: parentMap.size,
+        expandedCount: expandedParents.length,
+        nonRecurringCount: nonRecurring.length,
+      });
+      return [...nonRecurring, ...expandedParents];
     } catch (error) {
       logger.error('event.get.exception', { error, familyId });
-      const events = await offlineAdapter.getEvents(familyId, startDate, endDate);
-      return expandRecurringEvents(events || [], startDate, endDate);
+      const eventsInRange = await offlineAdapter.getEvents(familyId, startDate, endDate);
+      const recurringParents = await offlineAdapter.getRecurringParents(familyId);
+      const parentMap = new Map<string, Event>();
+      for (const p of recurringParents) parentMap.set(p.id, p);
+      for (const e of eventsInRange) { if (e.isRecurring && e.recurrenceRule) parentMap.set(e.id, e); }
+      const expandedParents = expandRecurringEvents(Array.from(parentMap.values()), startDate, endDate);
+      const nonRecurring = (eventsInRange || []).filter(e => !e.isRecurring || !e.recurrenceRule);
+      logger.debug('event.get.exception.expand.debug', {
+        parentsCount: parentMap.size,
+        expandedCount: expandedParents.length,
+        nonRecurringCount: nonRecurring.length,
+      });
+      return [...nonRecurring, ...expandedParents];
     }
   },
 
@@ -275,9 +330,36 @@ export const eventAdapter = {
     logger.debug('event.update.start', { eventId });
 
     try {
-      // Get event to check family type
-      const event = await offlineAdapter.getEventById(eventId);
+      // Get event to check family type; fallback to online if not cached
+      let event = await offlineAdapter.getEventById(eventId);
+
+      // If not found, try to resolve parent for recurring instance IDs
       if (!event) {
+        const maybeDate = eventId.slice(-10);
+        const hasDatePattern = /\d{4}-\d{2}-\d{2}/.test(maybeDate);
+        if (hasDatePattern) {
+          const parentId = eventId.slice(0, eventId.length - 11);
+          const parent = await offlineAdapter.getEventById(parentId);
+          if (parent) {
+            event = parent;
+            logger.debug('event.update.recurringInstance.parentResolved', { instanceId: eventId, parentId });
+          }
+        }
+      }
+
+      // If still not found, fetch from online service when possible
+      if (!event && navigator.onLine) {
+        const online = await eventService.getEvent(eventId);
+        if (online && online.data) {
+          event = online.data as Event;
+          // Cache to offline for consistency
+          await offlineAdapter.put('events', event);
+          logger.debug('event.update.onlineFetched.cached', { eventId });
+        }
+      }
+
+      if (!event) {
+        logger.warn('event.update.eventNotFound', { eventId });
         return { error: 'Event not found' };
       }
 
@@ -337,18 +419,36 @@ export const eventAdapter = {
         return { data: updated };
       }
 
-      const response = await eventService.updateEvent(eventId, input);
+      // Ensure we update the real UUID row in Supabase.
+      // If eventId is a synthetic recurring instance id, target the parent UUID.
+      let targetEventId = eventId;
+      const maybeDateForTarget = eventId.slice(-10);
+      const isSyntheticInstance = /\d{4}-\d{2}-\d{2}$/.test(maybeDateForTarget);
+      if (isSyntheticInstance) {
+        targetEventId = event.id; // resolved parent above
+      }
+
+      const response = await eventService.updateEvent(targetEventId, input);
 
       if (response.error) {
         logger.warn('event.update.online.failed', { error: response.error });
 
         // Fallback to offline
-        const event = await offlineAdapter.getEventById(eventId);
-        if (!event) {
+        let fallbackEvent = await offlineAdapter.getEventById(eventId);
+        // Resolve parent if instance id
+        if (!fallbackEvent) {
+          const maybeDate = eventId.slice(-10);
+          const hasDatePattern = /\d{4}-\d{2}-\d{2}/.test(maybeDate);
+          if (hasDatePattern) {
+            const parentId = eventId.slice(0, eventId.length - 11);
+            fallbackEvent = await offlineAdapter.getEventById(parentId);
+          }
+        }
+        if (!fallbackEvent) {
           return { error: 'Event not found' };
         }
 
-        const updated = { ...event, ...input };
+        const updated = { ...fallbackEvent, ...input };
         if (input.isAllDay === true) {
           delete (updated as any).time;
           delete (updated as any).duration;
@@ -356,7 +456,7 @@ export const eventAdapter = {
         }
         // Ensure familyId is preserved
         if (!updated.familyId) {
-          updated.familyId = event.familyId;
+          updated.familyId = fallbackEvent.familyId;
         }
         await offlineAdapter.put('events', updated);
         await offlineAdapter.sync.add({
@@ -381,12 +481,20 @@ export const eventAdapter = {
       logger.error('event.update.exception', { error: errorMsg, stack: errorStack, eventId, input });
 
       // Fallback to offline
-      const event = await offlineAdapter.getEventById(eventId);
-      if (!event) {
+      let finalEvent = await offlineAdapter.getEventById(eventId);
+      if (!finalEvent) {
+        const maybeDate = eventId.slice(-10);
+        const hasDatePattern = /\d{4}-\d{2}-\d{2}/.test(maybeDate);
+        if (hasDatePattern) {
+          const parentId = eventId.slice(0, eventId.length - 11);
+          finalEvent = await offlineAdapter.getEventById(parentId);
+        }
+      }
+      if (!finalEvent) {
         return { error: 'Event not found' };
       }
 
-      const updated = { ...event, ...input };
+      const updated = { ...finalEvent, ...input };
       if (input.isAllDay === true) {
         delete (updated as any).time;
         delete (updated as any).duration;
@@ -397,7 +505,7 @@ export const eventAdapter = {
         type: 'event',
         action: 'update',
         data: updated,
-        familyId: event.familyId,
+        familyId: finalEvent.familyId,
       });
 
       return { data: updated };
@@ -882,6 +990,8 @@ export const eventAdapter = {
         isPending: !isOfflineFamily,
         isRecurring: true,
         recurrenceRule: input.recurrenceRule,
+        recurrenceExceptions: [],
+        recurrenceOverrides: {},
       };
 
       // Store only the parent event with the rule (no instances)
@@ -944,6 +1054,8 @@ export const eventAdapter = {
         isPending: true,
         isRecurring: true,
         recurrenceRule: input.recurrenceRule,
+        recurrenceExceptions: [],
+        recurrenceOverrides: {},
       };
 
       await offlineAdapter.put('events', parentEvent);

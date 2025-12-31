@@ -6,7 +6,20 @@
  */
 
 import type { EventRow, TagDefinitionRow } from '@/types/database';
-import type { Event, EventTag } from '@/types/calendar';
+import type { Event, EventTag, RecurrenceRule } from '@/types/calendar';
+
+const parseRecurrenceRule = (raw: any): RecurrenceRule | undefined => {
+  if (!raw) return undefined;
+  try {
+    if (typeof raw === 'string') {
+      const obj = JSON.parse(raw);
+      return obj as RecurrenceRule;
+    }
+    return raw as RecurrenceRule;
+  } catch {
+    return undefined;
+  }
+};
 
 /**
  * Map database EventRow to application Event
@@ -26,7 +39,7 @@ export const mapEventRow = (row: EventRow, tags: string[] = []): Event => ({
   updatedAt: row.updated_at,
   isPending: false,
   isRecurring: row.is_recurring ?? undefined,
-  recurrenceRule: row.recurrence_rule ?? undefined,
+  recurrenceRule: parseRecurrenceRule(row.recurrence_rule),
 });
 
 /**

@@ -44,6 +44,12 @@ export const offlineAdapter = {
     return offlineDB.get<Event>('events', eventId) || null;
   },
 
+  getRecurringParents: async (familyId: string): Promise<Event[]> => {
+    const all = await offlineDB.getAllByIndex<Event>('events', 'family_id', familyId);
+    if (!all) return [];
+    return all.filter(e => e.isRecurring && e.recurrenceRule);
+  },
+
   getEventTags: async (familyId: string): Promise<EventTag[]> => {
     const tags = await offlineDB.getAllByIndex<EventTag>('tag_definitions', 'family_id', familyId);
     return tags ? tags.sort((a, b) => a.name.localeCompare(b.name)) : [];

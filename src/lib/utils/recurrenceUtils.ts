@@ -1,5 +1,6 @@
-import { addDays, addWeeks, addMonths, addYears, parseISO, format, lastDayOfMonth } from 'date-fns';
-import type { Event, EventInput, RecurrenceRule } from '@/types/calendar';
+import { addDays, addWeeks, addMonths, addYears, parseISO, format, lastDayOfMonth, differenceInDays, differenceInWeeks, differenceInMonths, differenceInYears } from 'date-fns';
+import { logger } from '@/lib/logger';
+import type { Event, RecurrenceRule, EventInput } from '@/types/calendar';
 
 /**
  * Recurrence Utils - Generate recurring event instances
@@ -21,50 +22,59 @@ export const generateRecurringInstances = (
 ): Event[] => {
   const instances: Event[] = [];
   const baseDate = parseISO(event.date);
-  
-  // If no range specified, generate a default range from event date
+
+  // Range defaults: from base date to +3 months if not provided
   const start = rangeStart ? parseISO(rangeStart) : baseDate;
-  const end = rangeEnd ? parseISO(rangeEnd) : addMonths(baseDate, 3); // Default: 3 months
-  
-  let currentDate = baseDate;
-  let occurrenceCount = 0;
-  
-  // Determine when to stop generating
+  const end = rangeEnd ? parseISO(rangeEnd) : addMonths(baseDate, 3);
+
   const hasEndDate = !!rule.endDate;
-  const hasMaxOccurrences = !!rule.maxOccurrences;
-  const isUnlimited = rule.unlimited === true;
-  
   const endDate = hasEndDate ? parseISO(rule.endDate!) : null;
+  const hasMaxOccurrences = !!rule.maxOccurrences;
   const maxOccurrences = hasMaxOccurrences ? rule.maxOccurrences! : null;
 
-  // Start from the first occurrence that falls within or before the range
-  while (currentDate < start && !hasEndDate && !hasMaxOccurrences) {
-    currentDate = getNextOccurrence(currentDate, rule);
-  }
+  const exceptions = new Set(event.recurrenceExceptions || []);
+  const overrides = event.recurrenceOverrides || {};
 
-  // Generate instances
-  while (currentDate <= end) {
-    // Check end conditions
-    if (hasEndDate && currentDate > endDate) break;
-    if (hasMaxOccurrences && occurrenceCount >= maxOccurrences) break;
-    if (!isUnlimited && !hasEndDate && !hasMaxOccurrences) break; // Fallback safety
+  let occurrenceCount = 0;
 
-    // Create instance
+  // Iterate day-by-day within the range; apply rule matching + interval logic
+  for (let cursor = start; cursor <= end; cursor = addDays(cursor, 1)) {
+    // Global stop conditions
+    if (hasEndDate && cursor > endDate!) break;
+    if (hasMaxOccurrences && occurrenceCount >= (maxOccurrences as number)) break;
+
+    if (!matchesRecurrenceRule(cursor, baseDate, rule)) continue;
+
+    const dateStr = format(cursor, 'yyyy-MM-dd');
+    if (exceptions.has(dateStr)) continue;
+
+    const override = overrides[dateStr] || {};
+
     const instance: Event = {
       ...event,
-      id: `${event.id}-${format(currentDate, 'yyyy-MM-dd')}`,
-      date: format(currentDate, 'yyyy-MM-dd'),
+      ...override,
+      id: `${event.id}-${dateStr}`,
+      date: dateStr,
       recurringEventId: event.id,
       isRecurringInstance: true,
-      isPending: event.isPending,
     };
 
     instances.push(instance);
     occurrenceCount++;
 
-    // Move to next occurrence
-    currentDate = getNextOccurrence(currentDate, rule);
+    if (hasMaxOccurrences && occurrenceCount >= (maxOccurrences as number)) break;
   }
+
+  logger.debug('recurrence.generate.instances', {
+    baseDate: event.date,
+    rangeStart: rangeStart,
+    rangeEnd: rangeEnd,
+    frequency: rule.frequency,
+    interval: rule.interval || 1,
+    hasEndDate,
+    hasMaxOccurrences,
+    count: instances.length,
+  });
 
   return instances;
 };
@@ -120,28 +130,49 @@ export const getNextOccurrence = (currentDate: Date, rule: RecurrenceRule): Date
  * Check if a date matches the recurrence rule
  */
 export const matchesRecurrenceRule = (date: Date, baseDate: Date, rule: RecurrenceRule): boolean => {
-  // Simple check for basic patterns
-  const daysDiff = Math.floor((date.getTime() - baseDate.getTime()) / (1000 * 60 * 60 * 24));
   const interval = rule.interval || 1;
 
   switch (rule.frequency) {
-    case 'daily':
-      return daysDiff % interval === 0;
+    case 'daily': {
+      const days = differenceInDays(date, baseDate);
+      return days >= 0 && days % interval === 0;
+    }
 
-    case 'weekly':
-      return daysDiff % (7 * interval) === 0;
+    case 'weekly': {
+      const weeks = differenceInWeeks(date, baseDate);
+      const weekMatch = weeks >= 0 && weeks % interval === 0;
+      const dow = date.getDay();
+      if (rule.daysOfWeek && rule.daysOfWeek.length > 0) {
+        return weekMatch && rule.daysOfWeek.includes(dow);
+      }
+      return weekMatch && dow === baseDate.getDay();
+    }
 
-    case 'biweekly':
-      return daysDiff % (14 * interval) === 0;
+    case 'biweekly': {
+      const weeks = differenceInWeeks(date, baseDate);
+      const period = 2 * interval;
+      const weekMatch = weeks >= 0 && weeks % period === 0;
+      const dow = date.getDay();
+      if (rule.daysOfWeek && rule.daysOfWeek.length > 0) {
+        return weekMatch && rule.daysOfWeek.includes(dow);
+      }
+      return weekMatch && dow === baseDate.getDay();
+    }
 
-    case 'monthly':
-      return date.getDate() === baseDate.getDate();
+    case 'monthly': {
+      const months = differenceInMonths(date, baseDate);
+      const monthMatch = months >= 0 && months % interval === 0;
+      const day = rule.dayOfMonth ?? baseDate.getDate();
+      return monthMatch && date.getDate() === day;
+    }
 
-    case 'yearly':
-      return (
-        date.getMonth() === baseDate.getMonth() &&
-        date.getDate() === baseDate.getDate()
-      );
+    case 'yearly': {
+      const years = differenceInYears(date, baseDate);
+      const yearMatch = years >= 0 && years % interval === 0;
+      const month = (rule.monthOfYear ?? baseDate.getMonth() + 1) - 1; // 0-based
+      const day = rule.dayOfMonth ?? baseDate.getDate();
+      return yearMatch && date.getMonth() === month && date.getDate() === day;
+    }
 
     default:
       return false;
