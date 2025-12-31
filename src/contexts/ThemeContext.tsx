@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useLayoutEffect } from 'react';
 
-export type ThemeKey = 'dark' | 'light' | 'nord' | 'dracula' | 'solarized' | 'gruvbox' | 'catppuccin';
+export type ThemeKey = 'dark' | 'light' | 'nord' | 'dracula' | 'solarized' | 'gruvbox' | 'catppuccin' | 'solarizedLight';
 
 export interface ThemeInfo {
   key: ThemeKey;
@@ -15,6 +15,7 @@ export const themes: ThemeInfo[] = [
   { key: 'solarized', labelKey: 'themeSolarized' },
   { key: 'gruvbox', labelKey: 'themeGruvbox' },
   { key: 'catppuccin', labelKey: 'themeCatppuccin' },
+  { key: 'solarizedLight', labelKey: 'themeSolarizedLight' },
 ];
 
 // Theme CSS variables definitions
@@ -228,6 +229,36 @@ const themeVariables: Record<ThemeKey, Record<string, string>> = {
     '--category-prazeres': '316 72% 86%',
     '--category-liberdade': '217 92% 76%',
     '--category-conhecimento': '23 92% 75%',
+  },
+  solarizedLight: {
+    '--background': '45 87% 94%',
+    '--foreground': '186 13% 35%',
+    '--card': '45 53% 88%',
+    '--card-foreground': '186 13% 35%',
+    '--card-hover': '45 53% 86%',
+    '--popover': '45 87% 96%',
+    '--popover-foreground': '186 13% 35%',
+    '--primary': '205 69% 49%',
+    '--primary-foreground': '0 0% 100%',
+    '--secondary': '44 35% 90%',
+    '--secondary-foreground': '186 13% 35%',
+    '--muted': '44 35% 90%',
+    '--muted-foreground': '186 13% 45%',
+    '--accent': '45 53% 86%',
+    '--accent-foreground': '186 13% 35%',
+    '--destructive': '1 71% 52%',
+    '--destructive-foreground': '0 0% 100%',
+    '--success': '68 100% 30%',
+    '--success-foreground': '0 0% 100%',
+    '--border': '44 32% 85%',
+    '--input': '44 32% 85%',
+    '--ring': '205 69% 49%',
+    '--category-custos-fixos': '205 69% 49%',
+    '--category-conforto': '68 100% 30%',
+    '--category-metas': '45 100% 35%',
+    '--category-prazeres': '331 64% 52%',
+    '--category-liberdade': '205 69% 49%',
+    '--category-conhecimento': '18 89% 55%',
   },
 };
 

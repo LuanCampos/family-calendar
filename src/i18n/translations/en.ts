@@ -170,6 +170,7 @@ export const en = {
   themeSolarized: 'Solarized',
   themeGruvbox: 'Gruvbox',
   themeCatppuccin: 'Catppuccin',
+  themeSolarizedLight: 'Solarized Light',
   
   // Profile & Password
   displayName: 'Display Name',
