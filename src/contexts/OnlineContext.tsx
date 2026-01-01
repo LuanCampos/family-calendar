@@ -274,7 +274,9 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             continue;
           }
 
-          if (item.action === 'insert') {
+          if (item.type === 'user_preference' && item.action === 'upsert') {
+            await userService.upsertUserPreference(item.data);
+          } else if (item.action === 'insert') {
             await familyService.insertToTable(item.type, item.data);
           } else if (item.action === 'update') {
             await familyService.updateInTable(item.type, item.data.id, item.data);

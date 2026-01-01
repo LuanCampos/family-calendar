@@ -13,8 +13,8 @@ export interface OfflineFamily {
 
 export interface SyncQueueItem {
   id: string;
-  type: 'family' | 'event' | 'tag';
-  action: 'insert' | 'update' | 'delete';
+  type: 'family' | 'event' | 'tag' | 'event_tag' | 'user_preference';
+  action: 'insert' | 'update' | 'delete' | 'upsert';
   data: any;
   createdAt: string;
   familyId: string;

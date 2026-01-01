@@ -14,9 +14,12 @@ import { supabase } from '../supabase';
 // USER PREFERENCE QUERIES
 // ============================================================================
 
+export const APPLICATION_KEY = 'calendar';
+
 export interface UserPreference {
   id: string;
   user_id: string;
+  application_key: string;
   language: string | null;
   theme: string | null;
   current_family_id: string | null;
@@ -28,6 +31,7 @@ export const getUserPreferences = async (userId: string) => {
     .from('user_preference')
     .select('*')
     .eq('user_id', userId)
+    .eq('application_key', APPLICATION_KEY)
     .maybeSingle();
 };
 
@@ -36,6 +40,7 @@ export const getCurrentFamilyPreference = async (userId: string) => {
     .from('user_preference')
     .select('current_family_id')
     .eq('user_id', userId)
+    .eq('application_key', APPLICATION_KEY)
     .maybeSingle();
 };
 
@@ -49,13 +54,14 @@ export const upsertUserPreference = async (payload: {
 
   const finalPayload = {
     user_id: session.user!.id,
+    application_key: APPLICATION_KEY,
     ...payload,
     updated_at: new Date().toISOString(),
   };
 
   const result = await supabase
     .from('user_preference')
-    .upsert(finalPayload, { onConflict: 'user_id' });
+    .upsert(finalPayload, { onConflict: 'user_id,application_key' });
 
   if (result.error) {
     console.error('[USER_PREF] Upsert failed', {
@@ -74,9 +80,10 @@ export const updateCurrentFamily = async (userId: string, familyId: string | nul
     .from('user_preference')
     .upsert({
       user_id: userId,
+      application_key: APPLICATION_KEY,
       current_family_id: familyId,
       updated_at: new Date().toISOString()
-    }, { onConflict: 'user_id' })
+    }, { onConflict: 'user_id,application_key' })
     .select()
     .single();
 };

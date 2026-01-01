@@ -231,8 +231,8 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
         } catch (err) {
           // Fallback: save to offline store and enqueue sync
           try {
-            await offlineAdapter.put('user_preferences', { user_id: user.id, theme: newTheme, updated_at: new Date().toISOString() });
-            await offlineAdapter.sync.add({ type: 'user_preference', action: 'upsert', data: { user_id: user.id, theme: newTheme }, familyId: '' });
+            await offlineAdapter.put('user_preferences', { user_id: user.id, application_key: 'calendar', theme: newTheme, updated_at: new Date().toISOString() });
+            await offlineAdapter.sync.add({ type: 'user_preference', action: 'upsert', data: { user_id: user.id, application_key: 'calendar', theme: newTheme }, familyId: '' });
           } catch (offlineErr) {
             console.error('Failed to persist theme preference offline:', offlineErr);
           }
@@ -529,7 +529,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
               <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder={t('newPasswordPlaceholder')} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">{t('confirmNewPassword')}</Label>
+              <Label htmlFor="confirmPassword">{t('confirmPassword')}</Label>
               <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder={t('confirmPasswordPlaceholder')} />
             </div>
             <div className="flex gap-2 pt-2">
