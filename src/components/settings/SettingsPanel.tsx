@@ -248,6 +248,34 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
     }
   };
 
+  const handleLanguageChange = async (newLanguage: Language) => {
+    try {
+      // Apply immediately in UI
+      setLanguage(newLanguage);
+
+      // If there's a logged-in user, try to persist preference server-side
+      if (user) {
+        const payload = { user_id: user.id, language: newLanguage };
+        try {
+          const res = await userService.upsertUserPreference(payload);
+          if ((res as any).error) {
+            throw (res as any).error;
+          }
+        } catch (err) {
+          // Fallback: save to offline store and enqueue sync
+          try {
+            await offlineAdapter.put('user_preferences', { user_id: user.id, application_key: 'calendar', language: newLanguage, updated_at: new Date().toISOString() });
+            await offlineAdapter.sync.add({ type: 'user_preference', action: 'upsert', data: { user_id: user.id, application_key: 'calendar', language: newLanguage }, familyId: '' });
+          } catch (offlineErr) {
+            console.error('Failed to persist language preference offline:', offlineErr);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error handling language change:', err);
+    }
+  };
+
   // Auth handlers for offline mode
   const handleAuthSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -765,7 +793,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
                           <Globe className="h-4 w-4 text-muted-foreground" />
                           <span className="text-sm">{t('language')}</span>
                         </div>
-                        <Select value={language} onValueChange={(v) => setLanguage(v as Language)}>
+                        <Select value={language} onValueChange={(v) => handleLanguageChange(v as Language)}>
                           <SelectTrigger className="w-36 h-9 text-sm"><SelectValue /></SelectTrigger>
                           <SelectContent className="bg-card border-border">
                             {languages.map((lang) => <SelectItem key={lang.code} value={lang.code}>{lang.name}</SelectItem>)}

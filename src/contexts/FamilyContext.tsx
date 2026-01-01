@@ -351,23 +351,25 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
       } else {
         try {
-          const { data } = await userService.getCurrentFamilyPreference(user.id);
-
-          if (data?.current_family_id) {
-            // Verify this family exists in the loaded families
-            const familyExists = allFamilies.some(f => f.id === data.current_family_id);
-            if (familyExists) {
-              selectedFamilyId = data.current_family_id;
+          // 1) Prefer the browser-stored family if it still exists/accessible.
+          const savedFamilyId = localStorage.getItem('current-family-id');
+          if (savedFamilyId) {
+            const exists = allFamilies.some(f => f.id === savedFamilyId);
+            if (exists) {
+              selectedFamilyId = savedFamilyId;
+            } else {
+              // Stale selection (user removed from family, etc.)
+              localStorage.removeItem('current-family-id');
             }
           }
-          
-          // If no valid preference found, check localStorage for offline family
+
+          // 2) If no valid browser selection, fall back to server preference.
           if (!selectedFamilyId) {
-            const savedFamilyId = localStorage.getItem('current-family-id');
-            if (savedFamilyId && offlineAdapter.isOfflineId(savedFamilyId)) {
-              const offlineExists = allFamilies.some(f => f.id === savedFamilyId);
-              if (offlineExists) {
-                selectedFamilyId = savedFamilyId;
+            const { data } = await userService.getCurrentFamilyPreference(user.id);
+            if (data?.current_family_id) {
+              const familyExists = allFamilies.some(f => f.id === data.current_family_id);
+              if (familyExists) {
+                selectedFamilyId = data.current_family_id;
               }
             }
           }

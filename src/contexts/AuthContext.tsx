@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { getAppBaseUrl } from '@/lib/utils/appBaseUrl';
 import * as userService from '@/lib/services/userService';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useTheme, themes, ThemeKey } from '@/contexts/ThemeContext';
 import { toast } from '@/hooks/ui/use-toast';
 
 interface AuthContextType {
@@ -29,7 +30,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const { t } = useLanguage();
+  const { t, setLanguage } = useLanguage();
+  const { setTheme } = useTheme();
   const [postAuthType, setPostAuthType] = useState<'signup' | 'recovery' | null>(null);
 
   useEffect(() => {
@@ -86,62 +88,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, []);
 
-  // When a user becomes available, ensure server has initial preferences copied
-  // from localStorage if the server record is missing or missing fields.
+  // When a user becomes available, retrieve user preferences (create if missing)
+  // and apply server-side values with higher priority than localStorage.
   useEffect(() => {
     if (!user) return;
 
-    const syncLocalPreferencesToServer = async () => {
+    const hydratePreferencesFromServer = async () => {
       try {
-        const { data, error } = await userService.getUserPreferences(user.id);
-        if (error) {
-          console.warn('[AUTH] getUserPreferences failed:', error);
-          return;
-        }
-
         const localTheme = typeof window !== 'undefined' ? localStorage.getItem('budget-app-theme') : null;
         const localLanguage = typeof window !== 'undefined' ? localStorage.getItem('budget-app-language') : null;
 
-        const payload: any = { user_id: user.id };
-        let shouldUpsert = false;
+        const browserLang = typeof navigator !== 'undefined' ? navigator.language.slice(0, 2) : 'en';
+        const defaultTheme: ThemeKey = (localTheme && themes.some(t => t.key === localTheme))
+          ? (localTheme as ThemeKey)
+          : 'dark';
+        const defaultLanguage = (localLanguage === 'pt' || localLanguage === 'en')
+          ? localLanguage
+          : (browserLang === 'pt' ? 'pt' : 'en');
 
-        if (!data) {
-          // No server record: explicitly write all preferences to ensure
-          // the server reflects the app's current state. Use localStorage
-          // values when available, otherwise use sensible defaults.
-          const browserLang = typeof navigator !== 'undefined' ? navigator.language.slice(0, 2) : 'en';
-          const themeToWrite = localTheme || 'dark';
-          const languageToWrite = (localLanguage === 'pt' || localLanguage === 'en') ? localLanguage : (browserLang === 'pt' ? 'pt' : 'en');
+        const { data, error } = await userService.getOrCreateUserPreferences(user.id, {
+          theme: defaultTheme,
+          language: defaultLanguage,
+        });
 
-          payload.theme = themeToWrite;
-          payload.language = languageToWrite;
-          shouldUpsert = true;
-        } else {
-          // Partial record: fill missing fields from localStorage
-          const prefs = data as userService.UserPreference;
-          if ((!prefs.theme || prefs.theme === null) && localTheme) { payload.theme = localTheme; shouldUpsert = true; }
-          if ((!prefs.language || prefs.language === null) && localLanguage) { payload.language = localLanguage; shouldUpsert = true; }
+        if (error) {
+          console.warn('[AUTH] getOrCreateUserPreferences failed:', error);
+          return;
         }
 
-        if (shouldUpsert) {
-          try {
-            const result = await userService.upsertUserPreference(payload);
-            if (result.error) {
-              console.warn('[AUTH] upsertUserPreference failed:', result.error);
-            }
-          } catch (upsertErr) {
-            // Non-fatal: Log and continue. Errors here are real auth/RLS issues,
-            // not transient race conditions. User can still use the app offline.
-            console.warn('[AUTH] upsertUserPreference threw:', upsertErr instanceof Error ? upsertErr.message : String(upsertErr));
-          }
+        if (!data) return;
+
+        // Server has priority over browser memory for theme/language.
+        const prefs = data as userService.UserPreference;
+
+        if (prefs.theme && themes.some(t => t.key === prefs.theme)) {
+          setTheme(prefs.theme as ThemeKey);
+        }
+
+        if (prefs.language === 'pt' || prefs.language === 'en') {
+          setLanguage(prefs.language);
         }
       } catch (err) {
-        console.warn('[AUTH] Error syncing local preferences to server:', err);
+        console.warn('[AUTH] Error hydrating user preferences:', err);
       }
     };
 
-    syncLocalPreferencesToServer();
-  }, [user]);
+    hydratePreferencesFromServer();
+  }, [user, setLanguage, setTheme]);
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
