@@ -39,7 +39,7 @@ export const mapEventRow = (row: EventRow, tags: string[] = []): Event => ({
   updatedAt: row.updated_at,
   isPending: false,
   isRecurring: row.is_recurring ?? undefined,
-  recurrenceRule: parseRecurrenceRule(row.recurrence_rule),
+  recurrenceRule: row.is_recurring ? parseRecurrenceRule(row.recurrence_rule) : undefined,
 });
 
 /**

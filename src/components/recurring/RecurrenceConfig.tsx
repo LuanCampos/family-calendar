@@ -138,7 +138,7 @@ export const RecurrenceConfig = ({
         <div className="flex items-center gap-2 flex-1">
           <Repeat2 className="h-4 w-4 text-primary mt-0.5" />
           <div className="flex-1">
-            <Label htmlFor="freq-trigger" className="text-xs sm:text-sm font-semibold block mb-0.5">
+            <Label className="text-xs sm:text-sm font-semibold block mb-0.5">
               {t('event.recurring')}
             </Label>
             <p className="text-xs text-muted-foreground">

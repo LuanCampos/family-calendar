@@ -249,6 +249,13 @@ export const eventService = {
         }
       });
 
+      // If recurrence is being turned off, we must explicitly clear the rule.
+      // Otherwise Supabase will keep the previous recurrence_rule value (partial update).
+      if (input.isRecurring === false) {
+        updatePayload.is_recurring = false;
+        updatePayload.recurrence_rule = null;
+      }
+
       // If toggling to all-day, explicitly clear time and duration
       if (input.isAllDay === true) {
         updatePayload.time = null;

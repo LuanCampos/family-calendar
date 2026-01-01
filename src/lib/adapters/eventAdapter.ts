@@ -81,22 +81,33 @@ export const eventAdapter = {
       if (response.error) {
         logger.warn('event.get.online.failed', { error: response.error });
         // Fallback to offline
-        const eventsInRange = await offlineAdapter.getEvents(familyId, startDate, endDate);
-        const recurringParents = await offlineAdapter.getRecurringParents(familyId);
-        const parentMap = new Map<string, Event>();
-        for (const p of recurringParents) parentMap.set(p.id, p);
-        for (const e of eventsInRange) { if (e.isRecurring && e.recurrenceRule) parentMap.set(e.id, e); }
-        const expandedParents = expandRecurringEvents(Array.from(parentMap.values()), startDate, endDate);
-        const nonRecurring = (eventsInRange || []).filter(e => !e.isRecurring || !e.recurrenceRule);
-        return [...nonRecurring, ...expandedParents];
+        try {
+          const eventsInRange = await offlineAdapter.getEvents(familyId, startDate, endDate);
+          const recurringParents = await offlineAdapter.getRecurringParents(familyId);
+          const parentMap = new Map<string, Event>();
+          for (const p of recurringParents) parentMap.set(p.id, p);
+          for (const e of eventsInRange) { if (e.isRecurring && e.recurrenceRule) parentMap.set(e.id, e); }
+          const expandedParents = expandRecurringEvents(Array.from(parentMap.values()), startDate, endDate);
+          const nonRecurring = (eventsInRange || []).filter(e => !e.isRecurring || !e.recurrenceRule);
+          return [...nonRecurring, ...expandedParents];
+        } catch (offlineError) {
+          logger.warn('event.get.offlineFallback.failed', { error: offlineError, familyId });
+          return [];
+        }
       }
 
       logger.info('event.get.success', { count: response.data?.length || 0, parents: parentsRes.data?.length || 0 });
 
       // Sync to offline storage
-      const toSync = [ ...(response.data as Event[] || []), ...(parentsRes.data as Event[] || []) ];
-      if (toSync.length > 0) {
-        await offlineAdapter.syncEvents(toSync);
+      try {
+        const toSync = [ ...(response.data as Event[] || []), ...(parentsRes.data as Event[] || []) ];
+        if (toSync.length > 0) {
+          await offlineAdapter.syncEvents(toSync);
+        }
+      } catch (syncError) {
+        // IndexedDB can be unavailable (private mode, blocked, quota, etc.).
+        // Do not fail the online read path just because offline sync failed.
+        logger.warn('event.get.offlineSync.failed', { error: syncError, familyId });
       }
 
       const eventsInRange = (response.data as Event[]) || [];
@@ -114,19 +125,24 @@ export const eventAdapter = {
       return [...nonRecurring, ...expandedParents];
     } catch (error) {
       logger.error('event.get.exception', { error, familyId });
-      const eventsInRange = await offlineAdapter.getEvents(familyId, startDate, endDate);
-      const recurringParents = await offlineAdapter.getRecurringParents(familyId);
-      const parentMap = new Map<string, Event>();
-      for (const p of recurringParents) parentMap.set(p.id, p);
-      for (const e of eventsInRange) { if (e.isRecurring && e.recurrenceRule) parentMap.set(e.id, e); }
-      const expandedParents = expandRecurringEvents(Array.from(parentMap.values()), startDate, endDate);
-      const nonRecurring = (eventsInRange || []).filter(e => !e.isRecurring || !e.recurrenceRule);
-      logger.debug('event.get.exception.expand.debug', {
-        parentsCount: parentMap.size,
-        expandedCount: expandedParents.length,
-        nonRecurringCount: nonRecurring.length,
-      });
-      return [...nonRecurring, ...expandedParents];
+      try {
+        const eventsInRange = await offlineAdapter.getEvents(familyId, startDate, endDate);
+        const recurringParents = await offlineAdapter.getRecurringParents(familyId);
+        const parentMap = new Map<string, Event>();
+        for (const p of recurringParents) parentMap.set(p.id, p);
+        for (const e of eventsInRange) { if (e.isRecurring && e.recurrenceRule) parentMap.set(e.id, e); }
+        const expandedParents = expandRecurringEvents(Array.from(parentMap.values()), startDate, endDate);
+        const nonRecurring = (eventsInRange || []).filter(e => !e.isRecurring || !e.recurrenceRule);
+        logger.debug('event.get.exception.expand.debug', {
+          parentsCount: parentMap.size,
+          expandedCount: expandedParents.length,
+          nonRecurringCount: nonRecurring.length,
+        });
+        return [...nonRecurring, ...expandedParents];
+      } catch (offlineError) {
+        logger.error('event.get.offlineFallback.failed', { error: offlineError, familyId });
+        return [];
+      }
     }
   },
 
@@ -154,7 +170,11 @@ export const eventAdapter = {
 
       // Sync to offline
       if (response.data) {
-        await offlineAdapter.put('events', response.data);
+        try {
+          await offlineAdapter.put('events', response.data);
+        } catch (syncError) {
+          logger.warn('event.getById.offlineSync.failed', { error: syncError, eventId });
+        }
       }
 
       return response.data as Event;
@@ -370,6 +390,11 @@ export const eventAdapter = {
         logger.info('event.update.offline', { eventId });
 
         const updated = { ...event, ...input };
+        // If recurrence is being turned off, clear the stored rule.
+        // Spreading partial input cannot remove existing properties.
+        if (input.isRecurring === false) {
+          delete (updated as any).recurrenceRule;
+        }
         // If toggling to all-day, clear time and duration locally
         if (input.isAllDay === true) {
           delete (updated as any).time;
@@ -400,6 +425,9 @@ export const eventAdapter = {
         logger.warn('event.update.session.not.ready', { error: sessionError });
         // Fallback to offline with pending sync
         const updated = { ...event, ...input };
+        if (input.isRecurring === false) {
+          delete (updated as any).recurrenceRule;
+        }
         if (input.isAllDay === true) {
           delete (updated as any).time;
           delete (updated as any).duration;
@@ -449,6 +477,9 @@ export const eventAdapter = {
         }
 
         const updated = { ...fallbackEvent, ...input };
+        if (input.isRecurring === false) {
+          delete (updated as any).recurrenceRule;
+        }
         if (input.isAllDay === true) {
           delete (updated as any).time;
           delete (updated as any).duration;
@@ -495,6 +526,9 @@ export const eventAdapter = {
       }
 
       const updated = { ...finalEvent, ...input };
+      if (input.isRecurring === false) {
+        delete (updated as any).recurrenceRule;
+      }
       if (input.isAllDay === true) {
         delete (updated as any).time;
         delete (updated as any).duration;
@@ -625,17 +659,26 @@ export const eventAdapter = {
       logger.info('tag.getAll.success', { count: response.data?.length || 0 });
 
       // Sync to offline
-      if (response.data && response.data.length > 0) {
-        for (const tag of response.data) {
-          await offlineAdapter.put('tag_definitions', tag);
+      try {
+        if (response.data && response.data.length > 0) {
+          for (const tag of response.data) {
+            await offlineAdapter.put('tag_definitions', tag);
+          }
         }
+      } catch (syncError) {
+        logger.warn('tag.getAll.offlineSync.failed', { error: syncError, familyId });
       }
 
       return (response.data as EventTag[]) || [];
     } catch (error) {
       logger.error('tag.getAll.exception', { error, familyId });
-      const tags = await offlineAdapter.getEventTags(familyId);
-      return tags || [];
+      try {
+        const tags = await offlineAdapter.getEventTags(familyId);
+        return tags || [];
+      } catch (offlineError) {
+        logger.error('tag.getAll.offlineFallback.failed', { error: offlineError, familyId });
+        return [];
+      }
     }
   },
 
