@@ -103,6 +103,7 @@ export const en = {
   
   // Tags
   tags: 'Tags',
+  untagged: 'Untagged',
   manageTags: 'Manage Tags',
   newTag: 'New Tag',
   editTag: 'Edit Tag',

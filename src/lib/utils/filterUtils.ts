@@ -1,5 +1,7 @@
 import type { Event } from '@/types/calendar';
 
+export const UNTAGGED_FILTER_ID = '__untagged__';
+
 /**
  * Filters events based on selected tag IDs
  * If selectedTagIds is empty, returns all events
@@ -14,13 +16,34 @@ export const filterEventsByTags = (
     return events;
   }
 
+  const includeUntagged = selectedTagIds.includes(UNTAGGED_FILTER_ID);
+  const selectedRealTagIds = selectedTagIds.filter(
+    (id) => id !== UNTAGGED_FILTER_ID
+  );
+
   // Filter events that have at least one of the selected tags
   return events.filter((event) => {
-    if (!event.tags || event.tags.length === 0) {
+    const hasTags = Array.isArray(event.tags) && event.tags.length > 0;
+
+    // Include events with no tags when UNTAGGED is selected
+    if (includeUntagged && !hasTags) {
+      return true;
+    }
+
+    // If only UNTAGGED was selected, exclude tagged events
+    if (includeUntagged && selectedRealTagIds.length === 0) {
       return false;
     }
 
-    return event.tags.some((tag) => selectedTagIds.includes(tag.id));
+    if (!hasTags) {
+      return false;
+    }
+
+    return event.tags.some((tag) =>
+      typeof tag === 'string'
+        ? selectedRealTagIds.includes(tag)
+        : selectedRealTagIds.includes(tag.id)
+    );
   });
 };
 

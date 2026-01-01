@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { UNTAGGED_FILTER_ID } from '@/lib/utils/filterUtils';
 import {
   Popover,
   PopoverContent,
@@ -235,6 +236,22 @@ export const Header: React.FC<HeaderProps> = ({
                   <div className="space-y-3">
                     <div className="font-semibold text-sm">{t('tags')}</div>
                     <div className="flex flex-wrap gap-1.5">
+                      <button
+                        key={UNTAGGED_FILTER_ID}
+                        onClick={() => onToggleTagFilter?.(UNTAGGED_FILTER_ID)}
+                        className={
+                          'px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full border transition-all text-xs sm:text-sm font-medium whitespace-nowrap hover:shadow-md hover:scale-[1.05] ' +
+                          (selectedFilterTags.includes(UNTAGGED_FILTER_ID)
+                            ? 'border-primary bg-primary text-primary-foreground'
+                            : 'border-border bg-background text-foreground')
+                        }
+                        title={t('untagged')}
+                      >
+                        {selectedFilterTags.includes(UNTAGGED_FILTER_ID) && (
+                          <span className="mr-1">✓</span>
+                        )}
+                        {t('untagged')}
+                      </button>
                       {availableTags.map((tag) => {
                         const isSelected = selectedFilterTags.includes(tag.id);
                         return (

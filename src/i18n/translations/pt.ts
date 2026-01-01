@@ -103,6 +103,7 @@ export const pt = {
   
   // Tags
   tags: 'Tags',
+  untagged: 'Sem Tag',
   manageTags: 'Gerenciar Tags',
   newTag: 'Nova Tag',
   editTag: 'Editar Tag',
