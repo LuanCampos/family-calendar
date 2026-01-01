@@ -107,14 +107,18 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
               {/* Month grid */}
               <div className="grid grid-cols-3 gap-2">
                 {months.map((month, index) => {
-                  const isHighlighted = index === todayMonth && selectedYear === todayYear;
+                  const isCurrentMonth = index === todayMonth && selectedYear === todayYear;
+                  const isViewingMonth =
+                    !isCurrentMonth &&
+                    index === currentDate.getMonth() && selectedYear === currentDate.getFullYear();
+                  const variant = isCurrentMonth ? "default" : "outline";
                   return (
                     <Button
                       key={month}
-                      variant={isHighlighted ? "default" : "outline"}
+                      variant={variant}
                       size="sm"
                       onClick={() => handleMonthSelect(index)}
-                      className="h-12 text-sm font-medium"
+                      className={`h-12 text-sm font-medium ${isViewingMonth ? 'border-primary' : ''}`}
                     >
                       {month.substring(0, 3)}
                     </Button>

@@ -147,15 +147,21 @@ export const Header: React.FC<HeaderProps> = ({
                   {/* Month grid */}
                   <div className="grid grid-cols-3 gap-2.5" role="group" aria-label="Mês">
                     {months.map((month, index) => {
-                      const isHighlighted = index === todayMonth && selectedYear === todayYear;
+                      const isCurrentMonth = index === todayMonth && selectedYear === todayYear;
+                      const isViewingMonth =
+                        !isCurrentMonth &&
+                        index === currentDate.getMonth() && selectedYear === currentDate.getFullYear();
+                      const variant = isCurrentMonth ? 'default' : 'outline';
                       return (
                         <Button
                           key={index}
                           size="default"
-                          variant={isHighlighted ? 'default' : 'outline'}
+                          variant={variant}
                           onClick={() => handleMonthSelect(index)}
-                          className="text-sm h-12 hover:shadow-md hover:border-primary hover:scale-[1.05] transition-all font-medium"
-                          aria-pressed={isHighlighted}
+                          className={
+                            `text-sm h-12 hover:shadow-md hover:border-primary hover:scale-[1.05] transition-all font-medium ${isViewingMonth ? 'border-primary' : ''}`
+                          }
+                          aria-pressed={isCurrentMonth}
                           aria-label={month}
                         >
                           {month.slice(0, 3)}
