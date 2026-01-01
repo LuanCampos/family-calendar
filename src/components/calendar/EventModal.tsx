@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { MaskedTimeInput } from '@/components/ui/masked-time-input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { TimePicker } from '@/components/ui/time-picker';
@@ -280,13 +281,12 @@ export const EventModal: React.FC<EventModalProps> = ({
                     </Label>
                   </div>
                   <div className="flex gap-2">
-                    <Input
+                    <MaskedTimeInput
                       id="time"
-                      type="text"
                       value={time}
-                      onChange={(e) => setTime(e.target.value)}
+                      onChange={(val) => setTime(val)}
                       placeholder="HH:MM"
-                      className="text-sm flex-1 font-mono h-9"
+                      className="flex-1"
                     />
                     <div className="flex-shrink-0">
                       <TimePicker

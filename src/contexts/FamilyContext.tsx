@@ -115,6 +115,8 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
 
     try {
+      // Ensure session/token is ready to avoid transient RLS/401 issues right after login
+      await userService.ensureSessionReady();
       const { data, error } = await familyService.getFamiliesByUser(user.id);
 
       if (!error && data) {
@@ -321,6 +323,8 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       if (user) {
         try {
+          // Ensure session/token is ready before fetching user families immediately after login
+          await userService.ensureSessionReady();
           const { data, error } = await familyService.getFamiliesByUser(user.id);
 
           if (!error && data) {
@@ -396,6 +400,21 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     };
     init();
   }, [user, loadOfflineFamilies, refreshMyInvitations]);
+
+  // Auto-select a family post-login if none is selected and families are loaded
+  useEffect(() => {
+    if (!user) return;
+    if (loading) return;
+    if (currentFamilyId) return;
+    if (families.length === 0) return;
+
+    const first = families[0];
+    setCurrentFamilyId(first.id);
+    localStorage.setItem('current-family-id', first.id);
+    if (!offlineAdapter.isOfflineId(first.id)) {
+      userService.updateCurrentFamily(user.id, first.id).then(() => {});
+    }
+  }, [user, loading, currentFamilyId, families]);
 
   // Load members and family invitations when family changes
   useEffect(() => {
