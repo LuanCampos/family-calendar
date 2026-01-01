@@ -1,254 +1,115 @@
-# AI Coding Agent Instructions: Family Calendar
+# Copilot Instructions for Family Calendar
 
-## Project Overview
+## Architecture Overview
 
-**Family Calendar** is a cloud-first, multi-user family calendar built with React, TypeScript, Vite, and Supabase. It features offline-first architecture with automatic sync, multi-family support, event tagging, and i18n (Portuguese/English).
+**Family Calendar** is a cloud-first, multi-family React calendar app with cloud sync via Supabase. The architecture uses **adapters** to branch logic between online (Supabase) and offline (IndexedDB) data sources.
 
-**Key Insight:** This is an offline-first app where the architecture uses **adapter pattern** to branch between online (Supabase) and offline (IndexedDB) operations seamlessly.
+### Core Principle: Online/Offline Branching
+- **eventAdapter** (src/lib/adapters/eventAdapter.ts) is the main entry point for all data operations
+- Checks `navigator.onLine` and offline IDs to decide whether to use `eventService` (Supabase) or `offlineAdapter` (IndexedDB)
+- On offline failure, automatically falls back to offline storage
+- Offline changes queue in `syncQueue` (IndexedDB) and sync when online
 
----
+### Key Data Flow
+1. **Events & Tags** → `storageAdapter` (re-exports from eventAdapter) → routes to `eventService` or `offlineAdapter`
+2. **Contexts** provide app-wide state: `AuthContext` (user session), `FamilyContext` (family/members), `CalendarContext` (UI dates), `OnlineContext` (connection status)
+3. **Hooks** (`useEvents`, `useEventTags`, `useRecurringEvents`) call adapters and manage state
+4. **Components** dispatch to hooks; never call services directly
 
-## Architecture: The Three Core Layers
+## Critical Patterns & Conventions
 
-### 1. **Contexts Layer** (`src/contexts/`)
-Manages global state and side effects via React Context:
+### Adapters Layer (src/lib/adapters/)
+- **eventAdapter.ts**: Online/offline branching for events, tags, recurring events. Always use this.
+- **offlineAdapter.ts**: Direct IndexedDB access with sync queue. Only used by eventAdapter.
+- **storageAdapter.ts**: Re-exports eventAdapter methods for convenience. Use this in components.
 
-- `AuthContext` - User auth via Supabase
-- `FamilyContext` - Currently selected family, multi-family switching
-- `OnlineContext` - Online/offline status & background sync orchestration
-- `CalendarContext` - Calendar view state (month, selected date)
-- `LanguageContext` - i18n (Portuguese/English)
-- `ThemeContext` - Dark/light mode
+**Pattern**: Always check `offlineAdapter.isOfflineId(familyId)` or `navigator.onLine` before deciding data source.
 
-**Pattern:** Contexts initialize their own providers at app level in `App.tsx` with TanStack Query for data fetching.
+### Recurring Events
+- Stored as parent events with `isRecurring: true` and `recurrenceRule` (see `RecurrenceRule` in src/types/calendar.ts)
+- **Never stored as individual instances in DB** - instances are generated on-the-fly via `generateRecurringInstances()` (src/lib/utils/recurrenceUtils.ts)
+- When fetching events, `eventAdapter.getEvents()` automatically expands recurring parents for the requested date range
+- Exceptions/overrides stored in `recurrenceExceptions` (excluded dates) and `recurrenceOverrides` (per-date customizations)
 
-### 2. **Adapters Layer** (`src/lib/adapters/`)
-The critical online/offline branching logic:
+**Why**: Reduces storage, simplifies updates (edit parent once affects all instances)
 
-```
-storageAdapter (main entry)
-├── eventAdapter (routes to online/offline)
-├── offlineAdapter (IndexedDB operations)
-└── eventService (Supabase API calls)
-```
+### Offline Data Model (IndexedDB stores in src/lib/storage/offlineStorage.ts)
+- `families`, `family_members`, `events`, `tag_definitions`, `event_tags`, `sync_queue`
+- `sync_queue` stores pending operations (events/tags created/updated offline) with `{ operation, data, familyId, timestamp }`
+- Offline IDs are UUIDs prefixed with `offline:` (see `generateOfflineId()`)
 
-**How It Works:**
-- `eventAdapter` checks `offlineAdapter.isOfflineId(familyId)` or `navigator.onLine`
-- If offline → uses `offlineAdapter` (IndexedDB)
-- If online → tries `eventService` (Supabase), falls back to offline on error
-- Online responses automatically sync to IndexedDB via `offlineAdapter.syncEvents()`
+### Family Context Hierarchy
+- Users can belong to multiple families; each has an `owner`, `admin`, or `member` role
+- `currentFamilyId` in FamilyContext is the active workspace
+- Offline families use IDs prefixed with `offline:` for testing without Supabase
+- Family members are synced in `members` array in FamilyContext
 
-**Critical Pattern:** Every data operation goes through adapters, never directly to Supabase. This ensures offline capability is maintained.
+## Developer Workflows
 
-### 3. **Services Layer** (`src/lib/services/`)
-Supabase API wrappers:
-- `eventService` - CRUD for events & tags
-- `familyService` - Family management & sync
-- `userService` - User profile operations
-
----
-
-## Key Data Flows
-
-### Creating an Event
-```
-useEvents hook
-  ↓
-storageAdapter.createEvent()
-  ↓
-eventAdapter.createEvent() [checks online status]
-  ├─ Online → eventService.createEvent() → Supabase
-  └─ Offline → offlineAdapter.createEvent() → IndexedDB
-  ↓
-Updates local component state + logs with logger.info()
-```
-
-### Syncing Offline Changes
-`OnlineContext` manages sync orchestration:
-1. Detects online status change
-2. Calls `syncFamily()` for each offline family
-3. Fetches offline family from Supabase
-4. Creates new online family with offline data
-5. Syncs events & tags from IndexedDB to online family
-6. Updates local family ID references
-
----
-
-## Important Patterns & Conventions
-
-### 1. **Family IDs Signal Online/Offline State**
-- Online families: UUIDs from Supabase
-- Offline families: prefixed with `offline-` (e.g., `offline-uuid`)
-- Always check `offlineAdapter.isOfflineId(familyId)` before routing
-
-### 2. **Structured Logging**
-```typescript
-logger.info('event.created', { eventId: '123', familyId: 'abc' });
-logger.error('event.create.error', { error: err, payload });
-logger.debug('sync.start', { queueLength }); // dev only
-```
-**Pattern:** Use dot-notation events (`event.created`, `sync.failed`) with context objects.
-
-### 3. **Error Handling with Fallbacks**
-Always fallback to offline when online fails:
-```typescript
-try {
-  if (!navigator.onLine) return offlineAdapter.getEvents(...);
-  const resp = await eventService.getEvents(...);
-  if (resp.error) return offlineAdapter.getEvents(...);
-  return resp.data;
-} catch (error) {
-  return offlineAdapter.getEvents(...); // fallback
-}
-```
-
-### 4. **Type Safety**
-- All calendar types in `src/types/calendar.ts` (Event, EventInput, EventTag, EventTagInput)
-- Database types in `src/types/database.ts` (PostgreSQL schema)
-- Import types with `import type` to avoid circular imports
-
-### 5. **Hook Dependencies**
-Hooks depend on contexts that must be wrapped:
-- `useEvents` → needs `FamilyContext` + `AuthContext`
-- `useAuth` → must be within `AuthProvider`
-- `useOnline` → must be within `OnlineProvider`
-
----
-
-## Development Workflow
-
-### Build & Run
+### Development
 ```bash
-npm run dev          # Vite dev server on port 8080
+npm run dev          # Start Vite dev server (http://localhost:8081/)
 npm run build        # Production build
-npm run build:dev    # Dev build (no minification, useful for debugging)
-npm run preview      # Preview production build
-npm run lint         # ESLint check
+npm run build:dev    # Dev build without minification (debugging)
+npm run lint         # Check ESLint
 ```
 
-### Local Testing
-- Dev server runs on `http://localhost:8080/family-calendar/`
-- Use browser DevTools → Application tab → IndexedDB to inspect offline storage
-- Toggle offline mode: DevTools → Network → Offline checkbox
+### Key Tools
+- **Vite 5.4** for fast HMR and bundling (vite.config.ts)
+- **Shadcn-ui** components (src/components/ui/) - use these for consistency
+- **TanStack React Query** for server state (QueryClient in App.tsx)
+- **Supabase** for online auth, families, events, tags via `src/lib/services/`
+- **date-fns** for date manipulation with locale support (i18n in src/i18n/)
 
-### Common Debugging
-- Check `logger` output in console (structured logs with timestamps)
-- Inspect sync progress: `OnlineContext` exposes `isSyncing` and `syncProgress`
-- Family switching: `FamilyContext.currentFamilyId` tells you which family is active
+### Debugging
+- `src/lib/logger.ts` for structured logging (use `logger.debug()`, `logger.info()`, `logger.error()`)
+- Check `localStorage` for auth tokens and family selection
+- Inspect IndexedDB (`Application > Storage > Indexed DB > budget-offline-db`) for offline data
+- Watch browser DevTools Network tab for Supabase calls
 
----
+## Import Conventions
 
-## UI Component Organization
+Use path aliases (defined in tsconfig.json):
+- `@/components` - React components
+- `@/contexts` - Context providers
+- `@/hooks` - Custom React hooks
+- `@/lib` - Core logic (adapters, services, storage, utils)
+- `@/types` - TypeScript types
+- `@/i18n` - Translations
 
-### `src/components/`
-- `calendar/` - CalendarGrid, CalendarHeader, EventModal
-- `tags/` - TagManager for event categorization
-- `family/` - FamilySetup (offline), FamilyManager (multi-family switching)
-- `ui/` - shadcn/ui primitives (Button, Dialog, Input, etc.)
-- `common/` - OnlineStatusBar (shows online/offline + sync progress)
-- `settings/` - SettingsPanel (theme, language)
+## Common Tasks
 
-**Pattern:** Components are domain-organized, not generic "buttons" folders.
+### Add a New Event Field
+1. Update `Event` interface in src/types/calendar.ts
+2. Update Supabase schema (PostgreSQL events table)
+3. Add mapping in `src/lib/mappers.ts` if needed
+4. Update `eventAdapter` to handle new field in create/update
+5. Update UI components to display/edit field
 
----
-
-## 🔄 Recurring Events Architecture
-
-**Key Concept:** Recurring events use **rule-only storage** - the system stores just the recurrence rule and generates instances on-demand for viewed periods. This enables unlimited/infinite recurrence without storing millions of instances.
-
-### How It Works
-
-**Creation:**
+### Create a Recurring Event
 ```typescript
-// Store only parent event + rule
-const input: EventInput = {
-  title: 'Weekly Meeting',
-  date: '2024-01-15',
+// In a component hook:
+const { createRecurringEvent } = useEvents();
+await createRecurringEvent(familyId, {
+  title: "Weekly meeting",
+  date: "2026-01-15",
   isRecurring: true,
-  recurrenceRule: {
-    frequency: 'weekly',
-    unlimited: true  // Infinite!
-  }
-};
-await createEvent(input);  // Stores 1 event with rule
+  recurrenceRule: { frequency: 'weekly', daysOfWeek: [3] } // Wednesday
+});
+// Instances auto-generated on fetch for any date range
 ```
 
-**Retrieval:**
-```typescript
-const events = await getEvents(familyId, '2024-01-15', '2024-02-15');
-// Internally: expandRecurringEvents() generates instances for the date range
-// Returns: normal events + generated instances (not persisted)
-```
+### Handle Offline-First Data
+- Components use `useOnline()` hook to detect connectivity
+- Display sync status via `OnlineStatusBar` component
+- Sync queue is automatic—changes made offline queue and sync on reconnect
+- No manual sync calls needed in most cases
 
-### Rule Structure (RecurrenceRule)
+### Internationalization
+- Add keys to src/i18n/translations/{pt,en}.json
+- Use `useLanguage()` hook: `const { t } = useLanguage(); <p>{t('key')}</p>`
 
-```typescript
-interface RecurrenceRule {
-  frequency: 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'yearly';
-  interval?: number;           // Periods between occurrences (default: 1)
-  endDate?: string;            // End date (YYYY-MM-DD)
-  maxOccurrences?: number;     // Max instances
-  daysOfWeek?: number[];       // For weekly (0-6)
-  dayOfMonth?: number;         // For monthly (1-31)
-  monthOfYear?: number;        // For yearly (1-12)
-  unlimited?: boolean;         // true = infinite, no endDate/maxOccurrences
-}
-```
-
-### Core Components
-
-- `src/lib/utils/recurrenceUtils.ts` - `generateRecurringInstances(event, rule, rangeStart?, rangeEnd?)`
-- `src/lib/adapters/eventAdapter.ts` - `expandRecurringEvents()`, `createRecurringEvent()`
-- `src/components/recurring/RecurrenceConfig.tsx` - UI for configuring rules
-- `src/components/recurring/RecurrencePreview.tsx` - Shows first 4 instances + ellipsis
-
-### Validation Rules
-
-- `unlimited: true` XOR (`endDate` OR `maxOccurrences`) - can't have both
-- Prevents invalid rule combinations
-
----
-
-## External Dependencies
-- **Supabase** - PostgreSQL backend, auth, realtime (config in `src/lib/supabase.ts`)
-- **TanStack Query** - HTTP caching & sync (QueryClient in `App.tsx`)
-- **shadcn/ui** - Radix UI + Tailwind component library
-- **date-fns** - Date formatting & manipulation
-- **react-hook-form** - Form handling in dialogs/modals
-
----
-
-## When Adding New Features
-
-1. **Add to adapters first** - Implement in `eventAdapter` with online/offline branching
-2. **Then add services** - Create Supabase API calls in `eventService` if online-only
-3. **Expose via hooks** - Create custom hook (e.g., `useEvents`) that uses adapters
-4. **Wire to UI** - Build components that call the hook
-5. **Log important events** - Use `logger.info()` for tracking user actions
-6. **Update types** - Ensure TypeScript definitions exist in `src/types/`
-
----
-
-## Gotchas & Common Mistakes
-
-- ❌ Never import directly from `eventService` in components - always use adapters
-- ❌ Don't forget the offline fallback in error handlers
-- ❌ Family context can be `null` during loading - always check `currentFamilyId`
-- ❌ Tags are family-scoped, not global - always filter by `familyId`
-- ✅ Use `storageAdapter` as the single entry point for all data operations
-- ✅ Always check `navigator.onLine` or `offlineAdapter.isOfflineId()` before routing
-
----
-
-## File Reference Map
-
-| Purpose | File |
-|---------|------|
-| Type definitions | [src/types/calendar.ts](c:/GitHub/family-calendar/src/types/calendar.ts), [src/types/database.ts](c:/GitHub/family-calendar/src/types/database.ts) |
-| Adapter routing | [src/lib/adapters/storageAdapter.ts](c:/GitHub/family-calendar/src/lib/adapters/storageAdapter.ts) |
-| Online/offline branching | [src/lib/adapters/eventAdapter.ts](c:/GitHub/family-calendar/src/lib/adapters/eventAdapter.ts) |
-| Offline storage | [src/lib/storage/offlineStorage.ts](c:/GitHub/family-calendar/src/lib/storage/offlineStorage.ts) |
-| Supabase config | [src/lib/supabase.ts](c:/GitHub/family-calendar/src/lib/supabase.ts) |
-| Logging | [src/lib/logger.ts](c:/GitHub/family-calendar/src/lib/logger.ts) |
-| Event CRUD hook | [src/hooks/useEvents.ts](c:/GitHub/family-calendar/src/hooks/useEvents.ts) |
-| i18n setup | [src/i18n/index.ts](c:/GitHub/family-calendar/src/i18n/index.ts) |
+## Testing Notes
+- Offline families (IDs with `offline:` prefix) bypass Supabase entirely
+- Use `clearOfflineCache()` to reset IndexedDB for fresh tests
+- Test recurring expansion with date ranges to verify correct instance generation
