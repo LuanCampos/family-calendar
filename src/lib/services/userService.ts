@@ -16,20 +16,7 @@ import { supabase } from '../supabase';
 
 export const APPLICATION_KEY = 'calendar';
 
-// Prefer the plural table name (matches app wording and offline store), but
-// keep a fallback to older deployments that used the singular name.
-const USER_PREFERENCES_TABLE_PRIMARY = 'user_preferences';
-const USER_PREFERENCES_TABLE_FALLBACK = 'user_preference';
-
-const isMissingTableError = (error: unknown): boolean => {
-  const err = error as { code?: string; message?: string } | null;
-  if (!err) return false;
-
-  // Postgres: undefined_table
-  if (err.code === '42P01') return true;
-  const msg = (err.message || '').toLowerCase();
-  return msg.includes('does not exist') && msg.includes('user_');
-};
+const USER_PREFERENCE_TABLE = 'user_preference';
 
 export interface UserPreference {
   id: string;
@@ -42,43 +29,21 @@ export interface UserPreference {
 }
 
 export const getUserPreferences = async (userId: string) => {
-  const primary = await supabase
-    .from(USER_PREFERENCES_TABLE_PRIMARY)
+  return supabase
+    .from(USER_PREFERENCE_TABLE)
     .select('*')
     .eq('user_id', userId)
     .eq('application_key', APPLICATION_KEY)
     .maybeSingle();
-
-  if (primary.error && isMissingTableError(primary.error)) {
-    return supabase
-      .from(USER_PREFERENCES_TABLE_FALLBACK)
-      .select('*')
-      .eq('user_id', userId)
-      .eq('application_key', APPLICATION_KEY)
-      .maybeSingle();
-  }
-
-  return primary;
 };
 
 export const getCurrentFamilyPreference = async (userId: string) => {
-  const primary = await supabase
-    .from(USER_PREFERENCES_TABLE_PRIMARY)
+  return supabase
+    .from(USER_PREFERENCE_TABLE)
     .select('current_family_id')
     .eq('user_id', userId)
     .eq('application_key', APPLICATION_KEY)
     .maybeSingle();
-
-  if (primary.error && isMissingTableError(primary.error)) {
-    return supabase
-      .from(USER_PREFERENCES_TABLE_FALLBACK)
-      .select('current_family_id')
-      .eq('user_id', userId)
-      .eq('application_key', APPLICATION_KEY)
-      .maybeSingle();
-  }
-
-  return primary;
 };
 
 export const upsertUserPreference = async (payload: {
@@ -104,26 +69,20 @@ export const upsertUserPreference = async (payload: {
   };
 
   const primary = await supabase
-    .from(USER_PREFERENCES_TABLE_PRIMARY)
+    .from(USER_PREFERENCE_TABLE)
     .upsert(finalPayload, { onConflict: 'user_id,application_key' });
 
-  const result = (primary.error && isMissingTableError(primary.error))
-    ? await supabase
-        .from(USER_PREFERENCES_TABLE_FALLBACK)
-        .upsert(finalPayload, { onConflict: 'user_id,application_key' })
-    : primary;
-
-  if (result.error) {
-    const meta = result.error as { details?: unknown; hint?: unknown };
+  if (primary.error) {
+    const meta = primary.error as { details?: unknown; hint?: unknown };
     console.error('[USER_PREF] Upsert failed', {
-      code: result.error.code,
-      message: result.error.message,
+      code: primary.error.code,
+      message: primary.error.message,
       details: meta?.details,
       hint: meta?.hint,
     });
   }
 
-  return result;
+  return primary;
 };
 
 export const updateCurrentFamily = async (userId: string, familyId: string | null) => {
@@ -135,18 +94,10 @@ export const updateCurrentFamily = async (userId: string, familyId: string | nul
   };
 
   const primary = await supabase
-    .from(USER_PREFERENCES_TABLE_PRIMARY)
+    .from(USER_PREFERENCE_TABLE)
     .upsert(payload, { onConflict: 'user_id,application_key' })
     .select()
     .single();
-
-  if (primary.error && isMissingTableError(primary.error)) {
-    return supabase
-      .from(USER_PREFERENCES_TABLE_FALLBACK)
-      .upsert(payload, { onConflict: 'user_id,application_key' })
-      .select()
-      .single();
-  }
 
   return primary;
 };

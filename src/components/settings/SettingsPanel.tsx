@@ -232,7 +232,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
         } catch (err) {
           // Fallback: save to offline store and enqueue sync
           try {
-            await offlineAdapter.put('user_preferences', { user_id: user.id, application_key: 'calendar', theme: newTheme, updated_at: new Date().toISOString() });
+            await offlineAdapter.put('user_preference', { user_id: user.id, application_key: 'calendar', theme: newTheme, updated_at: new Date().toISOString() });
             await offlineAdapter.sync.add({ type: 'user_preference', action: 'upsert', data: { user_id: user.id, application_key: 'calendar', theme: newTheme }, familyId: '' });
           } catch (offlineErr) {
             console.error('Failed to persist theme preference offline:', offlineErr);
@@ -264,7 +264,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
         } catch (err) {
           // Fallback: save to offline store and enqueue sync
           try {
-            await offlineAdapter.put('user_preferences', { user_id: user.id, application_key: 'calendar', language: newLanguage, updated_at: new Date().toISOString() });
+            await offlineAdapter.put('user_preference', { user_id: user.id, application_key: 'calendar', language: newLanguage, updated_at: new Date().toISOString() });
             await offlineAdapter.sync.add({ type: 'user_preference', action: 'upsert', data: { user_id: user.id, application_key: 'calendar', language: newLanguage }, familyId: '' });
           } catch (offlineErr) {
             console.error('Failed to persist language preference offline:', offlineErr);

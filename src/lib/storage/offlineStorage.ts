@@ -1,6 +1,6 @@
 // Offline storage using IndexedDB for robust local persistence
 const DB_NAME = 'budget-offline-db';
-const DB_VERSION = 5;
+const DB_VERSION = 6;
 
 export interface OfflineFamily {
   id: string;
@@ -121,7 +121,10 @@ const openDB = (): Promise<IDBDatabase> => {
       });
 
       // User preferences store
-      ensureStore('user_preferences', { keyPath: 'user_id' });
+      if (database.objectStoreNames.contains('user_preferences')) {
+        database.deleteObjectStore('user_preferences');
+      }
+      ensureStore('user_preference', { keyPath: 'user_id' });
     };
   });
 
