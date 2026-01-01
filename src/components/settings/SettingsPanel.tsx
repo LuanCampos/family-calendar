@@ -211,7 +211,8 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
 
   const handleSignOut = async () => {
     await signOut();
-    setOpen(false);
+    // Close dialog reliably even when it's controlled by parent via `externalIsOpen`
+    handleOpenChange(false);
   };
 
   const handleThemeChange = async (newTheme: ThemeKey) => {
