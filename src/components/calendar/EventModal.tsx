@@ -33,6 +33,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { RecurrenceConfig, RecurrencePreview } from '@/components/recurring';
 import { storageAdapter } from '@/lib/adapters/storageAdapter';
 import { logger } from '@/lib/logger';
+import { formatTimeHHMM } from '@/utils/formatters';
 
 interface EventModalProps {
   isOpen: boolean;
@@ -57,7 +58,7 @@ export const EventModal: React.FC<EventModalProps> = ({
   const [date, setDate] = useState<string>(editingEvent?.date || selectedDate);
   const [title, setTitle] = useState(editingEvent?.title || '');
   const [description, setDescription] = useState(editingEvent?.description || '');
-  const [time, setTime] = useState(editingEvent?.time || '');
+  const [time, setTime] = useState(editingEvent?.time ? formatTimeHHMM(editingEvent.time) : '');
   const [duration, setDuration] = useState(editingEvent?.duration?.toString() || '60');
   const [isAllDay, setIsAllDay] = useState(editingEvent?.isAllDay || false);
   const [selectedTags, setSelectedTags] = useState<string[]>(
@@ -76,7 +77,7 @@ export const EventModal: React.FC<EventModalProps> = ({
         setDate(editingEvent.date);
         setTitle(editingEvent.title);
         setDescription(editingEvent.description || '');
-        setTime(editingEvent.time || '');
+        setTime(editingEvent.time ? formatTimeHHMM(editingEvent.time) : '');
         setDuration(editingEvent.duration?.toString() || '60');
         // Initialize all-day based on explicit flag or absence of time
         setIsAllDay(editingEvent.isAllDay ?? !editingEvent.time);

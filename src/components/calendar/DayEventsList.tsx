@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { isEventTagArray } from '@/lib/utils/eventUtils';
 import { getContrastColor } from '@/lib/utils/colorUtils';
+import { formatTimeHHMM } from '@/utils/formatters';
 
 interface DayEventsListProps {
   isOpen: boolean;
@@ -41,7 +42,7 @@ export const DayEventsList: React.FC<DayEventsListProps> = ({
     if (aAll && !bAll) return -1;
     if (!aAll && bAll) return 1;
     if (a.time && b.time) {
-      return a.time.localeCompare(b.time);
+      return formatTimeHHMM(a.time).localeCompare(formatTimeHHMM(b.time));
     }
     return 0;
   });
@@ -121,7 +122,7 @@ const EventListItem: React.FC<EventListItemProps> = ({ event, onClick }) => {
       : 'hsl(var(--primary))';
 
   const isAllDayDisplay = !!event.isAllDay || !event.time;
-  const labelText = isAllDayDisplay ? t('eventAllDay') : (event.time || '');
+  const labelText = isAllDayDisplay ? t('eventAllDay') : formatTimeHHMM(event.time || '');
 
   return (
     <div className="flex items-stretch gap-2 group">

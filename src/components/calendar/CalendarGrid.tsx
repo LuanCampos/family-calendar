@@ -5,6 +5,8 @@ import { isEventTagArray } from '@/lib/utils/eventUtils';
 import { getContrastColor } from '@/lib/utils/colorUtils';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { Clock } from 'lucide-react';
+import { formatTimeHHMM } from '@/utils/formatters';
 
 interface CalendarGridProps {
   currentDate: Date;
@@ -85,6 +87,15 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
         {daysInCalendar.map((day) => {
           const dateStr = format(day, 'yyyy-MM-dd');
           const dayEvents = eventsByDate[dateStr] || [];
+          // Sort: all-day events first, then by time ascending
+          const sortedDayEvents = [...dayEvents].sort((a, b) => {
+            const aAll = !!a.isAllDay || !a.time;
+            const bAll = !!b.isAllDay || !b.time;
+            if (aAll && !bAll) return -1;
+            if (!aAll && bAll) return 1;
+            if (a.time && b.time) return formatTimeHHMM(a.time).localeCompare(formatTimeHHMM(b.time));
+            return 0;
+          });
           const isCurrentMonth = isSameMonth(day, currentDate);
           const isTodayDate = isToday(day);
           const isSelected = dateStr === selectedDate;
@@ -137,15 +148,16 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
 
               {/* Events - Faixinhas pequenas */}
               <div className="flex-1 px-0.5 sm:px-1 pb-0.5 overflow-hidden flex flex-col gap-0.5" role="list">
-                {dayEvents.length > 0 ? (
+                {sortedDayEvents.length > 0 ? (
                   <>
-                    {dayEvents.slice(0, maxPreview).map((event) => {
+                    {sortedDayEvents.slice(0, maxPreview).map((event) => {
                       const tagColor =
                         Array.isArray(event.tags) && event.tags.length > 0
                           ? isEventTagArray(event.tags)
                             ? event.tags[0].color
                             : 'hsl(var(--primary))'
                           : 'hsl(var(--primary))';
+                      const isAllDayDisplay = !!event.isAllDay || !event.time;
 
                       return (
                         <div
@@ -156,16 +168,22 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                             backgroundColor: tagColor,
                             color: getContrastColor(tagColor),
                           }}
-                          title={`${event.title}${event.time ? ` - ${event.time}` : ''}`}
-                          aria-label={`${event.title}${event.time ? ` às ${event.time}` : ''}`}
+                          title={`${event.title}${isAllDayDisplay ? ` - ${t('eventAllDay')}` : event.time ? ` - ${formatTimeHHMM(event.time)}` : ''}`}
+                          aria-label={`${event.title}${isAllDayDisplay ? ` ${t('eventAllDay')}` : event.time ? ` às ${formatTimeHHMM(event.time)}` : ''}`}
                         >
                           {event.title}
+                          {!isAllDayDisplay && (
+                            <span className="ml-1 inline-flex items-center gap-0.5">
+                              <Clock className="h-2 w-2" />
+                              <span>{formatTimeHHMM(event.time)}</span>
+                            </span>
+                          )}
                         </div>
                       );
                     })}
-                    {dayEvents.length > maxPreview && (
+                    {sortedDayEvents.length > maxPreview && (
                       <div className="text-[0.5rem] md:text-[0.6rem] lg:text-[0.7rem] text-primary font-bold px-0.5" role="listitem">
-                        +{dayEvents.length - maxPreview}
+                        +{sortedDayEvents.length - maxPreview}
                       </div>
                     )}
                   </>
