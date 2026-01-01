@@ -58,7 +58,7 @@ export const DayEventsList: React.FC<DayEventsListProps> = ({
   };
 
   const displayDate = selectedDate
-    ? format(parse(selectedDate, 'yyyy-MM-dd', new Date()), 'dd MMMM, EEEE', { locale: ptBR })
+    ? format(parse(selectedDate, 'yyyy-MM-dd', new Date()), "d 'de' MMMM, EEEE", { locale: ptBR })
     : '';
 
   return (
