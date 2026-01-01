@@ -26,8 +26,7 @@ import { Trash2, AlertCircle, Check, Clock, Timer, Sun } from 'lucide-react';
 import { getTagIds } from '@/lib/utils/eventUtils';
 import { getContrastColor } from '@/lib/utils/colorUtils';
 import type { Event, EventInput, EventTag, RecurrenceRule } from '@/types/calendar';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { isValid, parse } from 'date-fns';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { RecurrenceConfig, RecurrencePreview } from '@/components/recurring';
@@ -115,10 +114,10 @@ export const EventModal: React.FC<EventModalProps> = ({
     }
   }, [editingEvent, isOpen]);
 
-  const isValid = title.trim().length > 0;
+  const isFormValid = title.trim().length > 0;
 
   const handleSave = () => {
-    if (!isValid) {
+    if (!isFormValid) {
       setShowValidation(true);
       return;
     }
@@ -200,7 +199,10 @@ export const EventModal: React.FC<EventModalProps> = ({
           </DialogTitle>
           <p className="text-sm text-muted-foreground mt-1.5 font-medium">
             {(() => {
-              const d = new Date(date);
+              // IMPORTANT: avoid `new Date('YYYY-MM-DD')` because it is parsed as UTC and
+              // can shift the calendar day for users in negative timezones.
+              const d = parse(date, 'yyyy-MM-dd', new Date());
+              if (!isValid(d)) return date;
               const dayOfWeek = t(`day-${d.getDay()}` as any);
               const month = t(`month-${d.getMonth()}` as any);
               return `${dayOfWeek}, ${d.getDate()} de ${month} de ${d.getFullYear()}`;
@@ -215,7 +217,7 @@ export const EventModal: React.FC<EventModalProps> = ({
               <Label htmlFor="title" className="text-sm font-medium">
                 {t('eventTitle')} <span className="text-destructive">*</span>
               </Label>
-              {isValid && (
+              {isFormValid && (
                 <Check className="h-5 w-5 text-green-600" />
               )}
             </div>
@@ -224,9 +226,9 @@ export const EventModal: React.FC<EventModalProps> = ({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder={t('eventTitlePlaceholder')}
-              className={`text-sm h-10 ${showValidation && !isValid ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+              className={`text-sm h-10 ${showValidation && !isFormValid ? 'border-destructive focus-visible:ring-destructive' : ''}`}
             />
-            {showValidation && !isValid && (
+            {showValidation && !isFormValid && (
               <p className="text-sm text-destructive flex items-center gap-1.5 mt-1.5">
                 <AlertCircle className="h-4 w-4" />
                 {t('eventTitleRequired')}
@@ -395,7 +397,7 @@ export const EventModal: React.FC<EventModalProps> = ({
             </Button>
             <Button 
               onClick={handleSave}
-              disabled={!isValid && showValidation}
+              disabled={!isFormValid && showValidation}
               className="flex-1 sm:flex-none"
               size="sm"
             >
