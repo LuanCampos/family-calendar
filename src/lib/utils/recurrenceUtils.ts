@@ -1,6 +1,6 @@
-import { addDays, addWeeks, addMonths, addYears, parseISO, format, lastDayOfMonth, differenceInDays, differenceInWeeks, differenceInMonths, differenceInYears } from 'date-fns';
+import { addDays, addWeeks, addMonths, addYears, parseISO, format, lastDayOfMonth, differenceInDays, differenceInWeeks, differenceInMonths, differenceInYears, startOfWeek } from 'date-fns';
 import { logger } from '@/lib/logger';
-import type { Event, RecurrenceRule, EventInput } from '@/types/calendar';
+import type { Event, RecurrenceRule } from '@/types/calendar';
 
 /**
  * Recurrence Utils - Generate recurring event instances
@@ -42,10 +42,18 @@ export const generateRecurringInstances = (
   const MAX_INSTANCES_PER_RANGE = 2000;
   let truncated = false;
 
-  const pushInstance = (date: Date) => {
+  const inRange = (date: Date) => date >= start && date <= end;
+
+  // Record an occurrence for maxOccurrences accounting, and only materialize an instance if it falls
+  // inside the requested date range.
+  const recordOccurrence = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
     if (exceptions.has(dateStr)) return;
     const override = overrides[dateStr] || {};
+
+    occurrenceCount++;
+
+    if (!inRange(date)) return;
     const instance: Event = {
       ...event,
       ...override,
@@ -55,7 +63,6 @@ export const generateRecurringInstances = (
       isRecurringInstance: true,
     };
     instances.push(instance);
-    occurrenceCount++;
   };
 
   const stopNow = (cursor: Date) => {
@@ -73,12 +80,17 @@ export const generateRecurringInstances = (
 
   switch (rule.frequency) {
     case 'daily': {
+      // IMPORTANT: maxOccurrences must be enforced from the base date, not per-range.
+      // If maxOccurrences is set, walk from baseDate forward and only emit instances within range.
+      // Otherwise, jump to the first on-or-after range start to avoid unnecessary work.
+      const enforceGlobalMax = hasMaxOccurrences;
+
       // Jump by interval days from the first on-or-after date
-      const diffDays = Math.max(0, differenceInDays(start, baseDate));
+      const diffDays = enforceGlobalMax ? 0 : Math.max(0, differenceInDays(start, baseDate));
       const offset = diffDays % interval === 0 ? diffDays : diffDays + (interval - (diffDays % interval));
       let cursor = addDays(baseDate, offset);
       while (!stopNow(cursor)) {
-        pushInstance(cursor);
+        recordOccurrence(cursor);
         if (hasMaxOccurrences && occurrenceCount >= (maxOccurrences as number)) break;
         cursor = addDays(cursor, interval);
       }
@@ -91,27 +103,31 @@ export const generateRecurringInstances = (
         : [baseDate.getDay()];
 
       const periodWeeks = interval;
-      const weeksFromBaseToStart = Math.max(0, differenceInWeeks(start, baseDate));
+      const baseWeekStart = startOfWeek(baseDate, { weekStartsOn: 0 });
+
+      // When maxOccurrences is set, we must count occurrences starting from baseDate.
+      // Without maxOccurrences, we can jump closer to the requested range for performance.
+      const weeksFromBaseToStart = hasMaxOccurrences ? 0 : Math.max(0, differenceInWeeks(start, baseDate));
       const startAlignedWeeks = weeksFromBaseToStart % periodWeeks === 0
         ? weeksFromBaseToStart
         : weeksFromBaseToStart + (periodWeeks - (weeksFromBaseToStart % periodWeeks));
-      let weekAnchor = addWeeks(baseDate, startAlignedWeeks);
+      let weekStart = addWeeks(baseWeekStart, startAlignedWeeks);
 
-      while (!stopNow(weekAnchor)) {
-        // Emit occurrences for the specified days within this matching week
+      while (!stopNow(weekStart)) {
         for (const dow of daysOfWeek) {
-          const dayOffset = dow - weekAnchor.getDay();
-          const candidate = addDays(weekAnchor, dayOffset);
-          if (candidate < start) continue;
+          const candidate = addDays(weekStart, dow);
+          if (candidate < baseDate) continue;
+
+          if (!hasMaxOccurrences && candidate < start) continue;
           if (candidate > end) break;
-          if (hasEndDate && candidate > (endDate as Date)) { break; }
-          // Validate with rule matcher in case of DST/week math edge cases
+          if (hasEndDate && candidate > (endDate as Date)) break;
+
           if (!matchesRecurrenceRule(candidate, baseDate, rule)) continue;
-          pushInstance(candidate);
+          recordOccurrence(candidate);
           if (stopNow(candidate)) break;
         }
         if (hasMaxOccurrences && occurrenceCount >= (maxOccurrences as number)) break;
-        weekAnchor = addWeeks(weekAnchor, periodWeeks);
+        weekStart = addWeeks(weekStart, periodWeeks);
       }
       break;
     }
@@ -121,32 +137,35 @@ export const generateRecurringInstances = (
         ? rule.daysOfWeek.slice().sort((a, b) => a - b)
         : [baseDate.getDay()];
       const periodWeeks = 2 * interval;
-      const weeksFromBaseToStart = Math.max(0, differenceInWeeks(start, baseDate));
+      const baseWeekStart = startOfWeek(baseDate, { weekStartsOn: 0 });
+
+      const weeksFromBaseToStart = hasMaxOccurrences ? 0 : Math.max(0, differenceInWeeks(start, baseDate));
       const startAlignedWeeks = weeksFromBaseToStart % periodWeeks === 0
         ? weeksFromBaseToStart
         : weeksFromBaseToStart + (periodWeeks - (weeksFromBaseToStart % periodWeeks));
-      let weekAnchor = addWeeks(baseDate, startAlignedWeeks);
+      let weekStart = addWeeks(baseWeekStart, startAlignedWeeks);
 
-      while (!stopNow(weekAnchor)) {
+      while (!stopNow(weekStart)) {
         for (const dow of daysOfWeek) {
-          const dayOffset = dow - weekAnchor.getDay();
-          const candidate = addDays(weekAnchor, dayOffset);
-          if (candidate < start) continue;
+          const candidate = addDays(weekStart, dow);
+          if (candidate < baseDate) continue;
+
+          if (!hasMaxOccurrences && candidate < start) continue;
           if (candidate > end) break;
-          if (hasEndDate && candidate > (endDate as Date)) { break; }
+          if (hasEndDate && candidate > (endDate as Date)) break;
           if (!matchesRecurrenceRule(candidate, baseDate, rule)) continue;
-          pushInstance(candidate);
+          recordOccurrence(candidate);
           if (stopNow(candidate)) break;
         }
         if (hasMaxOccurrences && occurrenceCount >= (maxOccurrences as number)) break;
-        weekAnchor = addWeeks(weekAnchor, periodWeeks);
+        weekStart = addWeeks(weekStart, periodWeeks);
       }
       break;
     }
 
     case 'monthly': {
       const dom = rule.dayOfMonth ?? baseDate.getDate();
-      const monthsFromBaseToStart = Math.max(0, differenceInMonths(start, baseDate));
+      const monthsFromBaseToStart = hasMaxOccurrences ? 0 : Math.max(0, differenceInMonths(start, baseDate));
       const startAlignedMonths = monthsFromBaseToStart % interval === 0
         ? monthsFromBaseToStart
         : monthsFromBaseToStart + (interval - (monthsFromBaseToStart % interval));
@@ -157,13 +176,13 @@ export const generateRecurringInstances = (
         const m0 = cursor.getMonth();
         const day = clampDom(y, m0, dom);
         const candidate = new Date(y, m0, day);
-        if (candidate < start) {
+        if (!hasMaxOccurrences && candidate < start) {
           cursor = addMonths(cursor, interval);
           continue;
         }
         if (candidate > end) break;
         if (hasEndDate && candidate > (endDate as Date)) break;
-        pushInstance(candidate);
+        recordOccurrence(candidate);
         if (hasMaxOccurrences && occurrenceCount >= (maxOccurrences as number)) break;
         cursor = addMonths(cursor, interval);
       }
@@ -173,7 +192,7 @@ export const generateRecurringInstances = (
     case 'yearly': {
       const dom = rule.dayOfMonth ?? baseDate.getDate();
       const moy = (rule.monthOfYear ?? baseDate.getMonth() + 1) - 1; // 0-based
-      const yearsFromBaseToStart = Math.max(0, differenceInYears(start, baseDate));
+      const yearsFromBaseToStart = hasMaxOccurrences ? 0 : Math.max(0, differenceInYears(start, baseDate));
       const startAlignedYears = yearsFromBaseToStart % interval === 0
         ? yearsFromBaseToStart
         : yearsFromBaseToStart + (interval - (yearsFromBaseToStart % interval));
@@ -183,13 +202,13 @@ export const generateRecurringInstances = (
         const y = cursor.getFullYear();
         const day = clampDom(y, moy, dom);
         const candidate = new Date(y, moy, day);
-        if (candidate < start) {
+        if (!hasMaxOccurrences && candidate < start) {
           cursor = addYears(cursor, interval);
           continue;
         }
         if (candidate > end) break;
         if (hasEndDate && candidate > (endDate as Date)) break;
-        pushInstance(candidate);
+        recordOccurrence(candidate);
         if (hasMaxOccurrences && occurrenceCount >= (maxOccurrences as number)) break;
         cursor = addYears(cursor, interval);
       }
@@ -201,7 +220,7 @@ export const generateRecurringInstances = (
       for (let cursor = start; cursor <= end; cursor = addDays(cursor, 1)) {
         if (stopNow(cursor)) break;
         if (!matchesRecurrenceRule(cursor, baseDate, rule)) continue;
-        pushInstance(cursor);
+        recordOccurrence(cursor);
         if (hasMaxOccurrences && occurrenceCount >= (maxOccurrences as number)) break;
       }
       break;
