@@ -22,17 +22,19 @@ import { MaskedTimeInput } from '@/components/ui/masked-time-input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { TimePicker } from '@/components/ui/time-picker';
-import { Trash2, AlertCircle, Check, Clock, Timer, Sun } from 'lucide-react';
+import { Trash2, AlertCircle, Check, Clock, Timer, Sun, Calendar as CalendarIcon } from 'lucide-react';
 import { getTagIds } from '@/lib/utils/eventUtils';
 import { getContrastColor } from '@/lib/utils/colorUtils';
 import type { Event, EventInput, EventTag, RecurrenceRule } from '@/types/calendar';
-import { isValid, parse } from 'date-fns';
+import { format, isValid, parse } from 'date-fns';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { RecurrenceConfig, RecurrencePreview } from '@/components/recurring';
+import { RecurrenceConfig } from '@/components/recurring';
 import { storageAdapter } from '@/lib/adapters/storageAdapter';
 import { logger } from '@/lib/logger';
 import { formatTimeHHMM } from '@/utils/formatters';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 
 interface EventModalProps {
   isOpen: boolean;
@@ -68,6 +70,22 @@ export const EventModal: React.FC<EventModalProps> = ({
   );
   const [showValidation, setShowValidation] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const parsedDate = parse(date, 'yyyy-MM-dd', new Date());
+  const safeDate = isValid(parsedDate) ? parsedDate : null;
+
+  const humanReadableDate = safeDate
+    ? (() => {
+        const dayOfWeek = t(`day-${safeDate.getDay()}` as any);
+        const month = t(`month-${safeDate.getMonth()}` as any);
+        return `${dayOfWeek}, ${safeDate.getDate()} de ${month} de ${safeDate.getFullYear()}`;
+      })()
+    : date;
+
+  const handleDateSelect = (selectedDate?: Date) => {
+    if (!selectedDate) return;
+    setDate(format(selectedDate, 'yyyy-MM-dd'));
+  };
 
   // Sincronizar estado quando editingEvent muda
   useEffect(() => {
@@ -197,17 +215,29 @@ export const EventModal: React.FC<EventModalProps> = ({
           <DialogTitle className="text-lg sm:text-xl font-semibold">
             {editingEvent ? t('editEvent') : t('newEvent')}
           </DialogTitle>
-          <p className="text-sm text-muted-foreground mt-1.5 font-medium">
-            {(() => {
-              // IMPORTANT: avoid `new Date('YYYY-MM-DD')` because it is parsed as UTC and
-              // can shift the calendar day for users in negative timezones.
-              const d = parse(date, 'yyyy-MM-dd', new Date());
-              if (!isValid(d)) return date;
-              const dayOfWeek = t(`day-${d.getDay()}` as any);
-              const month = t(`month-${d.getMonth()}` as any);
-              return `${dayOfWeek}, ${d.getDate()} de ${month} de ${d.getFullYear()}`;
-            })()}
-          </p>
+          <div className="mt-1.5">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="px-0 h-auto text-sm text-muted-foreground font-medium hover:text-foreground gap-2"
+                >
+                  <CalendarIcon className="h-4 w-4" />
+                  <span className="text-left">{humanReadableDate}</span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="p-0">
+                <Calendar
+                  mode="single"
+                  selected={safeDate || undefined}
+                  defaultMonth={safeDate || undefined}
+                  onSelect={handleDateSelect}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto space-y-3 sm:space-y-3 p-4 sm:p-5 min-h-0">

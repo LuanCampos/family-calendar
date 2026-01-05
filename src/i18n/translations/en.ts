@@ -95,6 +95,7 @@ export const en = {
   eventTime: 'Time',
   eventDuration: 'Duration (min)',
   eventAllDay: 'All day event',
+  changeDate: 'Change date',
   eventCreated: 'Event created successfully!',
   eventUpdated: 'Event updated successfully!',
   eventDeleted: 'Event deleted successfully!',

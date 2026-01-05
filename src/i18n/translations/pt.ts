@@ -95,6 +95,7 @@ export const pt = {
   eventTime: 'Horário',
   eventDuration: 'Duração (min)',
   eventAllDay: 'Evento de dia inteiro',
+  changeDate: 'Alterar data',
   eventCreated: 'Evento criado com sucesso!',
   eventUpdated: 'Evento atualizado com sucesso!',
   eventDeleted: 'Evento deletado com sucesso!',
