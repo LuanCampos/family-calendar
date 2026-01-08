@@ -59,15 +59,15 @@ export const getFamiliesByUser = async (userId: string) => {
   return { data: formattedData, error: null };
 };
 
-export const insertFamily = async (name: string) => {
+export const insertFamily = async (name: string, userId: string) => {
   // Ensure session is ready before INSERT to prevent 403 RLS errors
   await userService.ensureSessionReady();
   
-  logger.apiCall('POST', 'family', { name });
+  logger.apiCall('POST', 'family', { name, userId });
   // Use insert + select to get the inserted row back
   const result = await supabase
     .from('family')
-    .insert({ name })
+    .insert({ name, created_by: userId })
     .select()
     .single();
   

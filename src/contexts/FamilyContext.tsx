@@ -530,8 +530,8 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       // This ensures the access token is applied to the client before any DB operation
       const session = await userService.ensureSessionReady();
 
-      // Create cloud family (created_by is automatically set to auth.uid())
-      const { data: family, error } = await familyService.insertFamily(name);
+      // Create cloud family (explicitly sending created_by field)
+      const { data: family, error } = await familyService.insertFamily(name, session.user.id);
 
       if (error || !family) {
         // Fallback to offline on error (e.g., network error, RLS error, etc.)
