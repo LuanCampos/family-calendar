@@ -306,11 +306,7 @@ export const FamilyManager = () => {
                       onKeyDown={(e) => e.key === 'Enter' && handleInvite()}
                     />
                     <Button onClick={handleInvite} disabled={!inviteEmail.trim() || isInviting} aria-label={t('sendInvitation')}>
-                      {isInviting ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <UserPlus className="h-4 w-4" />
-                      )}
+                      <UserPlus className="h-4 w-4" />
                     </Button>
                   </div>
                 </section>
@@ -357,11 +353,7 @@ export const FamilyManager = () => {
                             disabled={processingAction === member.id}
                             aria-label={t('removeMember')}
                           >
-                            {processingAction === member.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Trash2 className="h-4 w-4" />
-                            )}
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       )}
@@ -391,11 +383,7 @@ export const FamilyManager = () => {
                         disabled={processingAction === invitation.id}
                         aria-label={t('cancelInvitation')}
                       >
-                        {processingAction === invitation.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <X className="h-4 w-4" />
-                        )}
+                        <X className="h-4 w-4" />
                       </Button>
                     </div>
                   ))}
@@ -436,11 +424,7 @@ export const FamilyManager = () => {
                           onClick={() => handleAcceptInvitation(invitation.id)}
                           disabled={processingAction === invitation.id}
                         >
-                          {processingAction === invitation.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            t('accept')
-                          )}
+                          {t('accept')}
                         </Button>
                       </div>
                     </div>

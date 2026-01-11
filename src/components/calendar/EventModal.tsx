@@ -70,6 +70,8 @@ export const EventModal: React.FC<EventModalProps> = ({
   );
   const [showValidation, setShowValidation] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const parsedDate = parse(date, 'yyyy-MM-dd', new Date());
   const safeDate = isValid(parsedDate) ? parsedDate : null;
@@ -134,8 +136,8 @@ export const EventModal: React.FC<EventModalProps> = ({
 
   const isFormValid = title.trim().length > 0;
 
-  const handleSave = () => {
-    if (!isFormValid) {
+  const handleSave = async () => {
+    if (!isFormValid || isSaving) {
       setShowValidation(true);
       return;
     }
@@ -161,19 +163,29 @@ export const EventModal: React.FC<EventModalProps> = ({
       tagsCount: input.tags?.length || 0,
     });
 
-    onSave(input);
-    handleClose();
+    setIsSaving(true);
+    try {
+      onSave(input);
+      handleClose();
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleDelete = () => {
     setShowDeleteConfirm(true);
   };
 
-  const handleConfirmDelete = () => {
-    if (editingEvent && onDelete) {
-      onDelete(editingEvent.id);
-      setShowDeleteConfirm(false);
-      handleClose();
+  const handleConfirmDelete = async () => {
+    if (editingEvent && onDelete && !isDeleting) {
+      setIsDeleting(true);
+      try {
+        onDelete(editingEvent.id);
+        setShowDeleteConfirm(false);
+        handleClose();
+      } finally {
+        setIsDeleting(false);
+      }
     }
   };
 
@@ -201,8 +213,8 @@ export const EventModal: React.FC<EventModalProps> = ({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogCancel disabled={isDeleting}>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete} disabled={isDeleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               {t('delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -409,6 +421,7 @@ export const EventModal: React.FC<EventModalProps> = ({
             variant="destructive"
             size="sm"
             onClick={handleDelete}
+            disabled={isSaving || isDeleting}
             className="gap-2 order-last sm:order-none"
             style={{ display: editingEvent && onDelete ? 'flex' : 'none' }}
           >
@@ -420,6 +433,7 @@ export const EventModal: React.FC<EventModalProps> = ({
             <Button
               variant="outline"
               onClick={handleClose}
+              disabled={isSaving || isDeleting}
               className="flex-1 sm:flex-none"
               size="sm"
             >
@@ -427,7 +441,7 @@ export const EventModal: React.FC<EventModalProps> = ({
             </Button>
             <Button 
               onClick={handleSave}
-              disabled={!isFormValid && showValidation}
+              disabled={isSaving || isDeleting || (!isFormValid && showValidation)}
               className="flex-1 sm:flex-none"
               size="sm"
             >

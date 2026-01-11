@@ -256,14 +256,7 @@ export const FamilySetup = () => {
                   </div>
                 </div>
                 <Button type="submit" className="w-full" disabled={isAuthLoading}>
-                  {isAuthLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      {t('loading')}
-                    </>
-                  ) : (
-                    t('sendResetLink')
-                  )}
+                  {t('sendResetLink')}
                 </Button>
                 <Button
                   type="button"
@@ -333,17 +326,8 @@ export const FamilySetup = () => {
                 onClick={handleResendVerification}
                 disabled={isAuthLoading}
               >
-                {isAuthLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {t('loading')}
-                  </>
-                ) : (
-                  <>
-                    <Mail className="mr-2 h-4 w-4" />
-                    {t('resendVerificationEmail')}
-                  </>
-                )}
+                <Mail className="mr-2 h-4 w-4" />
+                {t('resendVerificationEmail')}
               </Button>
               <p className="text-xs text-muted-foreground text-center">
                 {t('checkSpamFolder')}
@@ -427,14 +411,7 @@ export const FamilySetup = () => {
                       </div>
                     </div>
                     <Button type="submit" className="w-full" disabled={isAuthLoading}>
-                      {isAuthLoading ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          {t('loading')}
-                        </>
-                      ) : (
-                        t('login')
-                      )}
+                      {t('login')}
                     </Button>
                   </form>
                 </TabsContent>
@@ -498,14 +475,7 @@ export const FamilySetup = () => {
                       </div>
                     </div>
                     <Button type="submit" className="w-full" disabled={isAuthLoading}>
-                      {isAuthLoading ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          {t('loading')}
-                        </>
-                      ) : (
-                        t('signup')
-                      )}
+                      {t('signup')}
                     </Button>
                   </form>
                 </TabsContent>
@@ -558,11 +528,7 @@ export const FamilySetup = () => {
               onClick={handleContinueOffline}
               disabled={isCreating}
             >
-              {isCreating ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <WifiOff className="mr-2 h-4 w-4" />
-              )}
+              <WifiOff className="mr-2 h-4 w-4" />
               {t('continueOffline')}
             </Button>
             <p className="text-xs text-muted-foreground text-center">
@@ -625,11 +591,7 @@ export const FamilySetup = () => {
                 onClick={handleCreateFamily}
                 disabled={!familyName.trim() || isCreating}
               >
-                {isCreating ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <Plus className="h-4 w-4 mr-2" />
-                )}
+                <Plus className="h-4 w-4 mr-2" />
                 {t('createFamily')}
               </Button>
             </TabsContent>
@@ -667,11 +629,7 @@ export const FamilySetup = () => {
                           onClick={() => handleAcceptInvitation(invitation.id)}
                           disabled={processingInvitation === invitation.id}
                         >
-                          {processingInvitation === invitation.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Check className="h-4 w-4" />
-                          )}
+                          <Check className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>

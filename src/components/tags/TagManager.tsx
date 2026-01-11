@@ -266,17 +266,8 @@ export const TagManager: React.FC<TagManagerProps> = ({
               disabled={isLoading || !isNameValid}
               className="w-full"
             >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  <span>{t('saving')}</span>
-                </>
-              ) : (
-                <>
-                  <Plus className="h-4 w-4 mr-2" />
-                  <span>{editingTag ? t('updateTag') : t('createTag')}</span>
-                </>
-              )}
+              <Plus className="h-4 w-4 mr-2" />
+              <span>{editingTag ? t('updateTag') : t('createTag')}</span>
             </Button>
           </div>
 

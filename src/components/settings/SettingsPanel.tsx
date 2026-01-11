@@ -520,7 +520,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
             <div className="flex gap-2 pt-2">
               <Button variant="outline" onClick={() => setActiveSection('main')} className="flex-1">{t('cancel')}</Button>
               <Button onClick={handleUpdateProfile} disabled={isLoading} className="flex-1">
-                {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t('loading')}</> : t('saveChanges')}
+                {t('saveChanges')}
               </Button>
             </div>
           </div>
@@ -564,7 +564,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
             <div className="flex gap-2 pt-2">
               <Button variant="outline" onClick={() => setActiveSection('main')} className="flex-1">{t('cancel')}</Button>
               <Button onClick={handleUpdatePassword} disabled={isLoading} className="flex-1">
-                {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t('loading')}</> : t('updatePassword')}
+                {t('updatePassword')}
               </Button>
             </div>
           </div>
@@ -630,7 +630,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
                     </div>
                   </div>
                   <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t('loading')}</> : t('login')}
+                    {t('login')}
                   </Button>
                 </form>
               </TabsContent>
@@ -694,7 +694,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
                     </div>
                   </div>
                   <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t('loading')}</> : t('signup')}
+                    {t('signup')}
                   </Button>
                 </form>
               </TabsContent>
@@ -849,11 +849,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
                           className="w-3/4 justify-center h-8 text-destructive ring-1 ring-destructive/20 rounded"
                           disabled={processingAction === 'clear-offline-cache'}
                         >
-                          {processingAction === 'clear-offline-cache' ? (
-                            <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
-                          ) : (
-                            <HardDrive className="h-3.5 w-3.5 mr-2" />
-                          )}
+                          <HardDrive className="h-3.5 w-3.5 mr-2" />
                           <span className="text-sm">{t('clearOfflineCache')}</span>
                         </Button>
                       </AlertDialogTrigger>
@@ -896,7 +892,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
                               <X className="h-4 w-4" />
                             </Button>
                             <Button size="sm" className="h-7 px-2 text-xs" onClick={() => handleAcceptInvitation(invitation.id)} disabled={processingAction === invitation.id} aria-label={t('acceptInvitation')}>
-                              {processingAction === invitation.id ? <Loader2 className="h-3 w-3 animate-spin" /> : t('accept')}
+                              {t('accept')}
                             </Button>
                           </div>
                         </div>
@@ -1035,7 +1031,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
                                     </SelectContent>
                                   </Select>
                                   <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => handleRemoveMember(member.id)} disabled={processingAction === member.id} aria-label={t('removeMember')}>
-                                    {processingAction === member.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
+                                    <X className="h-3.5 w-3.5" />
                                   </Button>
                                 </div>
                               )}
@@ -1053,7 +1049,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
                           <div className="flex gap-2">
                             <Input className="h-9" placeholder={t('inviteEmailPlaceholder')} type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleInvite()} />
                             <Button size="sm" className="h-9 px-3" onClick={handleInvite} disabled={!inviteEmail.trim() || isInviting}>
-                              {isInviting ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
+                              <UserPlus className="h-4 w-4" />
                             </Button>
                           </div>
                         </div>
@@ -1073,7 +1069,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
                                   <span className="text-sm text-muted-foreground truncate">{invitation.email}</span>
                                 </div>
                                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleCancelInvitation(invitation.id)} disabled={processingAction === invitation.id} aria-label={t('cancelInvitation')}>
-                                  {processingAction === invitation.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
+                                  <X className="h-3 w-3" />
                                 </Button>
                               </div>
                             ))}
@@ -1178,7 +1174,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
               onKeyDown={(e) => e.key === 'Enter' && handleCreateFamily()}
             />
             <Button onClick={handleCreateFamily} disabled={isCreatingFamily || !createFamilyName.trim()} className="w-full h-9">
-              {isCreatingFamily ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+              <Plus className="h-4 w-4 mr-2" />
               {t('createFamily')}
             </Button>
           </div>
