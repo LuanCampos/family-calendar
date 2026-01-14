@@ -1,7 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = 'https://iambwblptokdiwjkztss.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlhbWJ3YmxwdG9rZGl3amt6dHNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5OTg3MTYsImV4cCI6MjA4MTU3NDcxNn0.w_il9JwSo8NFscHQ6aaJ9LNlpy06fbBh54sgg9FU1tw';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+if (typeof supabaseUrl !== 'string' || !supabaseUrl) {
+  throw new Error('VITE_SUPABASE_URL is not set');
+}
+
+if (typeof supabaseAnonKey !== 'string' || !supabaseAnonKey) {
+  throw new Error('VITE_SUPABASE_ANON_KEY is not set');
+}
 
 /**
  * Single Supabase client for the entire application
