@@ -6,12 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { ModalContent } from '@/components/ui/modal-content';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -267,17 +267,18 @@ export const FamilyManager = () => {
             )}
           </Button>
         </DialogTrigger>
-        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+        <ModalContent size="lg">
+          <DialogHeader className="border-b bg-gradient-to-br from-card to-muted/30 px-4 sm:px-5 pt-4 pb-3 flex-shrink-0">
+            <DialogTitle className="text-lg sm:text-xl font-semibold flex items-center gap-2">
               <Users className="h-5 w-5" />
               {t('familySettings')}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-sm text-muted-foreground mt-1">
               {currentFamily.name}
             </DialogDescription>
           </DialogHeader>
 
+          <div className="flex-1 overflow-y-auto p-4 sm:p-5 min-h-0">
             <Tabs defaultValue={myPendingInvitations.length > 0 ? 'invitations' : 'members'}>
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="members">{t('members')}</TabsTrigger>
@@ -506,7 +507,8 @@ export const FamilyManager = () => {
               </section>
             </TabsContent>
           </Tabs>
-        </DialogContent>
+          </div>
+        </ModalContent>
       </Dialog>
 
       {/* Delete Alert */}

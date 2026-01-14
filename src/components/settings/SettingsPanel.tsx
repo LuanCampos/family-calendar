@@ -510,16 +510,13 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
           </DialogTrigger>
         )}
         <ModalContent size="md">
-          <DialogHeader className="dashboard-card-header px-6 pt-6 pb-4">
-            <DialogTitle className="flex items-center gap-2 text-base sm:text-lg font-semibold">
+          <DialogHeader className="border-b bg-gradient-to-br from-card to-muted/30 px-4 sm:px-5 pt-4 pb-3 flex-shrink-0">
+            <DialogTitle className="text-lg sm:text-xl font-semibold flex items-center gap-2">
               <User className="h-5 w-5" />
               {t('editProfile')}
             </DialogTitle>
-            <DialogDescription>
-              {t('profileDialogDescription')}
-            </DialogDescription>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto dashboard-card-content space-y-4">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 min-h-0">
             <div className="space-y-2">
               <Label htmlFor="email">{t('email')}</Label>
               <Input id="email" type="email" value={user?.email || ''} disabled className="bg-muted" />
@@ -551,16 +548,13 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
           </DialogTrigger>
         )}
         <ModalContent size="md">
-          <DialogHeader className="dashboard-card-header px-6 pt-6 pb-4">
-            <DialogTitle className="flex items-center gap-2 text-base sm:text-lg font-semibold">
+          <DialogHeader className="border-b bg-gradient-to-br from-card to-muted/30 px-4 sm:px-5 pt-4 pb-3 flex-shrink-0">
+            <DialogTitle className="text-lg sm:text-xl font-semibold flex items-center gap-2">
               <KeyRound className="h-5 w-5" />
               {t('changePassword')}
             </DialogTitle>
-            <DialogDescription>
-              {t('passwordDialogDescription')}
-            </DialogDescription>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto dashboard-card-content space-y-4">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 min-h-0">
             <div className="space-y-2">
               <Label htmlFor="currentPassword">{t('currentPassword')}</Label>
               <Input id="currentPassword" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder={t('currentPasswordPlaceholder')} />
@@ -595,16 +589,13 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
           </DialogTrigger>
         )}
         <ModalContent size="md">
-          <DialogHeader className="dashboard-card-header px-6 pt-6 pb-4">
-            <DialogTitle className="flex items-center gap-2 text-base sm:text-lg font-semibold">
+          <DialogHeader className="border-b bg-gradient-to-br from-card to-muted/30 px-4 sm:px-5 pt-4 pb-3 flex-shrink-0">
+            <DialogTitle className="text-lg sm:text-xl font-semibold flex items-center gap-2">
               <LogIn className="h-5 w-5" />
               {t('loginOrSignup')}
             </DialogTitle>
-            <DialogDescription>
-              {t('authDialogDescription')}
-            </DialogDescription>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto dashboard-card-content space-y-4">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 min-h-0">
             <Tabs value={authTab} onValueChange={(v) => setAuthTab(v as 'login' | 'signup')} className="w-full">
               <TabsList className="w-full mb-4">
                 <TabsTrigger value="login" className="flex-1">{t('login')}</TabsTrigger>
@@ -731,7 +722,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
           </DialogTrigger>
         )}
         <ModalContent size="md">
-          <DialogHeader className="dashboard-card-header px-5 pt-5 pb-3 flex-shrink-0">
+          <DialogHeader className="border-b bg-gradient-to-br from-card to-muted/30 px-4 sm:px-5 pt-4 pb-3 flex-shrink-0">
             <DialogTitle className="text-lg sm:text-xl font-semibold">{t('settings')}</DialogTitle>
           </DialogHeader>
           
@@ -748,7 +739,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
               </TabsTrigger>
             </TabsList>
 
-            <div className="flex-1 overflow-y-auto dashboard-card-content min-h-0">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5 min-h-0">
               {/* General Tab */}
               <TabsContent value="general" className="mt-0 space-y-5">
                 {/* User Account Section */}
@@ -1171,13 +1162,10 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
       {/* Create Family Dialog */}
       <Dialog open={showCreateFamilyDialog} onOpenChange={setShowCreateFamilyDialog}>
         <ModalContent size="sm" maxHeight="auto">
-          <DialogHeader>
-            <DialogTitle className="text-base">{t('createFamily')}</DialogTitle>
-            <DialogDescription>
-              {t('createFamilyDialogDescription')}
-            </DialogDescription>
+          <DialogHeader className="border-b bg-gradient-to-br from-card to-muted/30 px-4 sm:px-5 pt-4 pb-3 flex-shrink-0">
+            <DialogTitle className="text-lg sm:text-xl font-semibold">{t('createFamily')}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="p-4 sm:p-5 space-y-4">
             <Input
               className="h-10"
               placeholder={t('familyNamePlaceholder')}

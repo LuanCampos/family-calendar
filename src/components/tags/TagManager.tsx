@@ -195,13 +195,13 @@ export const TagManager: React.FC<TagManagerProps> = ({
 
       <Dialog open={isOpen} onOpenChange={onClose}>
         <ModalContent size="md">
-        <DialogHeader className="border-b bg-gradient-to-br from-card to-muted/30 px-4 sm:px-5 pt-4 sm:pt-4 pb-3 sm:pb-3">
+        <DialogHeader className="border-b bg-gradient-to-br from-card to-muted/30 px-4 sm:px-5 pt-4 pb-3 flex-shrink-0">
           <DialogTitle className="text-lg sm:text-xl font-semibold">
             {t('manageTags')}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto space-y-3 sm:space-y-3 p-4 sm:p-5">
+        <div className="flex-1 overflow-y-auto space-y-3 p-4 sm:p-5 min-h-0">
           {error && (
             <div className="border-2 border-destructive/50 rounded-xl p-3 sm:p-3.5 bg-destructive/10 flex items-start gap-2.5">
               <AlertCircle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
