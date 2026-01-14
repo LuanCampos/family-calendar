@@ -9,6 +9,7 @@
  */
 
 import { supabase } from '../supabase';
+import { logger } from '../logger';
 
 // ============================================================================
 // USER PREFERENCE QUERIES
@@ -74,7 +75,7 @@ export const upsertUserPreference = async (payload: {
 
   if (primary.error) {
     const meta = primary.error as { details?: unknown; hint?: unknown };
-    console.error('[USER_PREF] Upsert failed', {
+    logger.error('userPreference.upsert.failed', {
       code: primary.error.code,
       message: primary.error.message,
       details: meta?.details,

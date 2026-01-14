@@ -32,7 +32,9 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { RecurrenceConfig } from '@/components/recurring';
 import { storageAdapter } from '@/lib/adapters/storageAdapter';
 import { logger } from '@/lib/logger';
+import { CreateEventInputSchema } from '@/lib/validators';
 import { formatTimeHHMM } from '@/utils/formatters';
+import { toast } from '@/hooks/ui/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 
@@ -154,6 +156,19 @@ export const EventModal: React.FC<EventModalProps> = ({
       recurrenceRule: recurrenceRule || undefined,
     };
 
+    // SEC-003: Validate input with Zod before saving
+    const validation = CreateEventInputSchema.safeParse(input);
+    if (!validation.success) {
+      logger.warn('ui.eventModal.validation.failed', { errors: validation.error.errors });
+      toast({
+        title: t('error'),
+        description: t('invalidInput'),
+        variant: 'destructive',
+      });
+      setShowValidation(true);
+      return;
+    }
+
     logger.debug('ui.eventModal.save.input', {
       date,
       title: input.title,
@@ -165,7 +180,7 @@ export const EventModal: React.FC<EventModalProps> = ({
 
     setIsSaving(true);
     try {
-      onSave(input);
+      onSave(validation.data as EventInput);
       handleClose();
     } finally {
       setIsSaving(false);

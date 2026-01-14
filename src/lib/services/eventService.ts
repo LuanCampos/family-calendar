@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { logger } from '@/lib/logger';
 import * as userService from '@/lib/services/userService';
 import type { EventInput, EventTagInput, Event } from '@/types/calendar';
 import type { EventRow, SupabaseChannel } from '@/types/database';
@@ -26,7 +27,7 @@ export const eventService = {
     if (endDate) params.endDate = endDate;
     // Log the intent before performing the query
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (await import('@/lib/logger')).logger.apiCall('GET', endpoint, params);
+    logger.apiCall('GET', endpoint, params);
     // First get all events for the family in the date range
     let query = supabase
       .from('event')
@@ -42,7 +43,7 @@ export const eventService = {
 
     const eventsResult = await query.order('date', { ascending: true });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (await import('@/lib/logger')).logger.apiResponse('GET', endpoint, eventsResult.error ? 400 : 200, { count: eventsResult.data?.length || 0 });
+    logger.apiResponse('GET', endpoint, eventsResult.error ? 400 : 200, { count: eventsResult.data?.length || 0 });
     
     if (eventsResult.error || !eventsResult.data) {
       return eventsResult;
@@ -59,7 +60,7 @@ export const eventService = {
       .select('event_id, tag_id')
       .in('event_id', eventIds);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (await import('@/lib/logger')).logger.apiResponse('GET', 'event_tag', tagsResult.error ? 400 : 200, { count: tagsResult.data?.length || 0 });
+    logger.apiResponse('GET', 'event_tag', tagsResult.error ? 400 : 200, { count: tagsResult.data?.length || 0 });
 
     if (tagsResult.error) {
       // Return events even if tags fail
@@ -86,7 +87,7 @@ export const eventService = {
   getRecurringParents: async (familyId: string) => {
     // Debug API call
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (await import('@/lib/logger')).logger.apiCall('GET', 'event (recurring parents)', { familyId });
+    logger.apiCall('GET', 'event (recurring parents)', { familyId });
     const res = await supabase
       .from('event')
       .select('*')
@@ -94,7 +95,7 @@ export const eventService = {
       .eq('is_recurring', true)
       .order('date', { ascending: true });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (await import('@/lib/logger')).logger.apiResponse('GET', 'event (recurring parents)', res.error ? 400 : 200, { count: res.data?.length || 0 });
+    logger.apiResponse('GET', 'event (recurring parents)', res.error ? 400 : 200, { count: res.data?.length || 0 });
 
     if (res.error || !res.data) {
       return res;
@@ -109,7 +110,7 @@ export const eventService = {
         .select('event_id, tag_id')
         .in('event_id', parentIds);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (await import('@/lib/logger')).logger.apiResponse('GET', 'event_tag (parents)', tagsRes.error ? 400 : 200, { count: tagsRes.data?.length || 0 });
+      logger.apiResponse('GET', 'event_tag (parents)', tagsRes.error ? 400 : 200, { count: tagsRes.data?.length || 0 });
 
       if (!tagsRes.error && tagsRes.data) {
         tagsByEventId = new Map<string, string[]>();
@@ -157,7 +158,7 @@ export const eventService = {
    */
   createEvent: async (familyId: string, input: EventInput, userId: string) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (await import('@/lib/logger')).logger.apiCall('POST', 'event', { familyId, isRecurring: input.isRecurring, hasRule: !!input.recurrenceRule });
+    logger.apiCall('POST', 'event', { familyId, isRecurring: input.isRecurring, hasRule: !!input.recurrenceRule });
     // Ensure session is ready before INSERT to prevent 403 RLS errors
     await userService.ensureSessionReady();
     
@@ -182,10 +183,10 @@ export const eventService = {
       .select()
       .single();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (await import('@/lib/logger')).logger.apiResponse('POST', 'event', response.error ? 400 : 200, { id: response.data?.id });
+    logger.apiResponse('POST', 'event', response.error ? 400 : 200, { id: response.data?.id });
 
     if (response.error) {
-      console.error('[eventService] Event creation error:', {
+      logger.error('event.create.failed', {
         code: (response.error as any).code,
         message: response.error.message,
         details: (response.error as any).details,
@@ -206,7 +207,7 @@ export const eventService = {
         .insert(tagInserts);
 
       if (tagRes.error) {
-        console.error('[eventService] Tag insertion error:', tagRes.error);
+        logger.error('event.tags.insert.failed', { error: tagRes.error });
         // Rollback event creation if tag insertion fails
         await supabase.from('event').delete().eq('id', response.data.id);
         return tagRes;
@@ -224,7 +225,7 @@ export const eventService = {
   updateEvent: async (eventId: string, input: Partial<EventInput>) => {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (await import('@/lib/logger')).logger.apiCall('PATCH', 'event', { eventId, touchesRecurrence: input.isRecurring !== undefined || input.recurrenceRule !== undefined });
+      logger.apiCall('PATCH', 'event', { eventId, touchesRecurrence: input.isRecurring !== undefined || input.recurrenceRule !== undefined });
       // Ensure session is ready before UPDATE to prevent 403 RLS errors
       await userService.ensureSessionReady();
       
@@ -270,7 +271,7 @@ export const eventService = {
         .select()
         .single();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (await import('@/lib/logger')).logger.apiResponse('PATCH', 'event', response.error ? 400 : 200, { id: response.data?.id });
+      logger.apiResponse('PATCH', 'event', response.error ? 400 : 200, { id: response.data?.id });
 
       if (response.error) return response;
 
@@ -292,7 +293,7 @@ export const eventService = {
             .insert(tagInserts);
 
           if (tagRes.error) {
-            console.error('[eventService] Tag update error:', tagRes.error);
+            logger.error('event.tags.update.failed', { error: tagRes.error });
             return tagRes;
           }
         }
@@ -302,7 +303,7 @@ export const eventService = {
       const mapped = mapEventRow(response.data as EventRow, tags !== undefined ? tags : undefined as any);
       return { data: mapped, error: null };
     } catch (error) {
-      console.error('[eventService] updateEvent error:', { error, eventId });
+      logger.error('event.update.failed', { error, eventId });
       return { error };
     }
   },
@@ -358,7 +359,7 @@ export const eventService = {
       .single();
     
     if (result.error) {
-      console.error('[eventService] Tag creation error:', {
+      logger.error('tag.create.failed', {
         code: (result.error as any).code,
         message: result.error.message,
         details: (result.error as any).details,
@@ -455,7 +456,7 @@ export const eventService = {
 
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (await import('@/lib/logger')).logger.apiCall('POST', 'event (recurring)', { familyId, rule: input.recurrenceRule });
+      logger.apiCall('POST', 'event (recurring)', { familyId, rule: input.recurrenceRule });
       const { tags, duration, isAllDay } = input;
 
       const response = await supabase
@@ -475,7 +476,7 @@ export const eventService = {
         .select()
         .single();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (await import('@/lib/logger')).logger.apiResponse('POST', 'event (recurring)', response.error ? 400 : 200, { id: response.data?.id });
+      logger.apiResponse('POST', 'event (recurring)', response.error ? 400 : 200, { id: response.data?.id });
 
       if (response.error) return response;
 
@@ -504,3 +505,4 @@ export const eventService = {
     }
   },
 };
+

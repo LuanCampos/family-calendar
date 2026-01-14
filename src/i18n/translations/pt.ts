@@ -139,7 +139,12 @@ export const pt = {
   invalidCredentials: 'E-mail ou senha incorretos',
   loginSuccess: 'Login realizado com sucesso!',
   signupSuccess: 'Conta criada! Verifique seu e-mail para confirmar.',
-  passwordTooShort: 'A senha deve ter pelo menos 6 caracteres',
+  passwordTooShort: 'A senha deve ter pelo menos 8 caracteres',
+  passwordTooWeak: 'A senha não atende aos requisitos de segurança',
+  min8chars: 'Mínimo 8 caracteres',
+  needsUppercase: 'Precisa ter letra maiúscula',
+  needsNumber: 'Precisa ter um número',
+  invalidInput: 'Dados inválidos. Verifique os campos e tente novamente.',
   emailAlreadyRegistered: 'Este e-mail já está cadastrado',
   loading: 'Carregando...',
   

@@ -32,6 +32,29 @@ class Logger {
   private isDev = import.meta.env.DEV;
   private logs: LogEntry[] = [];
   private maxLogs = 500; // Keep last 500 logs in memory
+  
+  // SEC-008: Sensitive parameter names to redact
+  private sensitiveKeys = ['password', 'token', 'secret', 'key', 'authorization', 'cookie', 'session'];
+
+  /**
+   * SEC-008: Sanitize parameters by redacting sensitive values
+   */
+  private sanitizeParams(params?: Record<string, any>): Record<string, any> | undefined {
+    if (!params) return undefined;
+    
+    const sanitized: Record<string, any> = {};
+    for (const [key, value] of Object.entries(params)) {
+      const keyLower = key.toLowerCase();
+      if (this.sensitiveKeys.some(s => keyLower.includes(s))) {
+        sanitized[key] = '[REDACTED]';
+      } else if (typeof value === 'object' && value !== null) {
+        sanitized[key] = this.sanitizeParams(value);
+      } else {
+        sanitized[key] = value;
+      }
+    }
+    return sanitized;
+  }
 
   /**
    * Log at debug level (development only)
@@ -73,20 +96,24 @@ class Logger {
   /**
    * Log API calls with timing (for debugging)
    * Usage: logger.apiCall('GET', '/users', { userId: '123' })
+   * SEC-008: Now sanitizes sensitive parameters
    */
   apiCall(method: string, endpoint: string, params?: Record<string, any>) {
-    if (!DEBUG_API_CALLS) return;
-    console.log(`%c[API] ${method} ${endpoint}`, 'color: #0066cc; font-weight: bold;', params || '');
+    if (!DEBUG_API_CALLS || !this.isDev) return; // Only in dev mode
+    const safeParams = this.sanitizeParams(params);
+    console.log(`%c[API] ${method} ${endpoint}`, 'color: #0066cc; font-weight: bold;', safeParams || '');
   }
 
   /**
    * Log API response with timing
    * Usage: logger.apiResponse('GET', '/users', 200, { duration: 45 })
+   * SEC-008: Now sanitizes sensitive response data
    */
   apiResponse(method: string, endpoint: string, status: number, response?: Record<string, any>) {
-    if (!DEBUG_API_CALLS) return;
+    if (!DEBUG_API_CALLS || !this.isDev) return; // Only in dev mode
+    const safeResponse = this.sanitizeParams(response);
     const statusColor = status >= 400 ? '#cc0000' : '#00aa00';
-    console.log(`%c[API] ${method} ${endpoint} -> ${status}`, `color: ${statusColor}; font-weight: bold;`, response || '');
+    console.log(`%c[API] ${method} ${endpoint} -> ${status}`, `color: ${statusColor}; font-weight: bold;`, safeResponse || '');
   }
 
   /**

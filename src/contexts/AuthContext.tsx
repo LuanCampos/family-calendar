@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
+import { logger } from '@/lib/logger';
 import { getAppBaseUrl } from '@/lib/utils/appBaseUrl';
 import * as userService from '@/lib/services/userService';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -112,7 +113,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
 
         if (error) {
-          console.warn('[AUTH] getOrCreateUserPreferences failed:', error);
+          logger.warn('auth.preferences.fetch.failed', { error });
           return;
         }
 
@@ -129,7 +130,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setLanguage(prefs.language);
         }
       } catch (err) {
-        console.warn('[AUTH] Error hydrating user preferences:', err);
+        logger.warn('auth.preferences.hydrate.failed', { error: err });
       }
     };
 

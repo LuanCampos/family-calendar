@@ -1,5 +1,6 @@
 // Offline storage using IndexedDB for robust local persistence
-const DB_NAME = 'budget-offline-db';
+// SEC-011: Changed from 'budget-offline-db' to 'family-calendar-offline-db'
+const DB_NAME = 'family-calendar-offline-db';
 const DB_VERSION = 6;
 
 export interface OfflineFamily {

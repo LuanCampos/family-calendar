@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Settings, Globe, Palette, Trash2, Coins, User, KeyRound, LogIn, LogOut, Users, UserPlus, Mail, Crown, X, Loader2, WifiOff, ChevronDown, Plus, Check, Cloud, HardDrive, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import TriggerButton from '@/components/ui/trigger-button';
+import { logger } from '@/lib/logger';
+import { isStrongPassword, getPasswordErrors } from '@/lib/validators';
+import { debounce } from '@/lib/utils';
 import {
   Dialog,
   DialogHeader,
@@ -178,8 +181,11 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
       toast({ title: t('error'), description: t('fillAllFields'), variant: 'destructive' });
       return;
     }
-    if (newPassword.length < 6) {
-      toast({ title: t('error'), description: t('passwordTooShort'), variant: 'destructive' });
+    // SEC-006: Stronger password requirements (8+ chars, uppercase, number)
+    if (!isStrongPassword(newPassword)) {
+      const errors = getPasswordErrors(newPassword);
+      const errorMessages = errors.map(e => t(e as any)).join(', ');
+      toast({ title: t('error'), description: errorMessages || t('passwordTooWeak'), variant: 'destructive' });
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -235,7 +241,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
             await offlineAdapter.put('user_preference', { user_id: user.id, application_key: 'calendar', theme: newTheme, updated_at: new Date().toISOString() });
             await offlineAdapter.sync.add({ type: 'user_preference', action: 'upsert', data: { user_id: user.id, application_key: 'calendar', theme: newTheme }, familyId: '' });
           } catch (offlineErr) {
-            console.error('Failed to persist theme preference offline:', offlineErr);
+            logger.error('settings.theme.offline.failed', { error: offlineErr });
           }
         }
       } else {
@@ -244,7 +250,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
     } catch (err) {
       // Error here is non-fatal because we already applied the theme and
       // attempted server/offline persistence. Log for diagnostics only.
-      console.error('Error handling theme change:', err);
+      logger.error('settings.theme.change.failed', { error: err });
     }
   };
 
@@ -267,12 +273,12 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
             await offlineAdapter.put('user_preference', { user_id: user.id, application_key: 'calendar', language: newLanguage, updated_at: new Date().toISOString() });
             await offlineAdapter.sync.add({ type: 'user_preference', action: 'upsert', data: { user_id: user.id, application_key: 'calendar', language: newLanguage }, familyId: '' });
           } catch (offlineErr) {
-            console.error('Failed to persist language preference offline:', offlineErr);
+            logger.error('settings.language.offline.failed', { error: offlineErr });
           }
         }
       }
     } catch (err) {
-      console.error('Error handling language change:', err);
+      logger.error('settings.language.change.failed', { error: err });
     }
   };
 
@@ -366,7 +372,13 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
       await clearOfflineCache();
       localStorage.removeItem('current-family-id');
       toast({ title: t('success'), description: t('offlineCacheCleared') });
-      setTimeout(() => window.location.reload(), 350);
+      // SEC-016: Full reload is necessary here to reset all cached state after clearing IndexedDB
+      // This is a deliberate, one-time operation triggered by user action
+      setTimeout(() => {
+        if (typeof window !== 'undefined') {
+          window.location.reload();
+        }
+      }, 350);
     } catch (error) {
       toast({
         title: t('error'),

@@ -27,7 +27,7 @@ export const useRecurringEvents = () => {
       });
 
       if (!currentFamilyId) {
-        console.error('[useRecurringEvents] Missing currentFamilyId');
+        logger.error('recurringEvents.create.noFamily');
         setError('Family not loaded');
         return { error: 'Family not loaded' };
       }

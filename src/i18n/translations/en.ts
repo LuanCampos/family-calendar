@@ -139,7 +139,12 @@ export const en = {
   invalidCredentials: 'Invalid email or password',
   loginSuccess: 'Login successful!',
   signupSuccess: 'Account created! Check your email to confirm.',
-  passwordTooShort: 'Password must be at least 6 characters',
+  passwordTooShort: 'Password must be at least 8 characters',
+  passwordTooWeak: 'Password does not meet security requirements',
+  min8chars: 'Minimum 8 characters',
+  needsUppercase: 'Needs an uppercase letter',
+  needsNumber: 'Needs a number',
+  invalidInput: 'Invalid data. Please check the fields and try again.',
   emailAlreadyRegistered: 'This email is already registered',
   loading: 'Loading...',
   

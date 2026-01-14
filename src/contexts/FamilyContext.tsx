@@ -5,6 +5,7 @@ import * as userService from '@/lib/services/userService';
 import { useAuth } from '@/contexts/AuthContext';
 import { offlineAdapter } from '@/lib/adapters/offlineAdapter';
 import { logger } from '@/lib/logger';
+import { getSecureStorageItem, setSecureStorageItem, removeSecureStorageItem } from '@/lib/secureStorage';
 
 export type FamilyRole = 'owner' | 'admin' | 'member';
 
@@ -250,14 +251,14 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const loadUserPreferences = useCallback(async () => {
     // If no user, only allow offline families from localStorage
     if (!user) {
-      const savedFamilyId = localStorage.getItem('current-family-id');
+      const savedFamilyId = getSecureStorageItem('current-family-id');
       // Only restore if it's an offline family ID
       if (savedFamilyId && offlineAdapter.isOfflineId(savedFamilyId)) {
         setCurrentFamilyId(savedFamilyId);
       } else {
         // Clear any cloud family selection when logged out
         setCurrentFamilyId(null);
-        localStorage.removeItem('current-family-id');
+        removeSecureStorageItem('current-family-id');
       }
       return;
     }
@@ -267,10 +268,10 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       if (data?.current_family_id) {
         setCurrentFamilyId(data.current_family_id);
-        localStorage.setItem('current-family-id', data.current_family_id);
+        setSecureStorageItem('current-family-id', data.current_family_id);
       } else {
         // User logged in but no family preference - check localStorage for offline family
-        const savedFamilyId = localStorage.getItem('current-family-id');
+        const savedFamilyId = getSecureStorageItem('current-family-id');
         if (savedFamilyId && offlineAdapter.isOfflineId(savedFamilyId)) {
           setCurrentFamilyId(savedFamilyId);
         }
@@ -282,11 +283,11 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Save current family to preferences
   const saveCurrentFamily = useCallback(async (familyId: string | null) => {
-    // Always save to localStorage for offline access
+    // Always save to localStorage for offline access (using secure storage)
     if (familyId) {
-      localStorage.setItem('current-family-id', familyId);
+      setSecureStorageItem('current-family-id', familyId);
     } else {
-      localStorage.removeItem('current-family-id');
+      removeSecureStorageItem('current-family-id');
     }
 
     if (!user || !familyId || offlineAdapter.isOfflineId(familyId)) return;
@@ -345,21 +346,21 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       let selectedFamilyId: string | null = null;
       
       if (!user) {
-        const savedFamilyId = localStorage.getItem('current-family-id');
+        const savedFamilyId = getSecureStorageItem('current-family-id');
         if (savedFamilyId && offlineAdapter.isOfflineId(savedFamilyId)) {
           selectedFamilyId = savedFamilyId;
         }
       } else {
         try {
           // 1) Prefer the browser-stored family if it still exists/accessible.
-          const savedFamilyId = localStorage.getItem('current-family-id');
+          const savedFamilyId = getSecureStorageItem('current-family-id');
           if (savedFamilyId) {
             const exists = allFamilies.some(f => f.id === savedFamilyId);
             if (exists) {
               selectedFamilyId = savedFamilyId;
             } else {
               // Stale selection (user removed from family, etc.)
-              localStorage.removeItem('current-family-id');
+              removeSecureStorageItem('current-family-id');
             }
           }
 
@@ -381,7 +382,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         if (!selectedFamilyId && allFamilies.length > 0) {
           selectedFamilyId = allFamilies[0].id;
           // Save this auto-selection
-          localStorage.setItem('current-family-id', selectedFamilyId);
+          setSecureStorageItem('current-family-id', selectedFamilyId);
           if (!offlineAdapter.isOfflineId(selectedFamilyId || '')) {
             userService.updateCurrentFamily(user.id, selectedFamilyId).then(() => {});
           }
@@ -392,9 +393,9 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       
       setCurrentFamilyId(selectedFamilyId);
       if (selectedFamilyId) {
-        localStorage.setItem('current-family-id', selectedFamilyId);
+        setSecureStorageItem('current-family-id', selectedFamilyId);
       } else {
-        localStorage.removeItem('current-family-id');
+        removeSecureStorageItem('current-family-id');
       }
       
       prevUserIdRef.current = user?.id || null;
@@ -412,7 +413,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     const first = families[0];
     setCurrentFamilyId(first.id);
-    localStorage.setItem('current-family-id', first.id);
+    setSecureStorageItem('current-family-id', first.id);
     if (!offlineAdapter.isOfflineId(first.id)) {
       userService.updateCurrentFamily(user.id, first.id).then(() => {});
     }
@@ -469,7 +470,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         if (remainingFamilies.length > 0) {
           // Select the first available family
           setCurrentFamilyId(remainingFamilies[0].id);
-          localStorage.setItem('current-family-id', remainingFamilies[0].id);
+          setSecureStorageItem('current-family-id', remainingFamilies[0].id);
           // Save to cloud preferences if user is logged in
           if (user && !offlineAdapter.isOfflineId(remainingFamilies[0].id)) {
             userService.updateCurrentFamily(user.id, remainingFamilies[0].id).then(() => {});
@@ -477,7 +478,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         } else {
           // No families left
           setCurrentFamilyId(null);
-          localStorage.removeItem('current-family-id');
+          removeSecureStorageItem('current-family-id');
         }
         
         attemptedReloadRef.current = null;
@@ -535,7 +536,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       if (error || !family) {
         // Fallback to offline on error (e.g., network error, RLS error, etc.)
-        console.warn('[FAMILY] Cloud family creation failed:', {
+        logger.warn('family.create.cloud.failed', {
           code: (error as any)?.code,
           message: error?.message,
           hasData: !!family,
@@ -552,7 +553,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       });
 
       if (memberError) {
-        console.error('[FAMILY] Member creation error:', memberError);
+        logger.error('family.member.create.failed', { error: memberError });
         // Don't fail on this error - family was created successfully
       }
 
@@ -564,7 +565,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       // Auth validation failed (user not authenticated, token not ready, etc.)
       // Fall back to offline creation
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      console.warn('[FAMILY] Auth validation failed, falling back to offline:', errorMessage);
+      logger.warn('family.create.auth.failed', { error: errorMessage });
       return createOfflineFamily(name);
     }
   };
@@ -705,7 +706,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       return { error };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      console.error('Auth validation failed in inviteMember:', errorMessage);
+      logger.error('family.invite.auth.failed', { error: errorMessage });
       return { error: new Error(errorMessage) };
     }
   };
@@ -742,7 +743,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       return { error: null };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      console.error('Accept invitation failed:', errorMessage);
+      logger.error('family.invitation.accept.failed', { error: errorMessage });
       return { error: new Error(errorMessage) };
     }
   };

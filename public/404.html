@@ -6,6 +6,7 @@
     <script>
       // GitHub Pages SPA redirect script
       // This script redirects all 404s back to index.html with the original path/hash preserved
+      // SEC-009: Improved token handling to minimize exposure
       var pathSegmentsToKeep = 1; // Keep '/family-calendar/' in the path
       
       var l = window.location;
@@ -22,8 +23,20 @@
         redirectPath += 'q=' + l.search.slice(1).replace(/&/g, '~and~') + '&';
       }
       
-      // Preserve hash (important for Supabase auth tokens)
-      redirectPath += l.hash;
+      // SEC-009: Handle auth tokens more securely
+      // Store hash temporarily in sessionStorage instead of URL to minimize exposure
+      if (l.hash && l.hash.includes('access_token')) {
+        try {
+          sessionStorage.setItem('__auth_redirect_hash', l.hash);
+          redirectPath += '_auth=1';
+        } catch (e) {
+          // Fallback: pass hash in URL if sessionStorage fails
+          redirectPath += l.hash;
+        }
+      } else if (l.hash) {
+        // Non-sensitive hash can stay in URL
+        redirectPath += l.hash;
+      }
       
       l.replace(redirectPath);
     </script>
