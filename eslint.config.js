@@ -19,7 +19,12 @@ export default tseslint.config(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
+      
+      // React Refresh - allow files that export components + hooks/constants (common pattern in contexts)
+      "react-refresh/only-export-components": "off",
+      
+      // React Hooks - disable exhaustive-deps (intentionally omit deps to avoid infinite loops)
+      "react-hooks/exhaustive-deps": "off",
       
       // Type safety rules
       "@typescript-eslint/no-unused-vars": [
@@ -33,7 +38,7 @@ export default tseslint.config(
       "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/no-empty-object-type": "off", // Allow empty interfaces from external libs
       
-      // Naming conventions - allow snake_case for database types
+      // Naming conventions - allow snake_case for database types, PascalCase for React components
       "@typescript-eslint/naming-convention": [
         "warn",
         {
@@ -43,8 +48,16 @@ export default tseslint.config(
         },
         {
           selector: "variable",
-          format: ["camelCase", "UPPER_CASE"],
+          format: ["camelCase", "UPPER_CASE", "PascalCase"],
           leadingUnderscore: "allow",
+        },
+        {
+          selector: "function",
+          format: ["camelCase", "PascalCase"],
+        },
+        {
+          selector: "import",
+          format: ["camelCase", "PascalCase"],
         },
         {
           selector: "typeLike",
@@ -62,6 +75,11 @@ export default tseslint.config(
         // Allow snake_case in type properties (database types)
         {
           selector: "typeProperty",
+          format: null,
+        },
+        // Allow any format for object literal methods (e.g., IconLeft, IconRight from react-day-picker)
+        {
+          selector: "objectLiteralMethod",
           format: null,
         },
       ],

@@ -31,6 +31,7 @@ const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const ariaDescribedBy = (props as any)['aria-describedby'];
   return (
   <DialogPortal>

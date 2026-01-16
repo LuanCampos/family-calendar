@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   ChevronLeft,
@@ -10,7 +10,6 @@ import {
   X,
   CalendarDays,
 } from 'lucide-react';
-import { format } from 'date-fns';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { UNTAGGED_FILTER_ID } from '@/lib/utils/filterUtils';
 import {
@@ -37,7 +36,7 @@ interface HeaderProps {
   onClearFilters?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({
+export const Header = ({
   currentDate,
   onPrevious,
   onNext,
@@ -45,13 +44,13 @@ export const Header: React.FC<HeaderProps> = ({
   onDateChange,
   onTagManager,
   onSettings,
-  syncProgress = 0,
-  isSyncing = false,
+  syncProgress: _syncProgress = 0,
+  isSyncing: _isSyncing = false,
   availableTags = [],
   selectedFilterTags = [],
   onToggleTagFilter,
   onClearFilters,
-}) => {
+}: HeaderProps) => {
   const { t } = useLanguage();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);

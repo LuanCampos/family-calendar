@@ -14,7 +14,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { formatRecurrenceRule, validateRecurrenceRule } from '@/lib/utils/recurrenceUtils';
 import type { RecurrenceRule } from '@/types/calendar';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { AlertCircle, Repeat2, Infinity } from 'lucide-react';
+import { AlertCircle, Repeat2, Infinity as InfinityIcon } from 'lucide-react';
 
 interface RecurrenceConfigProps {
   onRuleChange?: (rule: RecurrenceRule | null) => void;
@@ -103,9 +103,8 @@ export const RecurrenceConfig = ({
       setRule(initialRule as RecurrenceRule);
       // Propagate to parent if needed
       onRuleChange?.(initialRule as RecurrenceRule);
-    } else {
-      // Do not force default rule here if toggled off; keep previous rule until user re-enables
     }
+    // Do not force default rule here if toggled off; keep previous rule until user re-enables
   }, [initialRule]);
 
   if (!isRecurring) {
@@ -250,7 +249,7 @@ export const RecurrenceConfig = ({
             className="h-8 w-8 p-0 flex items-center justify-center"
             title={t('recurrence.unlimitedOccurrence')}
           >
-            <Infinity className="h-4 w-4" />
+            <InfinityIcon className="h-4 w-4" />
           </Button>
         </div>
       </div>
@@ -269,5 +268,3 @@ export const RecurrenceConfig = ({
     </div>
   );
 };
-
-export default RecurrenceConfig;

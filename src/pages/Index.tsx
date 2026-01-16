@@ -9,7 +9,7 @@ import { OnlineStatusBar } from '@/components/common';
 import { useEventTags } from '@/hooks/useEventTags';
 import { useOnline } from '@/contexts/OnlineContext';
 
-const CalendarContent = () => {
+export const CalendarContent = () => {
   const { user } = useAuth();
   const { currentFamilyId } = useFamily();
   const { tags, createTag, updateTag, deleteTag } = useEventTags();
@@ -53,5 +53,3 @@ const CalendarContent = () => {
     </div>
   );
 };
-
-export default CalendarContent;

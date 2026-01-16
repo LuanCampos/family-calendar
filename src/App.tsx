@@ -8,11 +8,11 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { FamilyProvider } from "@/contexts/FamilyContext";
 import { OnlineProvider } from "@/contexts/OnlineContext";
 import { CalendarProvider } from "@/contexts/CalendarContext";
-import Index from "./pages/Index";
+import { CalendarContent } from './pages/Index';
 
 const queryClient = new QueryClient();
 
-const App = () => (
+export const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
       <LanguageProvider>
@@ -24,7 +24,7 @@ const App = () => (
                   <div className="w-screen overflow-hidden" style={{ height: 'calc(var(--app-vh, 1vh) * 100)' }}>
                     <Toaster />
                     <Sonner />
-                    <Index />
+                    <CalendarContent />
                   </div>
                 </TooltipProvider>
               </CalendarProvider>
@@ -35,5 +35,3 @@ const App = () => (
     </ThemeProvider>
   </QueryClientProvider>
 );
-
-export default App;

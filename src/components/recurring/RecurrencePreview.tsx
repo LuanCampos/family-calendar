@@ -14,7 +14,7 @@ interface RecurrencePreviewProps {
 export const RecurrencePreview = ({
   event,
   rule,
-  maxPreviewItems = 5,
+  maxPreviewItems: _maxPreviewItems = 5,
 }: RecurrencePreviewProps) => {
   const { t } = useLanguage();
 
@@ -69,5 +69,3 @@ export const RecurrencePreview = ({
     </div>
   );
 };
-
-export default RecurrencePreview;

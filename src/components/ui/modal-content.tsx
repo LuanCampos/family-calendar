@@ -38,5 +38,3 @@ export const ModalContent: React.FC<ModalContentProps> = ({
     </DialogContent>
   );
 };
-
-export default ModalContent;

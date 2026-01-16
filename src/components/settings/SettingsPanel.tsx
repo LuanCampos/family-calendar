@@ -1,16 +1,14 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Settings, Globe, Palette, Trash2, Coins, User, KeyRound, LogIn, LogOut, Users, UserPlus, Mail, Crown, X, Loader2, WifiOff, ChevronDown, Plus, Check, Cloud, HardDrive, Pencil } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Globe, Palette, Trash2, User, KeyRound, LogIn, LogOut, Users, UserPlus, Mail, Crown, X, Loader2, WifiOff, ChevronDown, Plus, Check, Cloud, HardDrive, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import TriggerButton from '@/components/ui/trigger-button';
+import { TriggerButton } from '@/components/ui/trigger-button';
 import { logger } from '@/lib/logger';
 import { isStrongPassword, getPasswordErrors } from '@/lib/validators';
-import { debounce } from '@/lib/utils';
 import {
   Dialog,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogDescription,
 } from '@/components/ui/dialog';
 import { ModalContent } from '@/components/ui/modal-content';
 import {
@@ -34,7 +32,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme, themes, ThemeKey } from '@/contexts/ThemeContext';
@@ -50,7 +47,6 @@ import * as userService from '@/lib/services/userService';
 import { clearOfflineCache } from '@/lib/storage/offlineStorage';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -184,7 +180,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
     // SEC-006: Stronger password requirements (8+ chars, uppercase, number)
     if (!isStrongPassword(newPassword)) {
       const errors = getPasswordErrors(newPassword);
-      const errorMessages = errors.map(e => t(e as any)).join(', ');
+      const errorMessages = errors.map(e => t(e as TranslationKey)).join(', ');
       toast({ title: t('error'), description: errorMessages || t('passwordTooWeak'), variant: 'destructive' });
       return;
     }
@@ -232,10 +228,10 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
         try {
           const res = await userService.upsertUserPreference(payload);
           // Supabase response has error field
-          if ((res as any).error) {
-            throw (res as any).error;
+          if (res && typeof res === 'object' && 'error' in res && res.error) {
+            throw res.error;
           }
-        } catch (err) {
+        } catch (_err) {
           // Fallback: save to offline store and enqueue sync
           try {
             await offlineAdapter.put('user_preference', { user_id: user.id, application_key: 'calendar', theme: newTheme, updated_at: new Date().toISOString() });
@@ -264,10 +260,10 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
         const payload = { user_id: user.id, language: newLanguage };
         try {
           const res = await userService.upsertUserPreference(payload);
-          if ((res as any).error) {
-            throw (res as any).error;
+          if (res && typeof res === 'object' && 'error' in res && res.error) {
+            throw res.error;
           }
-        } catch (err) {
+        } catch (_err) {
           // Fallback: save to offline store and enqueue sync
           try {
             await offlineAdapter.put('user_preference', { user_id: user.id, application_key: 'calendar', language: newLanguage, updated_at: new Date().toISOString() });

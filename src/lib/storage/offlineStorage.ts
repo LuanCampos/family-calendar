@@ -16,7 +16,7 @@ export interface SyncQueueItem {
   id: string;
   type: 'family' | 'event' | 'tag' | 'event_tag' | 'user_preference';
   action: 'insert' | 'update' | 'delete' | 'upsert';
-  data: any;
+  data: Record<string, unknown>;
   createdAt: string;
   familyId: string;
 }

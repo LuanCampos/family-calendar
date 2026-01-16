@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 import * as userService from '@/lib/services/userService';
-import type { EventInput, EventTagInput, Event } from '@/types/calendar';
+import type { EventInput, EventTagInput } from '@/types/calendar';
 import type { EventRow, SupabaseChannel } from '@/types/database';
 import { mapEventRow, mapEventRows } from '@/lib/mappers';
 
@@ -22,11 +22,11 @@ export const eventService = {
   getEvents: async (familyId: string, startDate?: string, endDate?: string) => {
     // Debug API call
     const endpoint = `event${startDate || endDate ? '' : ''}`;
-    const params: Record<string, any> = { familyId };
+    const params: Record<string, string> = { familyId };
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
     // Log the intent before performing the query
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     logger.apiCall('GET', endpoint, params);
     // First get all events for the family in the date range
     let query = supabase
@@ -42,7 +42,7 @@ export const eventService = {
     }
 
     const eventsResult = await query.order('date', { ascending: true });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     logger.apiResponse('GET', endpoint, eventsResult.error ? 400 : 200, { count: eventsResult.data?.length || 0 });
     
     if (eventsResult.error || !eventsResult.data) {
@@ -59,7 +59,7 @@ export const eventService = {
       .from('event_tag')
       .select('event_id, tag_id')
       .in('event_id', eventIds);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     logger.apiResponse('GET', 'event_tag', tagsResult.error ? 400 : 200, { count: tagsResult.data?.length || 0 });
 
     if (tagsResult.error) {
@@ -73,7 +73,8 @@ export const eventService = {
       if (!tagsByEventId.has(et.event_id)) {
         tagsByEventId.set(et.event_id, []);
       }
-      tagsByEventId.get(et.event_id)!.push(et.tag_id);
+      const eventTags = tagsByEventId.get(et.event_id);
+      if (eventTags) eventTags.push(et.tag_id);
     });
 
     // Map DB rows to application types with tags
@@ -86,7 +87,7 @@ export const eventService = {
    */
   getRecurringParents: async (familyId: string) => {
     // Debug API call
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     logger.apiCall('GET', 'event (recurring parents)', { familyId });
     const res = await supabase
       .from('event')
@@ -94,7 +95,7 @@ export const eventService = {
       .eq('family_id', familyId)
       .eq('is_recurring', true)
       .order('date', { ascending: true });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     logger.apiResponse('GET', 'event (recurring parents)', res.error ? 400 : 200, { count: res.data?.length || 0 });
 
     if (res.error || !res.data) {
@@ -109,16 +110,17 @@ export const eventService = {
         .from('event_tag')
         .select('event_id, tag_id')
         .in('event_id', parentIds);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       logger.apiResponse('GET', 'event_tag (parents)', tagsRes.error ? 400 : 200, { count: tagsRes.data?.length || 0 });
 
       if (!tagsRes.error && tagsRes.data) {
         tagsByEventId = new Map<string, string[]>();
         tagsRes.data.forEach(et => {
-          if (!tagsByEventId!.has(et.event_id)) {
-            tagsByEventId!.set(et.event_id, []);
+          if (!tagsByEventId.has(et.event_id)) {
+            tagsByEventId.set(et.event_id, []);
           }
-          tagsByEventId!.get(et.event_id)!.push(et.tag_id);
+          const eventTags = tagsByEventId.get(et.event_id);
+          if (eventTags) eventTags.push(et.tag_id);
         });
       }
     }
@@ -157,14 +159,14 @@ export const eventService = {
    * This protects against 403 RLS race condition on initial auth.
    */
   createEvent: async (familyId: string, input: EventInput, userId: string) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     logger.apiCall('POST', 'event', { familyId, isRecurring: input.isRecurring, hasRule: !!input.recurrenceRule });
     // Ensure session is ready before INSERT to prevent 403 RLS errors
     await userService.ensureSessionReady();
     
     const { tags, duration, isAllDay, isRecurring, recurrenceRule, ...eventData } = input;
 
-    const payload: Partial<EventRow> & Record<string, any> = {
+    const payload: Partial<EventRow> & Record<string, unknown> = {
       family_id: familyId,
       created_by: userId,
       title: eventData.title,
@@ -182,14 +184,17 @@ export const eventService = {
       .insert(payload)
       .select()
       .single();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     logger.apiResponse('POST', 'event', response.error ? 400 : 200, { id: response.data?.id });
 
     if (response.error) {
       logger.error('event.create.failed', {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         code: (response.error as any).code,
         message: response.error.message,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         details: (response.error as any).details,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         hint: (response.error as any).hint,
       });
       return response;
@@ -224,7 +229,7 @@ export const eventService = {
    */
   updateEvent: async (eventId: string, input: Partial<EventInput>) => {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       logger.apiCall('PATCH', 'event', { eventId, touchesRecurrence: input.isRecurring !== undefined || input.recurrenceRule !== undefined });
       // Ensure session is ready before UPDATE to prevent 403 RLS errors
       await userService.ensureSessionReady();
@@ -232,7 +237,7 @@ export const eventService = {
       const { tags, ...eventData } = input;
 
       // Filter out undefined values and map field names
-      const updatePayload: any = {};
+      const updatePayload: Record<string, unknown> = {};
       Object.entries(eventData).forEach(([key, value]) => {
         if (value !== undefined) {
           // Map camelCase to snake_case
@@ -270,7 +275,7 @@ export const eventService = {
         .eq('id', eventId)
         .select()
         .single();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       logger.apiResponse('PATCH', 'event', response.error ? 400 : 200, { id: response.data?.id });
 
       if (response.error) return response;
@@ -279,7 +284,7 @@ export const eventService = {
       if (tags !== undefined) {
         
         // Delete existing tags
-        const delRes = await supabase.from('event_tag').delete().eq('event_id', eventId);
+        const _delRes = await supabase.from('event_tag').delete().eq('event_id', eventId);
 
         // Insert new tags
         if (tags.length > 0) {
@@ -300,7 +305,7 @@ export const eventService = {
       }
 
       // Map response row to application type
-      const mapped = mapEventRow(response.data as EventRow, tags !== undefined ? tags : undefined as any);
+      const mapped = mapEventRow(response.data as EventRow, tags);
       return { data: mapped, error: null };
     } catch (error) {
       logger.error('event.update.failed', { error, eventId });
@@ -345,12 +350,12 @@ export const eventService = {
     // Ensure session is ready before INSERT to prevent 403 RLS errors
     await userService.ensureSessionReady();
     
-    const payload = {
+    const payload: Record<string, unknown> = {
       family_id: familyId,
       created_by: userId,
       name: input.name,
       color: input.color || '#3B82F6',
-    } as any;
+    };
     
     const result = await supabase
       .from('tag_definition')
@@ -360,9 +365,12 @@ export const eventService = {
     
     if (result.error) {
       logger.error('tag.create.failed', {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         code: (result.error as any).code,
         message: result.error.message,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         details: (result.error as any).details,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         hint: (result.error as any).hint,
       });
     }
@@ -455,7 +463,7 @@ export const eventService = {
     }
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       logger.apiCall('POST', 'event (recurring)', { familyId, rule: input.recurrenceRule });
       const { tags, duration, isAllDay } = input;
 
@@ -472,10 +480,10 @@ export const eventService = {
           is_recurring: true,
           recurrence_rule: input.recurrenceRule,
           created_by: userId,
-        } as any)
+        } as Record<string, unknown>)
         .select()
         .single();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       logger.apiResponse('POST', 'event (recurring)', response.error ? 400 : 200, { id: response.data?.id });
 
       if (response.error) return response;

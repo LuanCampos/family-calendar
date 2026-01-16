@@ -3,7 +3,7 @@ import { Pipette } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 interface ColorPickerProps {
   value: string;
@@ -98,7 +98,7 @@ const hslToHex = (h: number, s: number, l: number): string => {
 export const ColorPicker = React.forwardRef<HTMLDivElement, ColorPickerProps>(
   ({ value, onChange, disabled = false, className, label }, ref) => {
     const [inputValue, setInputValue] = React.useState(value);
-    const [hsl, setHsl] = React.useState(() => hexToHsl(value));
+    const [_hsl, setHsl] = React.useState(() => hexToHsl(value));
     const [tempColor, setTempColor] = React.useState(value);
     const [tempHsl, setTempHsl] = React.useState(() => hexToHsl(value));
     const [isOpen, setIsOpen] = React.useState(false);
@@ -133,7 +133,7 @@ export const ColorPicker = React.forwardRef<HTMLDivElement, ColorPickerProps>(
       setIsOpen(false);
     };
 
-    const handleHexChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const _handleHexChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       let val = e.target.value;
       if (!val.startsWith("#")) {
         val = "#" + val;

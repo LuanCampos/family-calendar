@@ -8,7 +8,7 @@
 import type { EventRow, TagDefinitionRow } from '@/types/database';
 import type { Event, EventTag, RecurrenceRule } from '@/types/calendar';
 
-const parseRecurrenceRule = (raw: any): RecurrenceRule | undefined => {
+const parseRecurrenceRule = (raw: Record<string, unknown> | string | null | undefined): RecurrenceRule | undefined => {
   if (!raw) return undefined;
   try {
     if (typeof raw === 'string') {

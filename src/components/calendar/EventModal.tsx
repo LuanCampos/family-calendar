@@ -29,6 +29,7 @@ import type { Event, EventInput, EventTag, RecurrenceRule } from '@/types/calend
 import { format, isValid, parse } from 'date-fns';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useLanguage } from '@/contexts/LanguageContext';
+import type { TranslationKey } from '@/i18n/translations/pt';
 import { RecurrenceConfig } from '@/components/recurring';
 import { storageAdapter } from '@/lib/adapters/storageAdapter';
 import { logger } from '@/lib/logger';
@@ -80,8 +81,8 @@ export const EventModal: React.FC<EventModalProps> = ({
 
   const humanReadableDate = safeDate
     ? (() => {
-        const dayOfWeek = t(`day-${safeDate.getDay()}` as any);
-        const month = t(`month-${safeDate.getMonth()}` as any);
+        const dayOfWeek = t(`day-${safeDate.getDay()}` as TranslationKey);
+        const month = t(`month-${safeDate.getMonth()}` as TranslationKey);
         return `${dayOfWeek}, ${safeDate.getDate()} de ${month} de ${safeDate.getFullYear()}`;
       })()
     : date;
@@ -108,7 +109,9 @@ export const EventModal: React.FC<EventModalProps> = ({
         if (!editingEvent.recurrenceRule && editingEvent.recurringEventId) {
           (async () => {
             try {
-              const parent = await storageAdapter.getEvent(editingEvent.recurringEventId!);
+              const parentId = editingEvent.recurringEventId;
+              if (!parentId) return;
+              const parent = await storageAdapter.getEvent(parentId);
               if (parent && parent.recurrenceRule) {
                 logger.debug('ui.eventModal.hydrateRecurrenceRule.fromParent', {
                   instanceId: editingEvent.id,

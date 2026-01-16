@@ -61,7 +61,7 @@ export const offlineAdapter = {
 
   deleteEvent: async (eventId: string): Promise<void> => {
     // Delete event tags first
-    const tagAssocs = await offlineDB.getAll<any>('event_tags');
+    const tagAssocs = await offlineDB.getAll<{ event_id: string; tag_id: string }>('event_tags');
     if (tagAssocs) {
       for (const assoc of tagAssocs) {
         if (assoc.event_id === eventId) {
@@ -75,7 +75,7 @@ export const offlineAdapter = {
 
   deleteTag: async (tagId: string): Promise<void> => {
     // Delete event_tag associations first
-    const tagAssocs = await offlineDB.getAll<any>('event_tags');
+    const tagAssocs = await offlineDB.getAll<{ event_id: string; tag_id: string }>('event_tags');
     if (tagAssocs) {
       for (const assoc of tagAssocs) {
         if (assoc.tag_id === tagId) {

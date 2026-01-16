@@ -1,5 +1,5 @@
 import { createRoot } from "react-dom/client";
-import App from "./App";
+import { App } from "./App";
 import "./index.css";
 
 // Handle GitHub Pages SPA redirect - restore URL from query params
@@ -38,4 +38,6 @@ setViewportHeightVar();
 window.addEventListener('resize', setViewportHeightVar);
 window.addEventListener('orientationchange', setViewportHeightVar);
 
-createRoot(document.getElementById("root")!).render(<App />);
+const rootElement = document.getElementById("root");
+if (!rootElement) throw new Error("Root element not found");
+createRoot(rootElement).render(<App />);

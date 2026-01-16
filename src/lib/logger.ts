@@ -20,11 +20,14 @@ export const DEBUG_API_CALLS = false;
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type LogContext = Record<string, any>;
+
 export interface LogEntry {
   timestamp: string;
   level: LogLevel;
   event: string;
-  context?: Record<string, any>;
+  context?: LogContext;
   error?: Error | string;
 }
 
@@ -39,10 +42,10 @@ class Logger {
   /**
    * SEC-008: Sanitize parameters by redacting sensitive values
    */
-  private sanitizeParams(params?: Record<string, any>): Record<string, any> | undefined {
+  private sanitizeParams(params?: LogContext): LogContext | undefined {
     if (!params) return undefined;
     
-    const sanitized: Record<string, any> = {};
+    const sanitized: LogContext = {};
     for (const [key, value] of Object.entries(params)) {
       const keyLower = key.toLowerCase();
       if (this.sensitiveKeys.some(s => keyLower.includes(s))) {
@@ -59,7 +62,7 @@ class Logger {
   /**
    * Log at debug level (development only)
    */
-  debug(event: string, context?: Record<string, any>) {
+  debug(event: string, context?: LogContext) {
     if (!DEBUG_ENABLED) return;
     this.log('debug', event, context);
   }
@@ -67,7 +70,7 @@ class Logger {
   /**
    * Log at info level
    */
-  info(event: string, context?: Record<string, any>) {
+  info(event: string, context?: LogContext) {
     // Only record info in development
     if (!this.isDev) return;
     this.log('info', event, context);
@@ -76,14 +79,14 @@ class Logger {
   /**
    * Log at warn level
    */
-  warn(event: string, context?: Record<string, any>) {
+  warn(event: string, context?: LogContext) {
     this.log('warn', event, context);
   }
 
   /**
    * Log at error level
    */
-  error(event: string, context?: Record<string, any> | Error | string) {
+  error(event: string, context?: LogContext | Error | string) {
     if (context instanceof Error) {
       this.log('error', event, { error: context.message, stack: context.stack });
     } else if (typeof context === 'string') {
@@ -98,7 +101,7 @@ class Logger {
    * Usage: logger.apiCall('GET', '/users', { userId: '123' })
    * SEC-008: Now sanitizes sensitive parameters
    */
-  apiCall(method: string, endpoint: string, params?: Record<string, any>) {
+  apiCall(method: string, endpoint: string, params?: LogContext) {
     if (!DEBUG_API_CALLS || !this.isDev) return; // Only in dev mode
     const safeParams = this.sanitizeParams(params);
     console.log(`%c[API] ${method} ${endpoint}`, 'color: #0066cc; font-weight: bold;', safeParams || '');
@@ -109,7 +112,7 @@ class Logger {
    * Usage: logger.apiResponse('GET', '/users', 200, { duration: 45 })
    * SEC-008: Now sanitizes sensitive response data
    */
-  apiResponse(method: string, endpoint: string, status: number, response?: Record<string, any>) {
+  apiResponse(method: string, endpoint: string, status: number, response?: LogContext) {
     if (!DEBUG_API_CALLS || !this.isDev) return; // Only in dev mode
     const safeResponse = this.sanitizeParams(response);
     const statusColor = status >= 400 ? '#cc0000' : '#00aa00';
@@ -119,7 +122,7 @@ class Logger {
   /**
    * Internal log method
    */
-  private log(level: LogLevel, event: string, context?: Record<string, any>) {
+  private log(level: LogLevel, event: string, context?: LogContext) {
     const entry: LogEntry = {
       timestamp: new Date().toISOString(),
       level,
@@ -248,7 +251,7 @@ export const logger = new Logger();
 export const createTimer = (eventName: string) => {
   const startTime = performance.now();
   return {
-    end: (context?: Record<string, any>) => {
+    end: (context?: LogContext) => {
       const duration = Math.round(performance.now() - startTime);
       logger.info(`${eventName}.completed`, {
         duration: `${duration}ms`,

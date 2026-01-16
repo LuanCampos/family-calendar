@@ -3,10 +3,17 @@ import { Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import type { User } from '@supabase/supabase-js';
+
+interface PendingInvitation {
+  id: string;
+  email?: string;
+  [key: string]: unknown;
+}
 
 interface TriggerButtonProps extends React.ComponentPropsWithoutRef<typeof Button> {
-  user?: any;
-  myPendingInvitations?: Array<any>;
+  user?: User | null;
+  myPendingInvitations?: Array<PendingInvitation>;
   getUserInitials?: () => string;
   getDisplayName?: () => string;
 }
@@ -45,4 +52,4 @@ const TriggerButton = React.forwardRef<HTMLButtonElement, TriggerButtonProps>(
 
 TriggerButton.displayName = 'TriggerButton';
 
-export default TriggerButton;
+export { TriggerButton };

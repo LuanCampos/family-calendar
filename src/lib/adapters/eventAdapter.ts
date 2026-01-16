@@ -192,7 +192,7 @@ export const eventAdapter = {
     familyId: string,
     input: EventInput,
     userId: string
-  ): Promise<{ data?: Event; error?: any }> => {
+  ): Promise<{ data?: Event; error?: unknown }> => {
     logger.debug('event.create.called', { familyId, userId, input });
     logger.debug('event.create.start', { familyId, title: input.title });
 
@@ -346,7 +346,7 @@ export const eventAdapter = {
   updateEvent: async (
     eventId: string,
     input: Partial<EventInput>
-  ): Promise<{ data?: Event; error?: any }> => {
+  ): Promise<{ data?: Event; error?: unknown }> => {
     logger.debug('event.update.start', { eventId });
 
     try {
@@ -393,12 +393,16 @@ export const eventAdapter = {
         // If recurrence is being turned off, clear the stored rule.
         // Spreading partial input cannot remove existing properties.
         if (input.isRecurring === false) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           delete (updated as any).recurrenceRule;
         }
         // If toggling to all-day, clear time and duration locally
         if (input.isAllDay === true) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           delete (updated as any).time;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           delete (updated as any).duration;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (updated as any).isAllDay = true;
         }
         await offlineAdapter.put('events', updated);
@@ -426,11 +430,15 @@ export const eventAdapter = {
         // Fallback to offline with pending sync
         const updated = { ...event, ...input };
         if (input.isRecurring === false) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           delete (updated as any).recurrenceRule;
         }
         if (input.isAllDay === true) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           delete (updated as any).time;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           delete (updated as any).duration;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (updated as any).isAllDay = true;
         }
         // Ensure familyId is preserved
@@ -478,11 +486,15 @@ export const eventAdapter = {
 
         const updated = { ...fallbackEvent, ...input };
         if (input.isRecurring === false) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           delete (updated as any).recurrenceRule;
         }
         if (input.isAllDay === true) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           delete (updated as any).time;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           delete (updated as any).duration;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (updated as any).isAllDay = true;
         }
         // Ensure familyId is preserved
@@ -527,11 +539,15 @@ export const eventAdapter = {
 
       const updated = { ...finalEvent, ...input };
       if (input.isRecurring === false) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         delete (updated as any).recurrenceRule;
       }
       if (input.isAllDay === true) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         delete (updated as any).time;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         delete (updated as any).duration;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (updated as any).isAllDay = true;
       }
       await offlineAdapter.put('events', updated);
@@ -549,7 +565,7 @@ export const eventAdapter = {
   /**
    * Delete an event (hard delete)
    */
-  deleteEvent: async (eventId: string, familyId: string): Promise<{ error?: any }> => {
+  deleteEvent: async (eventId: string, familyId: string): Promise<{ error?: unknown }> => {
     logger.debug('event.delete.start', { eventId });
 
     try {
@@ -689,7 +705,7 @@ export const eventAdapter = {
     familyId: string,
     input: EventTagInput,
     userId: string
-  ): Promise<{ data?: EventTag; error?: any }> => {
+  ): Promise<{ data?: EventTag; error?: unknown }> => {
     logger.debug('tag.create.called', { familyId, userId, input });
     logger.debug('tag.create.start', { familyId, name: input.name });
 
@@ -809,7 +825,7 @@ export const eventAdapter = {
     tagId: string,
     input: Partial<EventTagInput>,
     familyId: string
-  ): Promise<{ data?: EventTag; error?: any }> => {
+  ): Promise<{ data?: EventTag; error?: unknown }> => {
     logger.debug('tag.update.start', { tagId });
 
     try {
@@ -916,7 +932,7 @@ export const eventAdapter = {
   /**
    * Delete a tag
    */
-  deleteEventTag: async (tagId: string, familyId: string): Promise<{ error?: any }> => {
+  deleteEventTag: async (tagId: string, familyId: string): Promise<{ error?: unknown }> => {
     logger.debug('tag.delete.start', { tagId });
 
     try {
@@ -1002,7 +1018,7 @@ export const eventAdapter = {
     familyId: string,
     input: EventInput,
     userId: string
-  ): Promise<{ data?: Event; error?: any }> => {
+  ): Promise<{ data?: Event; error?: unknown }> => {
     if (!input.isRecurring || !input.recurrenceRule) {
       return { error: 'Not a recurring event' };
     }

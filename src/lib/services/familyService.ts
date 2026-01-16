@@ -72,6 +72,7 @@ export const insertFamily = async (name: string, userId: string) => {
     .single();
   
   if (result.error) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     logger.apiResponse('POST', 'family', 400, { error: result.error.message, code: (result.error as any).code });
     return result;
   }
@@ -288,21 +289,21 @@ export const deleteByIdFromTable = async (table: string, id: string) => {
   return supabase.from(table).delete().eq('id', id);
 };
 
-export const insertToTable = async (table: string, data: any) => {
+export const insertToTable = async (table: string, data: Record<string, unknown>) => {
   // Ensure session is ready before INSERT to prevent 403 RLS errors
   await userService.ensureSessionReady();
   
   return supabase.from(table).insert(data);
 };
 
-export const updateInTable = async (table: string, id: string, data: any) => {
+export const updateInTable = async (table: string, id: string, data: Record<string, unknown>) => {
   // Ensure session is ready before UPDATE to prevent 403 RLS errors
   await userService.ensureSessionReady();
   
   return supabase.from(table).update(data).eq('id', id);
 };
 
-export const insertWithSelect = async (table: string, data: any) => {
+export const insertWithSelect = async (table: string, data: Record<string, unknown>) => {
   // Ensure session is ready before INSERT to prevent 403 RLS errors
   await userService.ensureSessionReady();
   
@@ -312,7 +313,7 @@ export const insertWithSelect = async (table: string, data: any) => {
 
 // Note: Old expense/income/category features have been removed
 
-export const insertEventForSync = async (data: any) => {
+export const insertEventForSync = async (data: Record<string, unknown> & { id?: string; family_id?: string }) => {
   // Ensure session is ready before INSERT to prevent 403 RLS errors
   await userService.ensureSessionReady();
   

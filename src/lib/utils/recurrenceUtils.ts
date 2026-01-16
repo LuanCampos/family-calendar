@@ -28,9 +28,9 @@ export const generateRecurringInstances = (
   const end = rangeEnd ? parseISO(rangeEnd) : addMonths(baseDate, 3);
 
   const hasEndDate = !!rule.endDate;
-  const endDate = hasEndDate ? parseISO(rule.endDate!) : null;
+  const endDate = hasEndDate && rule.endDate ? parseISO(rule.endDate) : null;
   const hasMaxOccurrences = !!rule.maxOccurrences;
-  const maxOccurrences = hasMaxOccurrences ? rule.maxOccurrences! : null;
+  const maxOccurrences = hasMaxOccurrences && rule.maxOccurrences ? rule.maxOccurrences : null;
 
   const exceptions = new Set(event.recurrenceExceptions || []);
   const overrides = event.recurrenceOverrides || {};
@@ -269,7 +269,7 @@ export const getNextOccurrence = (currentDate: Date, rule: RecurrenceRule): Date
       return addWeeks(currentDate, 2 * interval);
 
     case 'monthly': {
-      let nextDate = addMonths(currentDate, interval);
+      const nextDate = addMonths(currentDate, interval);
       
       // If dayOfMonth is specified, ensure we land on that day
       if (rule.dayOfMonth) {
@@ -282,16 +282,16 @@ export const getNextOccurrence = (currentDate: Date, rule: RecurrenceRule): Date
     }
 
     case 'yearly': {
-      let nextDate = addYears(currentDate, interval);
+      const baseNextDate = addYears(currentDate, interval);
       
       // If monthOfYear and dayOfMonth are specified
       if (rule.monthOfYear && rule.dayOfMonth) {
-        const lastDay = lastDayOfMonth(new Date(nextDate.getFullYear(), rule.monthOfYear - 1, 1)).getDate();
+        const lastDay = lastDayOfMonth(new Date(baseNextDate.getFullYear(), rule.monthOfYear - 1, 1)).getDate();
         const dayToSet = Math.min(rule.dayOfMonth, lastDay);
-        nextDate = new Date(nextDate.getFullYear(), rule.monthOfYear - 1, dayToSet);
+        return new Date(baseNextDate.getFullYear(), rule.monthOfYear - 1, dayToSet);
       }
 
-      return nextDate;
+      return baseNextDate;
     }
 
     default:

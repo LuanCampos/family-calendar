@@ -14,8 +14,8 @@ interface TimePickerProps {
 }
 
 export const TimePicker = React.forwardRef<HTMLDivElement, TimePickerProps>(
-  ({ value, onChange, disabled = false, className, label }, ref) => {
-    const [inputValue, setInputValue] = React.useState(value || "");
+  ({ value, onChange, disabled = false, className, label: _label }, ref) => {
+    const [_inputValue, setInputValue] = React.useState(value || "");
     const [hours, setHours] = React.useState(() => {
       if (value) {
         const [h] = value.split(":");
@@ -40,7 +40,7 @@ export const TimePicker = React.forwardRef<HTMLDivElement, TimePickerProps>(
       }
     }, [value]);
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const _handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const val = e.target.value;
       setInputValue(val);
 
@@ -58,29 +58,27 @@ export const TimePicker = React.forwardRef<HTMLDivElement, TimePickerProps>(
     };
 
     const handleHourChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      let h = e.target.value.padStart(2, "0");
+      const h = e.target.value.padStart(2, "0");
       const hNum = parseInt(h, 10);
-      if (hNum > 23) h = "23";
-      if (hNum < 0) h = "00";
-      setHours(h);
-      const newTime = `${h}:${minutes}`;
+      const hFinal = hNum > 23 ? "23" : hNum < 0 ? "00" : h;
+      setHours(hFinal);
+      const newTime = `${hFinal}:${minutes}`;
       setInputValue(newTime);
       onChange(newTime);
     };
 
     const handleMinuteChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      let m = e.target.value.padStart(2, "0");
+      const m = e.target.value.padStart(2, "0");
       const mNum = parseInt(m, 10);
-      if (mNum > 59) m = "59";
-      if (mNum < 0) m = "00";
-      setMinutes(m);
-      const newTime = `${hours}:${m}`;
+      const mFinal = mNum > 59 ? "59" : mNum < 0 ? "00" : m;
+      setMinutes(mFinal);
+      const newTime = `${hours}:${mFinal}`;
       setInputValue(newTime);
       onChange(newTime);
     };
 
     const incrementHour = () => {
-      let h = (parseInt(hours, 10) + 1) % 24;
+      const h = (parseInt(hours, 10) + 1) % 24;
       const hStr = String(h).padStart(2, "0");
       setHours(hStr);
       const newTime = `${hStr}:${minutes}`;
@@ -89,7 +87,7 @@ export const TimePicker = React.forwardRef<HTMLDivElement, TimePickerProps>(
     };
 
     const decrementHour = () => {
-      let h = (parseInt(hours, 10) - 1 + 24) % 24;
+      const h = (parseInt(hours, 10) - 1 + 24) % 24;
       const hStr = String(h).padStart(2, "0");
       setHours(hStr);
       const newTime = `${hStr}:${minutes}`;
@@ -98,7 +96,7 @@ export const TimePicker = React.forwardRef<HTMLDivElement, TimePickerProps>(
     };
 
     const incrementMinute = () => {
-      let m = (parseInt(minutes, 10) + 1) % 60;
+      const m = (parseInt(minutes, 10) + 1) % 60;
       const mStr = String(m).padStart(2, "0");
       setMinutes(mStr);
       const newTime = `${hours}:${mStr}`;
@@ -107,7 +105,7 @@ export const TimePicker = React.forwardRef<HTMLDivElement, TimePickerProps>(
     };
 
     const decrementMinute = () => {
-      let m = (parseInt(minutes, 10) - 1 + 60) % 60;
+      const m = (parseInt(minutes, 10) - 1 + 60) % 60;
       const mStr = String(m).padStart(2, "0");
       setMinutes(mStr);
       const newTime = `${hours}:${mStr}`;

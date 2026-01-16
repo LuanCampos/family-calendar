@@ -1,5 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
-import { supabase } from '@/lib/supabase';
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import * as familyService from '@/lib/services/familyService';
 import * as userService from '@/lib/services/userService';
 import { useAuth } from '@/contexts/AuthContext';
@@ -83,8 +82,8 @@ export const useFamily = () => {
   return context;
 };
 
-export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, session } = useAuth();
+export const FamilyProvider = ({ children }: { children: React.ReactNode }) => {
+  const { user, session: _session } = useAuth();
   const [families, setFamilies] = useState<Family[]>([]);
   const [currentFamilyId, setCurrentFamilyId] = useState<string | null>(null);
   const [members, setMembers] = useState<FamilyMember[]>([]);
@@ -122,6 +121,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       if (!error && data) {
         const cloudFamilies = data
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           .map((d: any) => ({ ...d.family, isOffline: false }))
           .filter(Boolean) as Family[];
         
@@ -161,7 +161,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       if (!error && data) {
         setMembers(data);
       }
-    } catch (e) {
+    } catch (_e) {
       logger.warn('families.members.table.missing');
       setMembers([]);
     }
@@ -181,6 +181,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       if (!joinError && myInvitesWithFamily) {
         setMyPendingInvitations(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           myInvitesWithFamily.map((inv: any) => ({
             ...inv,
             family_name: inv.family?.name || 'Família'
@@ -206,6 +207,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         const familyNameMap = new Map(familiesData?.map(f => [f.id, f.name]) || []);
 
         setMyPendingInvitations(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           myInvites.map((inv: any) => ({
             ...inv,
             family_name: familyNameMap.get(inv.family_id) || inv.family_name || 'Família'
@@ -248,7 +250,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [refreshMyInvitations, refreshFamilyInvitations]);
 
   // Load user preferences to get current family
-  const loadUserPreferences = useCallback(async () => {
+  const _loadUserPreferences = useCallback(async () => {
     // If no user, only allow offline families from localStorage
     if (!user) {
       const savedFamilyId = getSecureStorageItem('current-family-id');
@@ -276,7 +278,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           setCurrentFamilyId(savedFamilyId);
         }
       }
-    } catch (e) {
+    } catch (_e) {
       logger.warn('user.preferences.table.missing');
     }
   }, [user]);
@@ -294,7 +296,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     try {
       await userService.updateCurrentFamily(user.id, familyId);
-    } catch (e) {
+    } catch (_e) {
       logger.warn('user.preferences.table.missing');
     }
   }, [user]);
@@ -330,6 +332,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
           if (!error && data) {
             const cloudFamilies = data
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               .map((d: any) => ({ ...d.family, isOffline: false }))
               .filter(Boolean) as Family[];
             
@@ -374,7 +377,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
               }
             }
           }
-        } catch (e) {
+        } catch (_e) {
           logger.warn('user.preferences.table.missing');
         }
         
@@ -510,7 +513,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     };
 
     try {
-      await offlineAdapter.put('families', family as any);
+      await offlineAdapter.put('families', family as unknown as Record<string, unknown>);
       await refreshFamilies();
       await selectFamily(id);
       return { error: null, family };
@@ -537,6 +540,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       if (error || !family) {
         // Fallback to offline on error (e.g., network error, RLS error, etc.)
         logger.warn('family.create.cloud.failed', {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           code: (error as any)?.code,
           message: error?.message,
           hasData: !!family,
@@ -581,7 +585,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (offlineAdapter.isOfflineId(familyId)) {
       const family = await offlineAdapter.get<Family>('families', familyId);
       if (family) {
-        await offlineAdapter.put('families', { ...family, name } as any);
+        await offlineAdapter.put('families', { ...family, name } as unknown as Record<string, unknown>);
         await refreshFamilies();
       }
       return { error: null };
@@ -590,7 +594,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     // CRITICAL: Validate session before write operation
     try {
       await userService.ensureSessionReady();
-    } catch (sessionError) {
+    } catch (_sessionError) {
       return { error: 'Session not ready' };
     }
 
@@ -604,10 +608,10 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const deleteFamily = async (familyId: string) => {
     if (offlineAdapter.isOfflineId(familyId)) {
       // Delete offline family and all related data
-      const events = await offlineAdapter.getAllByIndex<any>('events', 'family_id', familyId);
+      const events = await offlineAdapter.getAllByIndex<{ id: string }>('events', 'family_id', familyId);
       for (const event of events) await offlineAdapter.delete('events', event.id);
       
-      const tags = await offlineAdapter.getAllByIndex<any>('tag_definitions', 'family_id', familyId);
+      const tags = await offlineAdapter.getAllByIndex<{ id: string }>('tag_definitions', 'family_id', familyId);
       for (const tag of tags) await offlineAdapter.delete('tag_definitions', tag.id);
       
       await offlineAdapter.delete('families', familyId);
@@ -628,7 +632,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     // CRITICAL: Validate session before write operation
     try {
       await userService.ensureSessionReady();
-    } catch (sessionError) {
+    } catch (_sessionError) {
       return { error: 'Session not ready' };
     }
 
@@ -660,7 +664,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     // CRITICAL: Validate session before write operation
     try {
       await userService.ensureSessionReady();
-    } catch (sessionError) {
+    } catch (_sessionError) {
       return { error: 'Session not ready' };
     }
 
@@ -753,7 +757,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     // CRITICAL: Validate session before write operation
     try {
       await userService.ensureSessionReady();
-    } catch (sessionError) {
+    } catch (_sessionError) {
       return { error: 'Session not ready' };
     }
 
@@ -768,7 +772,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     // CRITICAL: Validate session before write operation
     try {
       await userService.ensureSessionReady();
-    } catch (sessionError) {
+    } catch (_sessionError) {
       return { error: 'Session not ready' };
     }
 
@@ -783,7 +787,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     // CRITICAL: Validate session before write operation
     try {
       await userService.ensureSessionReady();
-    } catch (sessionError) {
+    } catch (_sessionError) {
       return { error: 'Session not ready' };
     }
 

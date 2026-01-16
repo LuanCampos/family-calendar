@@ -26,8 +26,8 @@ export const useEvents = (startDate?: string, endDate?: string) => {
 
     try {
       const key = `${currentFamilyId}:${startDate || ''}:${endDate || ''}`;
-      if (cacheRef.current.has(key)) {
-        const cached = cacheRef.current.get(key)!;
+      const cached = cacheRef.current.get(key);
+      if (cached) {
         setEvents(cached);
         logger.debug('events.cache.hit', { key, count: cached.length });
       } else {
@@ -92,8 +92,9 @@ export const useEvents = (startDate?: string, endDate?: string) => {
           logger.debug('useEvents.storageAdapter.createEvent.result', { response });
 
           if (response.data) {
+            const eventData = response.data;
             setEvents(prev => {
-              const next = [...prev, response.data!];
+              const next = [...prev, eventData];
               const key = `${currentFamilyId}:${startDate || ''}:${endDate || ''}`;
               cacheRef.current.set(key, next);
               return next;
@@ -124,13 +125,14 @@ export const useEvents = (startDate?: string, endDate?: string) => {
         const response = await storageAdapter.updateEvent(eventId, input);
 
         if (response.data) {
+          const eventData = response.data;
           const touchesRecurrence = input.isRecurring !== undefined || input.recurrenceRule !== undefined;
           if (touchesRecurrence) {
             // If recurrence toggled/changed, reload to expand instances
             await loadEvents();
           } else {
             setEvents(prev => {
-              const next = prev.map(e => (e.id === eventId ? response.data! : e));
+              const next = prev.map(e => (e.id === eventId ? eventData : e));
               const key = `${currentFamilyId || ''}:${startDate || ''}:${endDate || ''}`;
               if (currentFamilyId) cacheRef.current.set(key, next);
               return next;

@@ -15,7 +15,7 @@ export interface EventRow {
   duration_minutes: number | null;
   is_all_day: boolean | null;
   is_recurring: boolean | null;
-  recurrence_rule: any | null; // JSON field
+  recurrence_rule: Record<string, unknown> | null; // JSON field
   created_at: string;
   updated_at: string;
 }

@@ -9,7 +9,8 @@ export { cn } from './utils/common';
  * SEC-005: Debounce utility for rate limiting
  * Delays execution until after wait milliseconds have elapsed since last call
  */
-export function debounce<T extends (...args: any[]) => any>(
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function debounce<T extends (...args: any[]) => unknown>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void {
@@ -30,7 +31,8 @@ export function debounce<T extends (...args: any[]) => any>(
  * SEC-005: Throttle utility for rate limiting
  * Ensures function is called at most once per wait milliseconds
  */
-export function throttle<T extends (...args: any[]) => any>(
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function throttle<T extends (...args: any[]) => unknown>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void {

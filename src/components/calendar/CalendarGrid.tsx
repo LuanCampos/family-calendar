@@ -1,6 +1,6 @@
 import React from 'react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, startOfWeek, endOfWeek } from 'date-fns';
-import type { Event, EventTag } from '@/types/calendar';
+import type { Event } from '@/types/calendar';
 import { isEventTagArray } from '@/lib/utils/eventUtils';
 import { getContrastColor } from '@/lib/utils/colorUtils';
 import { cn } from '@/lib/utils';

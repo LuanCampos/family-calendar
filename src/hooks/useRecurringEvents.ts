@@ -1,8 +1,8 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { storageAdapter } from '@/lib/adapters/storageAdapter';
 import { useFamily } from '@/contexts/FamilyContext';
 import { useAuth } from '@/contexts/AuthContext';
-import type { Event, EventInput, RecurrenceRule } from '@/types/calendar';
+import type { Event, EventInput } from '@/types/calendar';
 import { logger } from '@/lib/logger';
 
 /**
@@ -163,10 +163,10 @@ export const useRecurringEvents = () => {
           recurrenceExceptions: Array.from(exceptions),
         } as Event;
 
-        const response = await storageAdapter.updateEvent(parentEventId, {
-          // Only patch recurrenceExceptions field
-          // Casting because updateEvent accepts Partial<EventInput>; adapter merges object
-        } as any);
+        // Update parent with new exceptions
+        await storageAdapter.updateEvent(parentEventId, {
+          recurrenceExceptions: updatedParent.recurrenceExceptions,
+        });
 
         // Since adapter merges from offline copy, ensure we persisted exceptions
         await storageAdapter.offlineAdapter.put('events', updatedParent);
@@ -193,5 +193,3 @@ export const useRecurringEvents = () => {
     deleteRecurringInstance,
   };
 };
-
-export default useRecurringEvents;

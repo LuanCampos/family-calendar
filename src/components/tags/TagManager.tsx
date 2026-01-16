@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Trash2, Plus, Loader2, Check, AlertCircle, Pencil } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Trash2, Plus, Check, AlertCircle, Pencil } from 'lucide-react';
 import {
   Dialog,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from '@/components/ui/dialog';
 import { ModalContent } from '@/components/ui/modal-content';
 import {
@@ -27,21 +26,21 @@ import { logger } from '@/lib/logger';
 
 interface TagManagerProps {
   tags: EventTag[];
-  onCreateTag: (input: EventTagInput) => Promise<{ data?: EventTag; error?: any }>;
-  onUpdateTag?: (tagId: string, input: Partial<EventTagInput>) => Promise<{ data?: EventTag; error?: any }>;
-  onDeleteTag?: (tagId: string) => Promise<{ error?: any }>;
+  onCreateTag: (input: EventTagInput) => Promise<{ data?: EventTag; error?: unknown }>;
+  onUpdateTag?: (tagId: string, input: Partial<EventTagInput>) => Promise<{ data?: EventTag; error?: unknown }>;
+  onDeleteTag?: (tagId: string) => Promise<{ error?: unknown }>;
   isOpen: boolean;
   onClose: () => void;
 }
 
-export const TagManager: React.FC<TagManagerProps> = ({
+export const TagManager = ({
   tags,
   onCreateTag,
   onUpdateTag,
   onDeleteTag,
   isOpen,
   onClose,
-}) => {
+}: TagManagerProps) => {
   const { t } = useLanguage();
   const [newTagName, setNewTagName] = useState('');
   const [newTagColor, setNewTagColor] = useState('#3B82F6');

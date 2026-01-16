@@ -26,15 +26,15 @@ interface CalendarViewProps {
   syncProgress?: number;
 }
 
-export const CalendarView: React.FC<CalendarViewProps> = ({
+export const CalendarView = ({
   onTagManager,
   onSettings,
-  userEmail,
+  userEmail: _userEmail,
   availableTags,
-  isOnline = true,
+  isOnline: _isOnline = true,
   isSyncing = false,
   syncProgress = 0,
-}) => {
+}: CalendarViewProps) => {
   const { t } = useLanguage();
   const {
     currentDate,
@@ -55,7 +55,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   // Haptic feedback helper, only vibrates when user activation is active
   const canHaptic = () => {
     try {
-      const ua = (navigator as any).userActivation;
+      const ua = (navigator as unknown as { userActivation?: { isActive?: boolean } }).userActivation;
       const isActive = ua ? !!ua.isActive : true;
       return isActive && document.visibilityState === 'visible' && document.hasFocus();
     } catch {
@@ -135,6 +135,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   // Track when we're opening the modal as a result of clicking "New Event" in the day list.
   // This avoids a race where closing the day list clears `selectedDate` before the modal reads it.
   const openingModalRef = React.useRef(false);
+  // Track if we came from the day list to return there after editing
+  const cameFromDayListRef = React.useRef(false);
   React.useEffect(() => {
     if (isModalOpen) {
       // Modal is now open; clear the transitional flag
@@ -153,6 +155,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     logger.debug('ui.event.click', { eventId: event.id });
     selectDate(event.date);
     setEditingEvent(event);
+    // Track that we came from day list so we can return there after editing
+    cameFromDayListRef.current = isDayListOpen;
     setIsDayListOpen(false);
     setIsModalOpen(true);
   };
@@ -184,6 +188,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         logger.debug('ui.calendarView.events.reloaded.afterCreate');
       }
       setIsModalOpen(false);
+      // Return to day list if we came from there
+      if (cameFromDayListRef.current) {
+        setIsDayListOpen(true);
+        cameFromDayListRef.current = false;
+      }
     } catch (error) {
       logger.error('ui.event.save.error', { error });
       toast.error(t('eventError'));
@@ -199,6 +208,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       }
       toast.success(t('eventDeleted'));
       setIsModalOpen(false);
+      // Return to day list if we came from there
+      if (cameFromDayListRef.current) {
+        setIsDayListOpen(true);
+        cameFromDayListRef.current = false;
+      }
     } catch (error) {
       logger.error('ui.event.delete.error', { error });
       toast.error(t('eventError'));
@@ -209,6 +223,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     setEditingEvent(undefined);
     // Set flag before opening modal to prevent `selectedDate` from being cleared by day list close
     openingModalRef.current = true;
+    // Track that we came from day list so we can return there after saving/canceling
+    cameFromDayListRef.current = true;
     setIsModalOpen(true);
   };
 
@@ -300,8 +316,14 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         onClose={() => {
           setIsModalOpen(false);
           setEditingEvent(undefined);
-          // Clear selected date to remove highlight after closing any event modal
-          selectDate(null);
+          // Return to day list if we came from there, otherwise clear selection
+          if (cameFromDayListRef.current) {
+            setIsDayListOpen(true);
+            cameFromDayListRef.current = false;
+          } else {
+            // Clear selected date to remove highlight after closing any event modal
+            selectDate(null);
+          }
           const el = document.activeElement as HTMLElement | null;
           if (el && typeof el.blur === 'function') el.blur();
         }}

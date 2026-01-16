@@ -38,7 +38,6 @@ import {
   User,
   Trash2,
   X,
-  Loader2,
   Settings,
   LogOut
 } from 'lucide-react';
