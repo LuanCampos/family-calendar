@@ -28,15 +28,35 @@ export const RecurrenceConfig = ({
   disabled = false,
 }: RecurrenceConfigProps) => {
   const { t } = useLanguage();
-  const [isRecurring, setIsRecurring] = useState(!!initialRule);
-  const [rule, setRule] = useState<RecurrenceRule>(
-    initialRule || {
-      frequency: 'weekly',
-      interval: 1,
-      unlimited: false,
-      maxOccurrences: 12,
+  
+  // Default values for recurrence rule to ensure all fields are present
+  const defaultRule: RecurrenceRule = {
+    frequency: 'weekly',
+    interval: 1,
+    unlimited: false,
+    maxOccurrences: 12,
+  };
+
+  // Merge initialRule with defaults to ensure all fields are present
+  const mergeWithDefaults = (rule: RecurrenceRule | undefined): RecurrenceRule => {
+    if (!rule) return defaultRule;
+    // If rule has endDate, don't set maxOccurrences; if unlimited, don't set either
+    if (rule.unlimited) {
+      return { ...defaultRule, ...rule, maxOccurrences: undefined, endDate: undefined };
     }
-  );
+    if (rule.endDate) {
+      return { ...defaultRule, ...rule, maxOccurrences: undefined };
+    }
+    // If no endDate and not unlimited, ensure maxOccurrences has a value
+    return { 
+      ...defaultRule, 
+      ...rule, 
+      maxOccurrences: rule.maxOccurrences ?? defaultRule.maxOccurrences 
+    };
+  };
+
+  const [isRecurring, setIsRecurring] = useState(!!initialRule);
+  const [rule, setRule] = useState<RecurrenceRule>(mergeWithDefaults(initialRule));
 
   const [useEndDate, setUseEndDate] = useState(!!initialRule?.endDate);
   const [useUnlimited, setUseUnlimited] = useState(initialRule?.unlimited || false);
@@ -100,9 +120,21 @@ export const RecurrenceConfig = ({
     const hasRule = !!initialRule;
     setIsRecurring(hasRule);
     if (hasRule) {
-      setRule(initialRule as RecurrenceRule);
-      // Propagate to parent if needed
-      onRuleChange?.(initialRule as RecurrenceRule);
+      const mergedRule = mergeWithDefaults(initialRule);
+      setRule(mergedRule);
+      // Update useEndDate and useUnlimited based on merged rule
+      setUseEndDate(!!mergedRule.endDate);
+      setUseUnlimited(mergedRule.unlimited || false);
+      // Validate and clear any errors since we're applying defaults
+      const validation = validateRecurrenceRule(mergedRule);
+      setErrors(validation.errors);
+      // Propagate merged rule to parent to ensure defaults are applied
+      if (validation.valid) {
+        onRuleChange?.(mergedRule);
+      }
+    } else {
+      // Clear errors when no rule
+      setErrors([]);
     }
     // Do not force default rule here if toggled off; keep previous rule until user re-enables
   }, [initialRule]);
