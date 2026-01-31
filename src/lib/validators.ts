@@ -89,13 +89,17 @@ export const PasswordSchema = z.string().refine(isStrongPassword, {
 
 /**
  * Recurrence rule schema for recurring events
+ * Must match RecurrenceRule interface in types/calendar.ts
  */
 export const RecurrenceRuleSchema = z.object({
-  frequency: z.enum(['daily', 'weekly', 'monthly', 'yearly']),
+  frequency: z.enum(['daily', 'weekly', 'biweekly', 'monthly', 'yearly']),
   interval: z.number().int().min(1).max(365).optional(),
   daysOfWeek: z.array(z.number().int().min(0).max(6)).optional(),
   endDate: z.string().date().optional(),
-  count: z.number().int().min(1).max(999).optional(),
+  maxOccurrences: z.number().int().min(1).max(999).optional(),
+  dayOfMonth: z.number().int().min(1).max(31).optional(),
+  monthOfYear: z.number().int().min(1).max(12).optional(),
+  unlimited: z.boolean().optional(),
 }).optional();
 
 /**
