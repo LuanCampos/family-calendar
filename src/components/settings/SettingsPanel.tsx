@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Globe, Palette, Trash2, User, KeyRound, LogIn, LogOut, Users, UserPlus, Mail, Crown, X, Loader2, WifiOff, ChevronDown, Plus, Check, Cloud, HardDrive, Pencil } from 'lucide-react';
+import { Globe, Palette, Trash2, User, KeyRound, LogIn, LogOut, Users, UserPlus, Mail, Crown, X, Loader2, WifiOff, ChevronDown, Plus, Check, Cloud, HardDrive, Pencil, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TriggerButton } from '@/components/ui/trigger-button';
 import { logger } from '@/lib/logger';
@@ -47,6 +47,7 @@ import * as userService from '@/lib/services/userService';
 import { clearOfflineCache } from '@/lib/storage/offlineStorage';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { usePWAInstall } from '@/hooks/usePWAInstall';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -87,6 +88,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
     refreshFamilies
   } = useFamily();
   const { syncFamily, isSyncing, syncProgress, isOnline } = useOnline();
+  const { canInstall, installApp } = usePWAInstall();
   
   const [activeSection, setActiveSection] = useState<'main' | 'profile' | 'password' | 'auth'>('main');
   const [displayName, setDisplayName] = useState('');
@@ -811,6 +813,22 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, isOpen: extern
                           </SelectContent>
                         </Select>
                       </div>
+                      {/* Install App - só aparece quando instalável */}
+                      {canInstall && (
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start gap-3 h-12 text-left"
+                          onClick={installApp}
+                        >
+                          <div className="p-1.5 rounded-lg bg-primary/10">
+                            <Download className="h-4 w-4 text-primary" />
+                          </div>
+                          <div className="flex flex-col items-start">
+                            <span className="text-sm font-medium">{t('installApp')}</span>
+                            <span className="text-xs text-muted-foreground">{t('installAppDescription')}</span>
+                          </div>
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>

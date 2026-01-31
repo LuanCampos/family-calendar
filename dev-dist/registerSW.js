@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) navigator.serviceWorker.register('/family-calendar/dev-sw.js?dev-sw', { scope: '/family-calendar/', type: 'classic' })

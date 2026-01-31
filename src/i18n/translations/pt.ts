@@ -302,6 +302,11 @@ export const pt = {
   'recurrence.until': 'até',
   'recurrence.occurrences': 'ocorrências',
   
+  // PWA
+  installApp: 'Instalar App',
+  installAppDescription: 'Instale no seu dispositivo para acesso rápido',
+  appInstalled: 'App instalado com sucesso!',
+  
   // Dialog & Button Labels
   preferences: 'Preferências',
   invitations: 'Convites',

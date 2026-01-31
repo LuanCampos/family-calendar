@@ -1,4 +1,5 @@
 import { createRoot } from "react-dom/client";
+import { registerSW } from "virtual:pwa-register";
 import { App } from "./App";
 import "./index.css";
 
@@ -37,6 +38,9 @@ function setViewportHeightVar() {
 setViewportHeightVar();
 window.addEventListener('resize', setViewportHeightVar);
 window.addEventListener('orientationchange', setViewportHeightVar);
+
+// Register PWA service worker
+registerSW({ immediate: true });
 
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error("Root element not found");

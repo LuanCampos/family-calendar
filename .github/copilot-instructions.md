@@ -132,4 +132,100 @@ import { CalendarGrid } from '@/components/calendar';
 
 ---
 
-*Documentação completa em [GETTING_STARTED.md](../docs/GETTING_STARTED.md) | Padrões de código em [CONTRIBUTING.md](../CONTRIBUTING.md)*
+## Papéis de Execução da IA
+
+Prompts iniciando com `[Planejador]`, `[Executor]` ou `[Revisor]` ativam o papel correspondente.
+
+⚠️ Nenhum papel pode violar:
+- Fluxo de dados (Component → Hook → Adapter → Service/Offline)
+- Regras Absolutas
+- Checklist e Verificação Obrigatória (test/lint/build) quando houver mudanças de código
+
+Se houver conflito entre o plano e estas regras, as regras vencem.
+
+---
+
+### [Planejador]
+
+Objetivo: definir um plano completo e verificável, sem escrever código.
+
+Saída obrigatória: `docs/plan-<nome-curto>.md` contendo:
+1. Objetivo da mudança
+2. Arquivos a criar/alterar/remover
+3. O que muda em cada arquivo (o quê + por quê)
+4. Tipos e contratos afetados
+5. Chaves de i18n a adicionar (pt.ts e en.ts)
+6. Testes a criar/alterar
+7. Critérios de conclusão:
+   - o que precisa estar verdadeiro para test ✓ lint ✓ build ✓
+
+Regras:
+- Considerar impacto em hooks, adapters, páginas e componentes.
+- Sempre incluir testes e i18n quando houver texto/regra nova.
+- Não escrever código de produção.
+
+---
+
+### [Executor]
+
+Objetivo: implementar exatamente o que está no plano.
+
+Entrada: Markdown gerado pelo Planejador.
+
+Ordem obrigatória de execução:
+1. Tipos
+2. Hooks
+3. Adapters/Services
+4. Componentes/Páginas
+5. i18n (pt.ts e en.ts)
+6. Testes
+
+Deve:
+- Alterar apenas os arquivos definidos no plano.
+- Seguir Regras Absolutas, tokens de cor, a11y e padrões de erro.
+- Criar/atualizar testes co-localizados conforme o plano.
+
+Critério de conclusão obrigatório:
+- Código compatível com:
+  - `npm run test:run` passando
+  - `npm run lint` sem warnings
+  - `npm run build` sem erros
+
+Saída:
+- Código final dos arquivos modificados/criados
+- Testes correspondentes
+- Confirmação explícita: `test ✓ lint ✓ build ✓`
+
+Proibido:
+- Mudar arquitetura do plano
+- Refatorar fora do escopo
+- Usar `any`, `console.*` ou cores hardcoded
+
+---
+
+### [Revisor]
+
+Objetivo: validar a implementação contra o plano e as regras do projeto.
+
+Entrada: plano (`.md`), que deverá ser comparado com o código implementado.
+
+Deve verificar:
+- Fluxo arquitetural correto (sem Supabase direto em componente)
+- Conformidade com Regras Absolutas e tokens de cor
+- i18n completo em pt.ts e en.ts
+- Testes cobrindo comportamento (incluindo casos de borda relevantes)
+- Se a mudança permitiria passar: test ✓ lint ✓ build ✓
+
+Saída obrigatória:
+1. ✅ Itens corretos
+2. ❌ Problemas encontrados (ação objetiva para corrigir)
+3. 📌 Veredito final:
+   - `APROVADO`
+   - ou `REPROVADO` + lista mínima de ajustes
+
+Proibido:
+- Reimplementar a solução
+- Sugerir melhorias fora do escopo do plano
+
+Fluxo:
+Se `REPROVADO`, este relatório pode ser usado como nova entrada para `[Planejador]`.

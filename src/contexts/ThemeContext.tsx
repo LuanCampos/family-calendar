@@ -279,6 +279,29 @@ const applyTheme = (theme: ThemeKey) => {
   Object.entries(variables).forEach(([key, value]) => {
     root.style.setProperty(key, value);
   });
+
+  // Sync mobile status bar color with active theme
+  const themeColor = variables['--background'];
+  if (themeColor) {
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) {
+      meta.setAttribute('content', `hsl(${themeColor})`);
+    }
+  }
+
+  // Swap favicon to match current theme (dark/light variants)
+  const isLight = theme === 'light' || theme === 'solarizedLight';
+  const iconHref = `${import.meta.env.BASE_URL || '/'}${isLight ? 'favicon-light.png' : 'favicon-dark.png'}`;
+
+  const updateLink = (selector: string) => {
+    const linkEl = document.querySelector(selector) as HTMLLinkElement | null;
+    if (linkEl) {
+      linkEl.href = iconHref;
+    }
+  };
+
+  updateLink('link[rel="icon"][data-theme-favicon]');
+  updateLink('link[rel="shortcut icon"][data-theme-favicon]');
 };
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
